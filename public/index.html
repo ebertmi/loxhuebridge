@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loxHueBridge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #f4f6f8; --card-bg: #ffffff; --text-main: #1c1c1e; --text-muted: #636366; --border: #e1e4e8; --accent: #85c440; --sensor: #ff9500; --button: #007aff; --danger: #ff3b30; --radius: 12px; --input-bg: #ffffff; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card-bg: #1c1c1e; --text-main: #f2f2f7; --text-muted: #aeaeb2; --border: #38383a; --input-bg: #2c2c2e; } }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { font-weight: 800; color: var(--accent); margin-bottom: 5px; }
+        
+        /* TABS */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; overflow-x: auto; }
+        .tab { padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+        .tab.active { background: var(--text-main); color: var(--bg); }
+        .tab[data-tab="light"].active { background: var(--accent); } .tab[data-tab="sensor"].active { background: var(--sensor); } .tab[data-tab="button"].active { background: var(--button); }
+        
+        .card { background: var(--card-bg); padding: 25px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 30px; }
+        
+        .chip-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .chip { display: inline-flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border); padding: 6px 12px; border-radius: 50px; cursor: pointer; font-size: 0.85rem; }
+        .chip:hover { transform: translateY(-1px); }
+        .chip.command { border-color: var(--accent); color: var(--accent); } 
+        
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media(min-width: 768px) { .grid { grid-template-columns: 1fr 1fr; } }
+        
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        input, select { width: 100%; background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        button.add-btn { width: 100%; background: var(--text-main); color: var(--bg); font-weight: 700; border: none; padding: 14px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        
+        .mapping-list { display: flex; flex-direction: column; gap: 10px; }
+        .mapping-item { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); border-left: 4px solid transparent; }
+        .type-light, .type-group { border-left-color: var(--accent); } .type-sensor { border-left-color: var(--sensor); } .type-button { border-left-color: var(--button); }
+        
+        .mapping-lox { font-family: monospace; font-weight: 700; }
+        .mapping-hue { font-size: 0.9rem; color: var(--text-muted); }
+        .status-badges { display: flex; gap: 5px; margin-right: 10px; align-items: center; }
+        .badge { font-size: 0.85rem; padding: 2px 8px; border-radius: 4px; background: var(--border); color: var(--text-muted); min-width: 20px; text-align: center; }
+        .del-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+
+        .log-console { background-color: #1a1a1a; color: #f0f0f0; font-family: 'Fira Code', monospace; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .log-time { color: #888; margin-right: 10px; }
+        .log-level { font-weight: bold; margin-right: 10px; }
+        .level-INFO { color: #61afef; } .level-SUCCESS { color: #98c379; } .level-WARN { color: #e5c07b; } .level-ERROR { color: #e06c75; } .level-DEBUG { color: #c678dd; }
+        .settings-table { width: 100%; border-collapse: collapse; }
+        .settings-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+        .settings-table td:first-child { font-weight: bold; color: var(--text-muted); width: 40%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header><h1>loxHueBridge</h1><p style="color:var(--text-muted)">Dashboard</p></header>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="light" onclick="setTab('light')">💡 Lichter</div>
+        <div class="tab" data-tab="sensor" onclick="setTab('sensor')">📡 Sensoren</div>
+        <div class="tab" data-tab="button" onclick="setTab('button')">🔘 Schalter</div>
+        <div class="tab" data-tab="system" onclick="setTab('system')">⚙️ System</div>
+    </div>
+
+    <div id="main-interface" class="tab-content active">
+        <div class="detected-area" id="detectedContainer" style="display:none">
+            <div class="card" style="border: 1px dashed var(--border);">
+                <h3 style="margin-top:0; font-size: 1rem;">⚡ Neue Loxone Befehle</h3>
+                <div id="detectedList" class="chip-container"></div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 5px 0 0 0;">Klicke auf einen Befehl, um ihn zuzuordnen.</p>
+            </div>
+        </div>
+        <div class="grid">
+            <div>
+                <h2>Verbindung</h2>
+                <div class="card">
+                    <label>Loxone Name</label><input type="text" id="inName" placeholder="...">
+                    <div style="text-align: center; margin: 15px 0;">⬇</div>
+                    <label>Hue Gerät</label><select id="hueTarget"><option>Lade...</option></select>
+                    <button class="add-btn" onclick="addMapping()">Speichern</button>
+                </div>
+            </div>
+            <div>
+                <h2>Aktiv</h2>
+                <div id="mappingList" class="mapping-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="system-interface" class="tab-content">
+        <h2>Aktuelle Konfiguration</h2>
+        <div class="card">
+            <table class="settings-table" id="settingsTable"><tr><td>Lade...</td><td></td></tr></table>
+        </div>
+        <h2>Server Logs</h2>
+        <div class="log-console" id="logConsole"><div style="text-align:center; padding-top:20px; color:#666;">Warte auf Logs...</div></div>
+    </div>
+</div>
+
+<script>
+    let currentTab = 'light';
+    let targets = [];
+    let mappings = [];
+    let status = {};
+    let detectedHistory = [];
+    let logInterval = null;
+
+    async function init() {
+        await loadTargets();
+        await loadMappings();
+        loadDetected();
+        loadStatus();
+        setInterval(loadDetected, 3000);
+        setInterval(loadStatus, 2000);
+    }
+
+    function setTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+        if (tab === 'system') {
+            document.getElementById('main-interface').classList.remove('active');
+            document.getElementById('system-interface').classList.add('active');
+            loadSettings();
+            loadLogs();
+            if(!logInterval) logInterval = setInterval(loadLogs, 2000);
+        } else {
+            document.getElementById('main-interface').classList.add('active');
+            document.getElementById('system-interface').classList.remove('active');
+            if(logInterval) { clearInterval(logInterval); logInterval = null; }
+            const btn = document.querySelector('.add-btn');
+            btn.style.backgroundColor = tab==='light' ? 'var(--accent)' : (tab==='sensor' ? 'var(--sensor)' : 'var(--button)');
+            renderDropdown(); renderMappings();
+        }
+    }
+
+    async function loadTargets() {
+        try {
+            const res = await fetch('/api/targets');
+            targets = await res.json();
+            if(currentTab !== 'system') renderDropdown();
+        } catch(e){}
+    }
+
+    function renderDropdown() {
+        const select = document.getElementById('hueTarget');
+        select.innerHTML = '<option value="">-- Wählen --</option>';
+        const filtered = targets.filter(t => {
+            if (currentTab === 'light') return t.type === 'light' || t.type === 'group';
+            if (currentTab === 'sensor') return t.type === 'sensor';
+            if (currentTab === 'button') return t.type === 'button';
+            return false;
+        });
+        filtered.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.uuid; opt.dataset.type = t.type; opt.innerHTML = t.name;
+            select.appendChild(opt);
+        });
+    }
+
+    async function loadMappings() {
+        try {
+            const res = await fetch('/api/mapping');
+            mappings = await res.json();
+            if(currentTab !== 'system') renderMappings();
+        } catch(e){}
+    }
+
+    async function loadStatus() {
+        try {
+            const res = await fetch('/api/status');
+            status = await res.json();
+            if(currentTab !== 'system') renderMappings();
+        } catch(e){}
+    }
+
+    function renderMappings() {
+        const list = document.getElementById('mappingList');
+        list.innerHTML = '';
+        const filtered = mappings.filter(m => {
+            if (currentTab === 'light') return m.hue_type === 'light' || m.hue_type === 'group';
+            if (currentTab === 'sensor') return m.hue_type === 'sensor';
+            if (currentTab === 'button') return m.hue_type === 'button';
+            return false;
+        });
+
+        if (filtered.length === 0) { list.innerHTML = '<div class="empty-state">Leer</div>'; return; }
+        filtered.sort((a,b) => a.loxone_name.localeCompare(b.loxone_name));
+        
+        filtered.forEach(m => {
+            const st = status[m.loxone_name] || {};
+            let badges = '';
+            
+            if (st.motion !== undefined) {
+                const icon = st.motion ? '🏃' : '🧘';
+                const bg = 'var(--border)'; 
+                badges += `<span class="badge" style="background:${bg}; font-size: 1.2em;">${icon}</span>`;
+            }
+            if (st.temp !== undefined) badges += `<span class="badge">${st.temp}°C</span>`;
+            if (st.lux !== undefined) badges += `<span class="badge">${st.lux} lx</span>`;
+            if (st.on !== undefined) badges += `<span class="badge" style="background:${st.on?'#e1ffe1':'var(--border)'}">${st.on ? 'AN' : 'AUS'}</span>`;
+            if (st.bri !== undefined) badges += `<span class="badge">${Math.round(st.bri)}%</span>`;
+
+            const div = document.createElement('div');
+            div.className = `mapping-item type-${m.hue_type}`;
+            div.innerHTML = `
+                <div><div class="mapping-lox">/${m.loxone_name}</div><div class="mapping-hue">${m.hue_name}</div></div>
+                <div style="display:flex; align-items:center;"><div class="status-badges">${badges}</div><button class="del-btn" onclick="deleteMapping('${m.loxone_name}')">✖</button></div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    async function loadDetected() {
+        try {
+            const res = await fetch('/api/detected');
+            const detected = await res.json();
+            
+            // Nur Loxone Commands filtern!
+            const filteredDetected = detected.filter(d => d.type === 'command');
+
+            // Check auf Änderung (gegen Flackern)
+            if (JSON.stringify(filteredDetected) === JSON.stringify(detectedHistory)) return;
+            detectedHistory = filteredDetected;
+
+            const list = document.getElementById('detectedList');
+            const container = document.getElementById('detectedContainer');
+            
+            if (filteredDetected.length === 0) { container.style.display = 'none'; return; }
+            
+            container.style.display = 'block';
+            list.innerHTML = '';
+            
+            filteredDetected.forEach(d => {
+                const div = document.createElement('div');
+                div.className = `chip command`;
+                div.innerHTML = `<span>📥</span> /${d.name}`;
+                div.onclick = () => {
+                    document.getElementById('inName').value = d.name;
+                    document.getElementById('inName').focus();
+                };
+                list.appendChild(div);
+            });
+        } catch(e){}
+    }
+
+    async function addMapping() {
+        const name = document.getElementById('inName').value.trim().toLowerCase();
+        const hueSelect = document.getElementById('hueTarget');
+        if (!name || !hueSelect.value) return alert("Daten fehlen");
+        mappings = mappings.filter(m => m.loxone_name.toLowerCase() !== name);
+        mappings.push({ loxone_name: name, hue_uuid: hueSelect.value, hue_name: hueSelect.options[hueSelect.selectedIndex].text, hue_type: hueSelect.options[hueSelect.selectedIndex].dataset.type });
+        await fetch('/api/mapping', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(mappings) });
+        document.getElementById('inName').value = '';
+        loadMappings(); loadDetected();
+    }
+
+    async function deleteMapping(name) {
+        if(!confirm('Löschen?')) return;
+        mappings = mappings.filter(m => m.loxone_name !== name);
+        await fetch('/api/mapping', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(mappings) });
+        renderMappings();
+    }
+
+    async function loadSettings() {
+        try {
+            const res = await fetch('/api/settings');
+            const s = await res.json();
+            const table = document.getElementById('settingsTable');
+            table.innerHTML = `
+                <tr><td>Hue Bridge IP</td><td>${s.bridge_ip}</td></tr>
+                <tr><td>Loxone IP</td><td>${s.loxone_ip}</td></tr>
+                <tr><td>Loxone UDP Port</td><td>${s.loxone_port}</td></tr>
+                <tr><td>HTTP Port</td><td>${s.http_port}</td></tr>
+                <tr><td>Debug Modus</td><td>${s.debug ? '✅ Aktiv' : 'Inaktiv'}</td></tr>
+                <tr><td>App Key</td><td>${s.key_configured}</td></tr>
+            `;
+        } catch(e) { document.getElementById('settingsTable').innerHTML = 'Fehler beim Laden'; }
+    }
+
+    async function loadLogs() {
+        try {
+            const res = await fetch('/api/logs');
+            const logs = await res.json();
+            const consoleDiv = document.getElementById('logConsole');
+            const html = logs.map(l => `<div class="log-entry"><span class="log-time">${l.time}</span><span class="log-level level-${l.level}">${l.level}</span>${l.msg}</div>`).join('');
+            if(consoleDiv.innerHTML !== html) consoleDiv.innerHTML = html;
+        } catch(e) {}
+    }
+
+    init();
+</script>
+</body>
+</html>

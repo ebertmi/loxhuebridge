@@ -1,0 +1,18 @@
+services:
+  loxhuebridge:
+    build: .
+    container_name: loxhuebridge
+    restart: always
+    # Host Mode: Der Container nutzt direkt das Netzwerk des Raspberry Pi
+    network_mode: "host"
+    
+    # Ports brauchen wir nicht mehr mappen, da der Container direkt auf Port 8555 des Hosts lauscht
+    # ports:
+    #   - "8555:8555"
+    
+    environment:
+      - TZ=Europe/Vienna
+    volumes:
+      # Config und Daten persistieren
+      - ./.env:/app/.env
+      - ./mapping.json:/app/mapping.json
