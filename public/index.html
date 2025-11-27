@@ -421,9 +421,19 @@
         const name = document.getElementById('inName').value.trim().toLowerCase();
         const hueSelect = document.getElementById('hueTarget');
         if (!name || !hueSelect.value) return alert("Daten fehlen");
-        mappings = mappings.filter(m => m.loxone_name.toLowerCase() !== name);
+
+        // CHECK IF NAME EXISTS
+        const existing = mappings.find(m => m.loxone_name.toLowerCase() === name);
+        if (existing) {
+            if(!confirm(`Der Name '${name}' wird bereits für '${existing.hue_name}' verwendet.\nMöchtest du die Zuordnung überschreiben?`)) {
+                return;
+            }
+            mappings = mappings.filter(m => m.loxone_name.toLowerCase() !== name);
+        }
+
         let rawHueName = hueSelect.options[hueSelect.selectedIndex].text;
         let cleanHueName = rawHueName.replace(/^[💡🏠📡🔘]\s/, '');
+
         mappings.push({ loxone_name: name, hue_uuid: hueSelect.value, hue_name: cleanHueName, hue_type: hueSelect.options[hueSelect.selectedIndex].dataset.type });
         await fetch('/api/mapping', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(mappings) });
         document.getElementById('inName').value = '';

@@ -28,6 +28,7 @@ config.json
 *.key
 mapping.json
 setup_hue.js
+HueSettings
 
 # --- IDE & Editor Dateien ---
 .idea/

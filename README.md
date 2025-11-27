@@ -9,6 +9,7 @@ Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung u
 * **Smart Setup:** Automatische Suche der Hue Bridge und Pairing per Web-Interface.
 * **Live Dashboard:** Zeigt alle verbundenen Lichter und Sensoren (Temperatur, Lux, Bewegung) in Echtzeit.
 * **Smart Mapping:** Einfache Zuordnung per "Klick & Wähl".
+* **Wichtig:** Jeder Loxone-Name (z.B. `buero`) darf nur **einmal** vergeben werden. Wenn du einen Namen doppelt vergibst, fragt die Oberfläche nach Bestätigung zum Überschreiben.
 * **Loxone Integration:**
     * **Steuern:** Schalten, Dimmen, Warmweiß & RGB (via Virtueller Ausgang).
     * **Empfangen:** Bewegung, Taster, Helligkeit, Temperatur (via UDP Eingang).
@@ -127,6 +128,7 @@ It enables extremely fast, local control without cloud delays and uses the moder
 * **Smart Setup:** Automatic discovery of the Hue Bridge and pairing via web interface.
 * **Live Dashboard:** Shows all connected lights and sensors (temperature, lux, motion) in real-time.
 * **Smart Mapping:** Easy assignment via "Click & Select".
+* **Important:** Each Loxone Name (e.g. `office`) must be **unique**. If you assign a name twice, the interface will ask for confirmation to overwrite the existing mapping.
 * **Loxone Integration:**
     * **Control:** Switching, Dimming, Warm White & RGB (via Virtual Output).
     * **Receive:** Motion, Switches, Brightness, Temperature (via UDP Input).
