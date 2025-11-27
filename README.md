@@ -1,4 +1,4 @@
-# loxHueBridge 🇦🇹 Deutsche Version
+# loxHueBridge 🇦🇹
 
 **loxHueBridge** ist eine bidirektionale Schnittstelle zwischen dem **Loxone Miniserver** und der **Philips Hue Bridge (V2 / API)**.
 
@@ -6,13 +6,13 @@ Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung u
 
 ## 🚀 Features
 
-* **Bidirektional:** Loxone steuert Hue ↔ Hue meldet Status an Loxone.
-* **Clean URLs:** Sprechende Namen statt kryptischer IDs (z.B. `/wohnzimmer/50`).
-* **Auto-Discovery:** Erkennt automatisch Hue Lichter, Räume, Zonen, Bewegungsmelder und Schalter.
-* **Smart Mapping:** Einfache Zuordnung über ein modernes Web-Dashboard.
-* **Hardware-Abstraktion:** Tausche defekte Hue-Lampen aus, ohne das Loxone-Programm ändern zu müssen.
-* **Smart Logic:** Erkennt automatisch, ob geschaltet, gedimmt oder Farbe geändert werden soll, basierend auf dem Wert.
-* **Docker Ready:** Optimiert für den Einsatz auf Raspberry Pi, Synology NAS oder Servern.
+* **Smart Setup:** Automatische Suche der Hue Bridge und Pairing per Web-Interface.
+* **Live Dashboard:** Zeigt alle verbundenen Lichter und Sensoren (Temperatur, Lux, Bewegung) in Echtzeit.
+* **Smart Mapping:** Einfache Zuordnung per "Klick & Wähl".
+* **Loxone Integration:**
+    * **Steuern:** Schalten, Dimmen, Warmweiß & RGB (via Virtueller Ausgang).
+    * **Empfangen:** Bewegung, Taster, Helligkeit, Temperatur (via UDP Eingang).
+* **Docker Ready:** Robustes Design mit Data-Persistence.
 
 ---
 
@@ -20,117 +20,103 @@ Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung u
 
 * Philips Hue Bridge (V2, eckiges Modell)
 * Loxone Miniserver
-* Ein Server für Docker (z.B. Raspberry Pi)
+* Ein Server für Docker (z.B. Raspberry Pi, Synology, Unraid)
 
 ---
 
-## 🛠 Installation (Docker)
+## 🛠 Installation
 
-Dies ist die empfohlene Installationsmethode.
+Die Installation erfolgt via Docker Compose.
 
-1.  **Repository klonen oder Dateien kopieren:**
-    Benötigt werden `Dockerfile`, `docker-compose.yml`, `package.json`, `server.js` und der Ordner `public`.
+1.  **Dateien laden:**
+    Klone das Repository oder kopiere die Dateien (`docker-compose.yml`, `Dockerfile`, `package.json`, `server.js`, `public/`) in einen Ordner auf deinem Server.
 
-2.  **Konfiguration vorbereiten:**
-    Erstelle eine Datei `mapping.json` (falls nicht vorhanden):
-    ```bash
-    echo "[]" > mapping.json
-    ```
-
-3.  **Environment Variablen setzen:**
-    Erstelle eine `.env` Datei:
-    ```ini
-    # Hue Bridge Settings
-    HUE_BRIDGE_IP=192.168.1.XXX
-    HUE_APP_KEY=DeinGenerierterKey... 
-    
-    # Loxone Settings (für Rückkanal)
-    LOXONE_IP=192.168.1.YYY
-    LOXONE_UDP_PORT=7000
-    
-    # Server Settings
-    HTTP_PORT=8555
-    DEBUG=false
-    ```
-
-4.  **Starten:**
+2.  **Starten:**
     ```bash
     docker compose up -d --build
     ```
 
-Das Web-Interface ist nun unter `http://<DEINE-IP>:8555` erreichbar.
+3.  **Setup Assistent:**
+    Öffne `http://<DEINE-IP>:8555` im Browser.
+    Der Assistent führt dich durch die Verbindung zur Hue Bridge (Pairing-Knopf drücken) und die Konfiguration von Loxone (IP & UDP Port).
 
 ---
 
-## ⚙️ Einrichtung in Loxone
+## 🔌 Integration in Loxone (Smart Import)
 
-### 1. Lichter steuern (Ausgang)
+Anstatt Befehle manuell einzutippen, kannst du deine konfigurierte loxHueBridge direkt in Loxone importieren.
 
-Damit die Werte sauber übertragen werden, empfiehlt es sich, am **Lichtbaustein** (Ausgang AQ, RGB, etc.) zuerst einen **Analogmerker** anzuschließen und diesen dann mit dem Virtuellen Ausgangsbefehl zu verbinden.
+![Loxone Import Workflow](lox_import.gif)
 
-1.  Erstelle einen **Virtuellen Ausgang**:
-    * **Adresse:** `http://<IP-DER-BRIDGE>:8555`
-    * **Verbindung schließen:** Ja
-2.  Erstelle darunter **Virtuelle Ausgangsbefehle**.
-3.  Verbinde den Analogmerker des Lichtbausteins mit diesem Befehl.
+### Schritt 1: Vorlagen exportieren
+1.  Öffne das **loxHueBridge Dashboard** (`http://<IP>:8555`).
+2.  Klicke auf **"Auswählen / Exportieren"** (oben rechts bei "Aktiv").
+3.  Wähle alle Geräte aus, die du in Loxone haben möchtest (oder "Alles markieren").
+4.  Klicke auf **"📥 XML"**.
+    * Mach das einmal im Tab **💡 Lichter** (speichert `lox_outputs.xml`).
+    * Mach das einmal im Tab **📡 Sensoren** (speichert `lox_inputs.xml`).
+
+### Schritt 2: Vorlagen in Loxone Config importieren
+
+1.  Öffne **Loxone Config**.
+2.  Klicke im Menüband oben auf den Tab **Miniserver**.
+3.  Klicke auf den Button **Gerätevorlagen** und wähle **Vorlage importieren...**.
+4.  Wähle die eben heruntergeladene XML-Datei aus.
+5.  Wiederhole das für beide Dateien (Inputs und Outputs).
+
+### Schritt 3: Geräte anlegen
+
+**Für Lichter (Virtuelle Ausgänge):**
+1.  Klicke im Peripheriebaum auf **Virtuelle Ausgänge**.
+2.  Klicke oben im Menüband auf **Vordefinierte Geräte**.
+3.  Wähle im Dropdown **LoxHueBridge Lights**.
+4.  Ein neuer Virtueller Ausgang mit all deinen Lampen wird erstellt.
+    * *Tipp:* Verbinde einen **Analogmerker** zwischen Lichtbaustein und dem Ausgangsbefehl für saubere Datenübertragung.
+
+**Für Sensoren (Virtuelle UDP Eingänge):**
+1.  Klicke im Peripheriebaum auf **Virtuelle UDP Eingänge**.
+2.  Klicke oben im Menüband auf **Vordefinierte Geräte**.
+3.  Wähle im Dropdown **LoxHueBridge Sensors**.
+4.  Ein neuer UDP-Eingang mit all deinen Bewegungs-, Temperatur- und Helligkeitssensoren wird erstellt.
+    * *Hinweis:* Kontrolliere, ob der **UDP Empfangsport** (Standard 7000) mit deiner loxHueBridge Einstellung übereinstimmt.
+
+### ⚠️ Wichtige Einstellung für Lichtbausteine
+
+Damit Warmweiß/Kaltweiß korrekt dargestellt wird, müssen die Grenzen im Loxone **Lichtsteuerungs-Baustein** (oder Smart Actuator) an die Bridge angepasst werden.
+
+Klicke auf den Baustein und setze in den Eigenschaften:
+* **Max. Farbtemperatur (Kalt):** `6500`
+* **Min. Farbtemperatur (Warm):** `2700`
+
+---
+
+## 💡 Manuelle Konfiguration (Referenz)
+
+Falls du die Befehle manuell anlegen möchtest:
+
+**Lichter (Virtueller Ausgang):**
+Adresse: `http://<IP-DER-BRIDGE>:8555`
 
 | Funktion | Befehl bei EIN / Analog | Erklärung |
 | :--- | :--- | :--- |
-| **Ausschalten** | `/kueche/<v>` | Schaltet aus (wenn Wert 0) |
-| **Dimmen** | `/kueche/<v>` | Werte 2-100 werden als % Helligkeit interpretiert |
-| **Warmweiß** | `/kueche/<v>` | Nutzt Loxone Smart Actuator Logik (z.B. `201002700`) |
-| **Farbe (RGB)** | `/kueche/<v>` | Nutzt Loxone RGB Logik (R + G*1000 + B*1000000) |
+| **Ausschalten** | `/kueche/<v>` | Schaltet aus (Wert 0) |
+| **Dimmen** | `/kueche/<v>` | Werte 2-100 % |
+| **Warmweiß** | `/kueche/<v>` | Smart Actuator Logik (z.B. `201002700`) |
+| **RGB** | `/kueche/<v>` | RGB Logik (R + G*1000 + B*1000000) |
 
-*Hinweis:* `<v>` ist der Platzhalter für den Wert, den der Analogmerker sendet.
-### 2. Sensoren empfangen (Eingang)
+**Sensoren (UDP Eingang):**
+Port: 7000
 
-Erstelle in Loxone Config einen **Virtuellen UDP Eingang**:
-* **UDP Empfangsport:** `7000` (oder was in der .env steht)
-
-Erstelle darunter **Virtuelle UDP Eingangsbefehle**.
-Der Befehlserkennungstext entspricht dem Namen, den du im Web-Interface dem Sensor gegeben hast (z.B. `bwm_flur`).
-
-| Sensor-Typ | Befehlserkennung | Beispielwert |
-| :--- | :--- | :--- |
-| **Bewegung** | `hue.bwm_flur.motion \v` | 0 oder 1 |
-| **Helligkeit** | `hue.bwm_flur.lux \v` | Lux-Wert (z.B. 150) |
-| **Temperatur** | `hue.bwm_flur.temp \v` | Grad Celsius (z.B. 21.5) |
-| **Schalter** | `hue.taster.button \v` | Event (z.B. `initial_press`) |
-| **Licht Status**| `hue.kueche.on \v` | 0 oder 1 (Rückmeldung) |
+| Typ | Befehlserkennung |
+| :--- | :--- |
+| **Bewegung** | `hue.bwm_flur.motion \v` |
+| **Helligkeit** | `hue.bwm_flur.lux \v` |
+| **Temperatur** | `hue.bwm_flur.temp \v` |
+| **Schalter** | `hue.taster.button \v` |
 
 ---
 
-## 🖥 Web Dashboard
-
-Rufe `http://<IP>:8555` auf.
-
-1.  **Tab Lichter:**
-    * Sende einen Befehl aus Loxone (z.B. `/buero/1`).
-    * Der Befehl erscheint unter "Neu entdeckt".
-    * Klicke ihn an und wähle rechts das passende Hue-Licht aus. Speichern.
-2.  **Tab Sensoren:**
-    * Löse einen Sensor aus (Bewegung).
-    * Klicke auf den Chip unter "Neu entdeckt" (im Tab Sensoren).
-    * Gib ihm einen Namen (z.B. `bwm_flur`) und speichere.
-3.  **Tab System:**
-    * Prüfe Logs und Einstellungen.
-
----
-
-## 🐳 Docker Hinweise
-
-Der Container nutzt `network_mode: "host"`. Dies ist empfohlen, damit Loxone die UDP-Pakete korrekt der IP-Adresse des Hosts zuordnen kann.
-
-Falls du **kein** Host-Netzwerk nutzen willst, musst du Ports mappen:
-```yaml
-ports:
-  - "8555:8555"
-  # UDP Port muss explizit exposed werden, wenn nicht host mode!
-```
-
----
-
-# loxHueBridge - 🇬🇧 English Version
+## 🇬🇧 English Version
 
 **loxHueBridge** is a bidirectional interface between the **Loxone Miniserver** and the **Philips Hue Bridge (V2 / API)**.
 
@@ -138,13 +124,13 @@ It enables extremely fast, local control without cloud delays and uses the moder
 
 ## 🚀 Features
 
-* **Bidirectional:** Loxone controls Hue ↔ Hue reports status to Loxone.
-* **Clean URLs:** Descriptive names instead of cryptic IDs (e.g., `/livingroom/50`).
-* **Auto-Discovery:** Automatically detects Hue lights, rooms, zones, motion sensors, and switches.
-* **Smart Mapping:** Easy assignment via a modern web dashboard.
-* **Hardware Abstraction:** Replace defective Hue bulbs without changing the Loxone program.
-* **Smart Logic:** Automatically detects whether to switch, dim, or change color based on the value.
-* **Docker Ready:** Optimized for use on Raspberry Pi, Synology NAS, or servers.
+* **Smart Setup:** Automatic discovery of the Hue Bridge and pairing via web interface.
+* **Live Dashboard:** Shows all connected lights and sensors (temperature, lux, motion) in real-time.
+* **Smart Mapping:** Easy assignment via "Click & Select".
+* **Loxone Integration:**
+    * **Control:** Switching, Dimming, Warm White & RGB (via Virtual Output).
+    * **Receive:** Motion, Switches, Brightness, Temperature (via UDP Input).
+* **Docker Ready:** Robust design with data persistence.
 
 ---
 
@@ -152,59 +138,81 @@ It enables extremely fast, local control without cloud delays and uses the moder
 
 * Philips Hue Bridge (V2, square model)
 * Loxone Miniserver
-* A server for Docker (e.g., Raspberry Pi)
+* A server for Docker (e.g., Raspberry Pi, Synology, Unraid)
 
 ---
 
-## 🛠 Installation (Docker)
+## 🛠 Installation
 
-This is the recommended installation method.
+Installation is done via Docker Compose.
 
-1.  **Clone repository or copy files:**
-    You need `Dockerfile`, `docker-compose.yml`, `package.json`, `server.js`, and the `public` folder.
+1.  **Download Files:**
+    Clone the repository or copy the files (`docker-compose.yml`, `Dockerfile`, `package.json`, `server.js`, `public/`) to a folder on your server.
 
-2.  **Prepare configuration:**
-    Create a `mapping.json` file (if it doesn't exist):
-    ```bash
-    echo "[]" > mapping.json
-    ```
-
-3.  **Set environment variables:**
-    Create a `.env` file:
-    ```ini
-    # Hue Bridge Settings
-    HUE_BRIDGE_IP=192.168.1.XXX
-    HUE_APP_KEY=YourGeneratedKey... 
-    
-    # Loxone Settings (for return channel)
-    LOXONE_IP=192.168.1.YYY
-    LOXONE_UDP_PORT=7000
-    
-    # Server Settings
-    HTTP_PORT=8555
-    DEBUG=false
-    ```
-
-4.  **Start:**
+2.  **Start:**
     ```bash
     docker compose up -d --build
     ```
 
-The web interface is now accessible at `http://<YOUR-IP>:8555`.
+3.  **Setup Assistant:**
+    Open `http://<YOUR-IP>:8555` in your browser.
+    The assistant will guide you through connecting to the Hue Bridge (pressing the pairing button) and configuring Loxone (IP & UDP Port).
 
 ---
 
-## ⚙️ Setup in Loxone
+## 🔌 Integration in Loxone (Smart Import)
 
-### 1. Controlling Lights (Output)
+Instead of typing commands manually, you can directly import your configured loxHueBridge into Loxone.
 
-To ensure clean data transmission, it is recommended to connect an **Analog Memory** (Analogmerker) to the **Lighting Controller** outputs (AQ, RGB, etc.) first, and then link this memory to the Virtual Output Command.
+![Loxone Import Workflow](lox_import.gif)
 
-1.  Create a **Virtual Output**:
-    * **Address:** `http://<IP-OF-BRIDGE>:8555`
-    * **Close connection:** Yes
-2.  Create **Virtual Output Commands** underneath.
-3.  Connect the Analog Memory from the Lighting Controller to this command.
+### Step 1: Export Templates
+1.  Open the **loxHueBridge Dashboard** (`http://<IP>:8555`).
+2.  Click **"Select / Export"** (top right in the "Active" section).
+3.  Select the devices you want in Loxone (or "Select All").
+4.  Click **"📥 XML"**.
+    * Do this once in the **💡 Lights** tab (saves `lox_outputs.xml`).
+    * Do this once in the **📡 Sensors** tab (saves `lox_inputs.xml`).
+
+### Step 2: Import Templates into Loxone Config
+
+1.  Open **Loxone Config**.
+2.  Click on the **Miniserver** tab in the ribbon menu.
+3.  Click the **Device Templates** button and select **Import Template...**.
+4.  Select the downloaded XML files.
+5.  Repeat for both files (Inputs and Outputs).
+
+### Step 3: Create Devices
+
+**For Lights (Virtual Outputs):**
+1.  Click on **Virtual Outputs** in the periphery tree.
+2.  Click on **Predefined Devices** in the ribbon menu.
+3.  Select **LoxHueBridge Lights** from the dropdown.
+4.  A new Virtual Output with all your lights is created.
+    * *Tip:* Connect an **Analog Memory** between your Lighting Controller and the output command to ensure clean data transmission.
+
+**For Sensors (Virtual UDP Inputs):**
+1.  Click on **Virtual UDP Inputs** in the periphery tree.
+2.  Click on **Predefined Devices** in the ribbon menu.
+3.  Select **LoxHueBridge Sensors** from the dropdown.
+4.  A new UDP Input with all your motion, temperature, and lux sensors is created.
+    * *Note:* Check if the **UDP Receive Port** (Default 7000) matches your loxHueBridge settings.
+
+### ⚠️ Important Setting for Lighting Controllers
+
+To ensure Warm White/Cool White is rendered correctly, you must adjust the limits in the **Lighting Controller** block (or Smart Actuator) properties in Loxone Config:
+
+* **Max Color Temperature (Cool):** `6500`
+* **Min Color Temperature (Warm):** `2700`
+
+---
+
+## 💡 Manual Configuration (Reference)
+
+If you prefer to add commands manually:
+
+**Lights (Virtual Output):**
+Address: `http://<IP-OF-BRIDGE>:8555`
 
 | Function | Command on ON / Analog | Explanation |
 | :--- | :--- | :--- |
@@ -213,53 +221,19 @@ To ensure clean data transmission, it is recommended to connect an **Analog Memo
 | **Warm White** | `/kitchen/<v>` | Uses Loxone Smart Actuator logic (e.g., `201002700`) |
 | **Color (RGB)** | `/kitchen/<v>` | Uses Loxone RGB logic (R + G*1000 + B*1000000) |
 
-*Note:* `<v>` is the placeholder for the value sent by the Analog Memory.
+**Sensors (UDP Input):**
+Port: 7000
 
-### 2. Receiving Sensors (Input)
-
-Create a **Virtual UDP Input** in Loxone Config:
-* **UDP Receive Port:** `7000` (or whatever is in your .env)
-
-Create **Virtual UDP Input Commands** underneath.
-The command recognition text corresponds to the name you gave the sensor in the web interface (e.g., `motion_hall`).
-
-| Sensor Type | Command Recognition | Example Value |
-| :--- | :--- | :--- |
-| **Motion** | `hue.motion_hall.motion \v` | 0 or 1 |
-| **Brightness** | `hue.motion_hall.lux \v` | Lux value (e.g., 150) |
-| **Temperature** | `hue.motion_hall.temp \v` | Degrees Celsius (e.g., 21.5) |
-| **Switch** | `hue.button.button \v` | Event (e.g., `initial_press`) |
-| **Light Status**| `hue.kitchen.on \v` | 0 or 1 (Feedback) |
+| Type | Command Recognition |
+| :--- | :--- |
+| **Motion** | `hue.motion_hall.motion \v` |
+| **Brightness** | `hue.motion_hall.lux \v` |
+| **Temperature** | `hue.motion_hall.temp \v` |
+| **Switch** | `hue.button.button \v` |
 
 ---
 
-## 🖥 Web Dashboard
+## 💡 Tips
 
-Open `http://<IP>:8555`.
-
-1.  **Lights Tab:**
-    * Send a command from Loxone (e.g., `/office/1`).
-    * The command appears under "Newly Discovered".
-    * Click it and select the matching Hue light on the right. Save.
-2.  **Sensors Tab:**
-    * Trigger a sensor (motion).
-    * Click on the chip under "Newly Discovered" (in the Sensors tab).
-    * Give it a name (e.g., `motion_hall`) and save.
-3.  **System Tab:**
-    * Check logs and settings.
-
----
-
-## 🐳 Docker Notes
-
-The container uses `network_mode: "host"`. This is recommended so that Loxone can correctly assign the UDP packets to the host's IP address.
-
-If you do **not** want to use host network, you must map ports:
-```yaml
-ports:
-  - "8555:8555"
-  # UDP Port must be explicitly exposed if not in host mode!
-````
-
-```
-
+* **Data Folder:** All settings are saved in the `./data` folder. Make sure to back it up.
+* **Host Network:** The container uses the host network mode for trouble-free UDP communication.

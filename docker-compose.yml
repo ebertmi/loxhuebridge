@@ -3,16 +3,16 @@ services:
     build: .
     container_name: loxhuebridge
     restart: always
-    # Host Mode: Der Container nutzt direkt das Netzwerk des Raspberry Pi
-    network_mode: "host"
     
-    # Ports brauchen wir nicht mehr mappen, da der Container direkt auf Port 8555 des Hosts lauscht
-    # ports:
-    #   - "8555:8555"
+    # WICHTIG: Host Network für korrekte UDP Kommunikation mit Loxone
+    network_mode: "host"
     
     environment:
       - TZ=Europe/Vienna
+      # Optional: Falls du den Web-Port ändern willst (Standard 8555)
+      # - HTTP_PORT=8555 
+      
     volumes:
-      # Config und Daten persistieren
-      - ./.env:/app/.env
-      - ./mapping.json:/app/mapping.json
+      # WICHTIG: Wir mounten den lokalen Ordner "./data" in den Container
+      # Dort liegen dann config.json und mapping.json sicher.
+      - ./data:/app/data

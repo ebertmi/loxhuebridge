@@ -5,3 +5,9 @@ node_modules
 .env
 Dockerfile
 docker-compose.yml
+config.json
+.env.bak
+iniprompt.md
+config.json
+http_lox_server_VO.xml
+udp_lox_server_VI.xml

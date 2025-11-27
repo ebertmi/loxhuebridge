@@ -5,84 +5,99 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 const dgram = require('dgram');
+const os = require('os');
 
-// --- KONFIGURATION ---
-// ÄNDERUNG: Port aus .env laden
-const PORT = parseInt(process.env.HTTP_PORT || "8555");
-const DEBUG = process.env.DEBUG === 'true';
+// --- PFADE ---
+const DATA_DIR = path.join(__dirname, 'data');
+const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
+const MAPPING_FILE = path.join(DATA_DIR, 'mapping.json');
 
-const BRIDGE_IP = process.env.HUE_BRIDGE_IP;
-const APP_KEY = process.env.HUE_APP_KEY;
-const LOXONE_IP = process.env.LOXONE_IP;
-const LOXONE_UDP_PORT = parseInt(process.env.LOXONE_UDP_PORT || "7000");
+if (!fs.existsSync(DATA_DIR)) {
+    try { fs.mkdirSync(DATA_DIR); } catch (e) { console.error(e); }
+}
 
+const HTTP_PORT = parseInt(process.env.HTTP_PORT || "8555");
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-// --- LOGGER & BUFFER ---
-const logBuffer = []; 
-const MAX_LOGS = 50;
+let config = {
+    bridgeIp: process.env.HUE_BRIDGE_IP || null,
+    appKey: process.env.HUE_APP_KEY || null,
+    loxoneIp: process.env.LOXONE_IP || null,
+    loxonePort: parseInt(process.env.LOXONE_UDP_PORT || "7000"),
+    debug: process.env.DEBUG === 'true'
+};
 
+let isConfigured = false;
+const logBuffer = []; const MAX_LOGS = 50;
 const getTime = () => new Date().toLocaleTimeString();
 
 function addToLogBuffer(level, msg) {
-    const entry = { time: getTime(), level: level, msg: msg };
-    logBuffer.unshift(entry);
+    logBuffer.unshift({ time: getTime(), level: level, msg: msg });
     if (logBuffer.length > MAX_LOGS) logBuffer.pop();
 }
 
 const log = {
-    info:    (msg) => { console.log(`ℹ️  [${getTime()}] INFO:    ${msg}`); addToLogBuffer('INFO', msg); },
-    success: (msg) => { console.log(`✅  [${getTime()}] SUCCESS: ${msg}`); addToLogBuffer('SUCCESS', msg); },
-    warn:    (msg) => { console.log(`⚠️  [${getTime()}] WARN:    ${msg}`); addToLogBuffer('WARN', msg); },
-    error:   (msg) => { console.error(`❌ [${getTime()}] ERROR:   ${msg}`); addToLogBuffer('ERROR', msg); },
-    debug:   (msg) => { 
-        if (DEBUG) {
-            console.log(`🐛 [${getTime()}] DEBUG:   ${msg}`); 
-            addToLogBuffer('DEBUG', msg);
-        }
-    },
-    hueError: (error) => {
-        const status = error.response ? error.response.status : 'Network Error';
-        console.error(`❌ [${getTime()}] HUE ERROR! Status: ${status}`);
-        addToLogBuffer('ERROR', `HUE ERROR! Status: ${status}`);
+    info: (m) => { console.log(`ℹ️  INFO: ${m}`); addToLogBuffer('INFO', m); },
+    success: (m) => { console.log(`✅  SUCCESS: ${m}`); addToLogBuffer('SUCCESS', m); },
+    warn: (m) => { console.log(`⚠️  WARN: ${m}`); addToLogBuffer('WARN', m); },
+    error: (m) => { console.error(`❌ ERROR: ${m}`); addToLogBuffer('ERROR', m); },
+    debug: (m) => { if(config.debug){ console.log(`🐛 DEBUG: ${m}`); addToLogBuffer('DEBUG', m); }},
+    hueError: (e) => {
+        const s = e.response ? e.response.status : 'Net';
+        console.error(`❌ HUE ERR: ${s}`);
+        addToLogBuffer('ERROR', `HUE ERR: ${s}`);
     }
 };
 
-// --- UDP SENDER ---
-const udpClient = dgram.createSocket('udp4');
-
-function sendToLoxone(baseName, suffix, value) {
-    if (!LOXONE_IP) return;
-    const message = `hue.${baseName}.${suffix} ${value}`;
-    const buffer = Buffer.from(message);
-    
-    udpClient.send(buffer, LOXONE_UDP_PORT, LOXONE_IP, (err) => {
-        if (err) log.error(`UDP Fehler: ${err}`);
-        else if(DEBUG) console.log(`UDP >> ${message}`); 
-    });
+function getServerIp() {
+    const interfaces = os.networkInterfaces();
+    for (const devName in interfaces) {
+        for (const alias of interfaces[devName]) {
+            if (alias.family === 'IPv4' && !alias.internal) return alias.address;
+        }
+    }
+    return '127.0.0.1';
 }
 
-// --- DATEN & CACHES ---
-let mapping = [];       
-let detectedItems = []; 
-let serviceToDeviceMap = {}; 
-let statusCache = {};        
+function loadConfig() {
+    try {
+        if (fs.existsSync(CONFIG_FILE)) {
+            const d = JSON.parse(fs.readFileSync(CONFIG_FILE));
+            config = { ...config, ...d };
+            if (config.bridgeIp && config.appKey) { isConfigured=true; return; }
+        }
+    } catch (e) {}
+    if (config.bridgeIp && config.appKey) isConfigured=true;
+    else log.warn("Setup erforderlich.");
+}
+loadConfig();
+
+function saveConfigToFile() {
+    try { fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 4)); } catch(e){}
+}
+
+let mapping = []; let detectedItems = []; let serviceToDeviceMap = {}; let statusCache = {};
+let lightCapabilities = {};
 
 function loadMapping() {
     try {
-        if (fs.existsSync('mapping.json')) {
-            const raw = JSON.parse(fs.readFileSync('mapping.json'));
-            mapping = raw.filter(m => m.loxone_name);
-            log.info(`Mapping geladen: ${mapping.length} Einträge.`);
-        }
+        if (fs.existsSync(MAPPING_FILE)) mapping = JSON.parse(fs.readFileSync(MAPPING_FILE)).filter(m=>m.loxone_name);
     } catch (e) { mapping = []; }
 }
 loadMapping();
 
 // --- HELFER ---
+const LOX_MIN_MIREK = 153; 
+const LOX_MAX_MIREK = 370;
+
+function mapRange(value, in_min, in_max, out_min, out_max) {
+    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 function kelvinToMirek(k) { if (k < 2000) return 500; return Math.round(1000000/k); }
+
 function rgbToXy(r, g, b) {
-    let red = r / 100; let green = g / 100; let blue = b / 100;
+    let red = r/100, green = g/100, blue = b/100;
     red = (red > 0.04045) ? Math.pow((red + 0.055) / 1.055, 2.4) : (red / 12.92);
     green = (green > 0.04045) ? Math.pow((green + 0.055) / 1.055, 2.4) : (green / 12.92);
     blue = (blue > 0.04045) ? Math.pow((blue + 0.055) / 1.055, 2.4) : (blue / 12.92);
@@ -93,87 +108,104 @@ function rgbToXy(r, g, b) {
     if (sum === 0) return { x: 0, y: 0 };
     return { x: Number((X / sum).toFixed(4)), y: Number((Y / sum).toFixed(4)) };
 }
-function hueLightToLux(value) { return Math.round(Math.pow(10, (value - 1) / 10000)); }
 
-// --- GERÄTE LOGIK ---
-async function buildDeviceMap() {
-    try {
-        const res = await axios.get(`https://${BRIDGE_IP}/clip/v2/resource/device`, { headers: { 'hue-application-key': APP_KEY }, httpsAgent });
-        const devices = res.data.data;
-        serviceToDeviceMap = {}; 
-        
-        devices.forEach(dev => {
-            dev.services.forEach(svc => {
-                serviceToDeviceMap[svc.rid] = {
-                    deviceId: dev.id,
-                    deviceName: dev.metadata.name,
-                    serviceType: svc.rtype
-                };
-            });
-        });
-        log.info(`Device Map aufgebaut: ${Object.keys(serviceToDeviceMap).length} Services.`);
-    } catch (e) { log.error("DeviceMap Fehler: " + e.message); }
+function rgbToMirekFallback(r, g, b, minM, maxM) {
+    if ((r + b) === 0) return Math.round((minM + maxM) / 2);
+    let warmth = r / (r + b); 
+    return Math.round(minM + (warmth * (maxM - minM)));
 }
 
-// --- STATUS UPDATE ---
+function hueLightToLux(v) { return Math.round(Math.pow(10, (v - 1) / 10000)); }
+
+// --- UDP ---
+const udpClient = dgram.createSocket('udp4');
+function sendToLoxone(baseName, suffix, value) {
+    if (!config.loxoneIp) return;
+    const msg = `hue.${baseName}.${suffix} ${value}`;
+    udpClient.send(Buffer.from(msg), config.loxonePort, config.loxoneIp, (err) => {
+        if(err) log.error(`UDP Err: ${err}`);
+    });
+}
+
+// --- LOGIK ---
+async function buildDeviceMap() {
+    if (!isConfigured) return;
+    try {
+        const [resDev, resLight] = await Promise.all([
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/device`, { headers: { 'hue-application-key': config.appKey }, httpsAgent }),
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/light`, { headers: { 'hue-application-key': config.appKey }, httpsAgent })
+        ]);
+
+        serviceToDeviceMap = {}; 
+        lightCapabilities = {};
+
+        resDev.data.data.forEach(dev => {
+            dev.services.forEach(svc => {
+                serviceToDeviceMap[svc.rid] = { deviceId: dev.id, deviceName: dev.metadata.name, serviceType: svc.rtype };
+            });
+        });
+
+        resLight.data.data.forEach(l => {
+            lightCapabilities[l.id] = {
+                supportsColor: !!l.color, 
+                supportsCt: !!l.color_temperature,
+                min: l.color_temperature?.mirek_schema?.mirek_minimum || 153,
+                max: l.color_temperature?.mirek_schema?.mirek_maximum || 500
+            };
+        });
+        
+        log.info(`Device Map & Caps aktualisiert.`);
+    } catch (e) { log.error("Map Error: " + e.message); }
+}
+
 function updateStatus(loxName, key, val) {
     if (!statusCache[loxName]) statusCache[loxName] = {};
     if (statusCache[loxName][key] !== val) {
         statusCache[loxName][key] = val;
         sendToLoxone(loxName, key, val);
-        if(DEBUG) process.stdout.write(` > ${loxName}.${key}=${val} `);
     }
-}
-
-// --- EVENT PROZESSOR ---
-function findMappingForService(serviceId) {
-    let entry = mapping.find(m => m.hue_uuid === serviceId);
-    if (entry) return entry.loxone_name;
-
-    const deviceMeta = serviceToDeviceMap[serviceId];
-    if (deviceMeta) {
-        entry = mapping.find(m => {
-            const mappedMeta = serviceToDeviceMap[m.hue_uuid];
-            return mappedMeta && mappedMeta.deviceId === deviceMeta.deviceId;
-        });
-        if (entry) return entry.loxone_name;
-    }
-    return null;
 }
 
 function processHueEvents(events) {
     events.forEach(evt => {
         if (evt.type === 'update' || evt.type === 'add') {
             evt.data.forEach(d => {
-                const serviceId = d.id;
-                const loxName = findMappingForService(serviceId);
+                const entry = mapping.find(m => m.hue_uuid === d.id) || mapping.find(m => {
+                    const meta = serviceToDeviceMap[d.id];
+                    const mapMeta = serviceToDeviceMap[m.hue_uuid];
+                    return meta && mapMeta && meta.deviceId === mapMeta.deviceId;
+                });
 
-                if (loxName) {
-                    if (d.motion && d.motion.motion !== undefined) updateStatus(loxName, 'motion', d.motion.motion ? 1 : 0);
-                    if (d.temperature && d.temperature.temperature !== undefined) updateStatus(loxName, 'temp', d.temperature.temperature);
-                    if (d.light && d.light.light_level !== undefined) updateStatus(loxName, 'lux', hueLightToLux(d.light.light_level));
-                    if (d.on) updateStatus(loxName, 'on', d.on.on ? 1 : 0);
-                    if (d.dimming && d.dimming.brightness !== undefined) updateStatus(loxName, 'bri', d.dimming.brightness);
-                    if (d.button && d.button.last_event !== undefined) updateStatus(loxName, 'button', d.button.last_event);
-                    if (d.power_state && d.power_state.battery_level !== undefined) updateStatus(loxName, 'bat', d.power_state.battery_level);
-                } 
-                else {
-                    if (d.motion || d.temperature || d.light || d.button || (d.on && !serviceToDeviceMap[serviceId])) {
-                        const meta = serviceToDeviceMap[serviceId];
-                        const niceName = meta ? meta.deviceName : serviceId;
-                        
-                        let type = 'unknown';
-                        let val = '';
-                        
-                        if(d.motion) { type='sensor'; val='Bewegung'; }
-                        else if(d.temperature) { type='sensor'; val='Temp'; }
-                        else if(d.light) { type='sensor'; val='Lux'; }
-                        else if(d.button) { type='button'; val='Taste'; }
-                        else if(d.on) { type='light'; val='Schalten'; }
-
-                        if(type !== 'unknown') {
-                            addDetectedItem({ type: type, id: serviceId, name: niceName, val: val });
-                        }
+                if (entry) {
+                    const lox = entry.loxone_name;
+                    if (d.motion && d.motion.motion !== undefined) updateStatus(lox, 'motion', d.motion.motion ? 1 : 0);
+                    if (d.temperature) updateStatus(lox, 'temp', d.temperature.temperature);
+                    if (d.light) updateStatus(lox, 'lux', hueLightToLux(d.light.light_level));
+                    if (d.on) updateStatus(lox, 'on', d.on.on ? 1 : 0);
+                    if (d.dimming) updateStatus(lox, 'bri', d.dimming.brightness);
+                    if (d.button) updateStatus(lox, 'button', d.button.last_event);
+                    if (d.power_state) updateStatus(lox, 'bat', d.power_state.battery_level);
+                    if (d.relative_rotary && d.relative_rotary.rotation) {
+                        const rot = d.relative_rotary.rotation;
+                        let steps = rot.steps;
+                        if (rot.direction === 'counter_clock_wise') steps = -steps;
+                        sendToLoxone(lox, 'rotary', steps);
+                        statusCache[lox] = statusCache[lox] || {};
+                        statusCache[lox]['rotary'] = steps; 
+                    }
+                } else {
+                    let type = 'unknown'; let val = '';
+                    const meta = serviceToDeviceMap[d.id];
+                    const name = meta ? meta.deviceName : d.id;
+                    
+                    if(d.motion) { type='sensor'; val='Bewegung'; }
+                    else if(d.button) { type='button'; val='Taste'; }
+                    else if(d.relative_rotary) { type='button'; val='Drehen'; } 
+                    else if(d.on) { type='light'; val='Schalten'; }
+                    
+                    if(type !== 'unknown') {
+                        const exists = detectedItems.find(i => i.id === d.id);
+                        if (!exists) { detectedItems.push({type, id: d.id, name, val}); if(detectedItems.length>10) detectedItems.shift(); }
                     }
                 }
             });
@@ -181,156 +213,200 @@ function processHueEvents(events) {
     });
 }
 
-function addDetectedItem(item) {
-    const exists = detectedItems.find(d => d.id === item.id);
-    if (!exists) {
-        detectedItems.push(item);
-        if (detectedItems.length > 10) detectedItems.shift();
-        log.debug(`Neu: ${item.name} (${item.val})`);
-    }
-}
-
+let eventStreamActive = false;
 async function startEventStream() {
+    if (!isConfigured || eventStreamActive) return;
+    eventStreamActive = true;
     await buildDeviceMap();
-    log.info("EventStream Start...");
+    log.info("Starte EventStream...");
     try {
-        const response = await axios({
-            method: 'get',
-            url: `https://${BRIDGE_IP}/eventstream/clip/v2`,
-            headers: { 'hue-application-key': APP_KEY, 'Accept': 'text/event-stream' },
-            httpsAgent,
-            responseType: 'stream'
-        });
+        const response = await axios({ method: 'get', url: `https://${config.bridgeIp}/eventstream/clip/v2`, headers: { 'hue-application-key': config.appKey, 'Accept': 'text/event-stream' }, httpsAgent, responseType: 'stream' });
         response.data.on('data', (chunk) => {
             const lines = chunk.toString().split('\n');
             lines.forEach(line => {
-                if (line.startsWith('data: ')) {
-                    try { processHueEvents(JSON.parse(line.substring(6))); } catch (e) {}
-                }
+                if (line.startsWith('data: ')) { try { processHueEvents(JSON.parse(line.substring(6))); } catch (e) {} }
             });
         });
-        response.data.on('end', () => setTimeout(startEventStream, 5000));
-    } catch (error) { setTimeout(startEventStream, 10000); }
+        response.data.on('end', () => { eventStreamActive = false; setTimeout(startEventStream, 5000); });
+    } catch (error) { eventStreamActive = false; setTimeout(startEventStream, 10000); }
 }
 
-// --- EXPRESS APP ---
 const app = express();
 app.use(express.json());
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path === '/setup.html') return next();
+    if (!isConfigured) {
+        if (req.path === '/') return res.sendFile(path.join(__dirname, 'public', 'setup.html'));
+        return res.redirect('/');
+    }
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API: Targets
-app.get('/api/targets', async (req, res) => {
+// SETUP APIs
+app.get('/api/setup/discover', async (req, res) => {
+    try { const r = await axios.get('https://discovery.meethue.com/'); res.json(r.data); } catch (e) { res.status(500).json({}); }
+});
+app.post('/api/setup/register', async (req, res) => {
     try {
-        await buildDeviceMap(); 
-        const [lights, rooms, zones, devices] = await Promise.all([
-            axios.get(`https://${BRIDGE_IP}/clip/v2/resource/light`, { headers: { 'hue-application-key': APP_KEY }, httpsAgent }),
-            axios.get(`https://${BRIDGE_IP}/clip/v2/resource/room`, { headers: { 'hue-application-key': APP_KEY }, httpsAgent }),
-            axios.get(`https://${BRIDGE_IP}/clip/v2/resource/zone`, { headers: { 'hue-application-key': APP_KEY }, httpsAgent }),
-            axios.get(`https://${BRIDGE_IP}/clip/v2/resource/device`, { headers: { 'hue-application-key': APP_KEY }, httpsAgent })
-        ]);
-        let targets = [];
-        if(lights.data?.data) lights.data.data.forEach(l => targets.push({ uuid: l.id, name: l.metadata.name, type: 'light' }));
-        [...(rooms.data?.data || []), ...(zones.data?.data || [])].forEach(g => {
-             const s = g.services.find(s => s.rtype === 'grouped_light');
-             if(s) targets.push({ uuid: s.rid, name: g.metadata.name, type: 'group' });
-        });
-        if(devices.data?.data) {
-            devices.data.data.forEach(dev => {
-                const motion = dev.services.find(s => s.rtype === 'motion');
-                if(motion) targets.push({ uuid: motion.rid, name: dev.metadata.name, type: 'sensor' });
-                const btn = dev.services.find(s => s.rtype === 'button');
-                if(btn) targets.push({ uuid: btn.rid, name: `${dev.metadata.name} (Taster)`, type: 'button' });
-            });
+        const r = await axios.post(`https://${req.body.ip}/api`, { devicetype: "loxHueBridge" }, { httpsAgent });
+        if(r.data[0].success) { config.bridgeIp = req.body.ip; config.appKey = r.data[0].success.username; return res.json({success:true}); }
+        res.json({success:false, error: r.data[0].error.description});
+    } catch(e) { res.status(500).json({error:e.message}); }
+});
+app.post('/api/setup/loxone', (req, res) => {
+    config.loxoneIp = req.body.loxoneIp; config.loxonePort = parseInt(req.body.loxonePort); config.debug = !!req.body.debug;
+    saveConfigToFile(); isConfigured=true; startEventStream(); res.json({success:true});
+});
+
+// XML EXPORT
+app.get('/api/download/outputs', (req, res) => {
+    const filterNames = req.query.names ? req.query.names.split(',') : null;
+    let lights = mapping.filter(m => m.hue_type === 'light' || m.hue_type === 'group');
+    if (filterNames) lights = lights.filter(m => filterNames.includes(m.loxone_name));
+    
+    let xml = `<?xml version="1.0" encoding="utf-8"?>\n<VirtualOut Title="LoxHueBridge Lights" Address="http://${getServerIp()}:${HTTP_PORT}" CmdInit="" CloseAfterSend="true" CmdSep=";">\n\t<Info templateType="3" minVersion="16011106"/>\n`;
+    lights.forEach(l => {
+        const t = l.loxone_name.charAt(0).toUpperCase() + l.loxone_name.slice(1) + " (Hue)";
+        xml += `\t<VirtualOutCmd Title="${t}" Comment="${l.hue_name}" CmdOn="/${l.loxone_name}/<v>" Analog="true"/>\n`;
+    });
+    xml += `</VirtualOut>`;
+    res.set('Content-Type', 'text/xml'); res.set('Content-Disposition', `attachment; filename="lox_outputs.xml"`); res.send(xml);
+});
+
+app.get('/api/download/inputs', (req, res) => {
+    const filterNames = req.query.names ? req.query.names.split(',') : null;
+    let sensors = mapping.filter(m => m.hue_type === 'sensor' || m.hue_type === 'button');
+    if (filterNames) sensors = sensors.filter(m => filterNames.includes(m.loxone_name));
+    
+    let xml = `<?xml version="1.0" encoding="utf-8"?>\n<VirtualInUdp Title="LoxHueBridge Sensors" Port="${config.loxonePort}">\n\t<Info templateType="1" minVersion="16011106"/>\n`;
+    sensors.forEach(s => {
+        const n = s.loxone_name; const t = n.charAt(0).toUpperCase() + n.slice(1);
+        if (s.hue_type === 'sensor') {
+            xml += `\t<VirtualInUdpCmd Title="${t} Motion" Check="hue.${n}.motion \\v" Analog="true" DefVal="0" MinVal="0" MaxVal="1"/>\n`;
+            xml += `\t<VirtualInUdpCmd Title="${t} Lux" Check="hue.${n}.lux \\v" Analog="true" DefVal="0" MinVal="0" MaxVal="65000" Unit="lx"/>\n`;
+            xml += `\t<VirtualInUdpCmd Title="${t} Temp" Check="hue.${n}.temp \\v" Analog="true" DefVal="0" MinVal="-50" MaxVal="100" Unit="°C"/>\n`;
+            xml += `\t<VirtualInUdpCmd Title="${t} Battery" Check="hue.${n}.bat \\v" Analog="true" DefVal="0" MinVal="0" MaxVal="100" Unit="%"/>\n`;
+        } else {
+            xml += `\t<VirtualInUdpCmd Title="${t} Event" Check="hue.${n}.button \\v" Analog="false"/>\n`;
+            xml += `\t<VirtualInUdpCmd Title="${t} Rotary" Check="hue.${n}.rotary \\v" Analog="true" DefVal="0" MinVal="-1000" MaxVal="1000" Unit="steps"/>\n`;
         }
-        targets.sort((a,b) => a.name.localeCompare(b.name));
-        res.json(targets);
+    });
+    xml += `</VirtualInUdp>`;
+    res.set('Content-Type', 'text/xml'); res.set('Content-Disposition', `attachment; filename="lox_inputs.xml"`); res.send(xml);
+});
+
+// MAIN APIs
+app.get('/api/targets', async (req, res) => {
+    if(!isConfigured) return res.status(503).json([]);
+    try {
+        await buildDeviceMap();
+        const [l, r, z, d] = await Promise.all([
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/light`, { headers: { 'hue-application-key': config.appKey }, httpsAgent }),
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/room`, { headers: { 'hue-application-key': config.appKey }, httpsAgent }),
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/zone`, { headers: { 'hue-application-key': config.appKey }, httpsAgent }),
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/device`, { headers: { 'hue-application-key': config.appKey }, httpsAgent })
+        ]);
+        let t = [];
+        if(l.data?.data) l.data.data.forEach(x => {
+            // CAPS für jedes Licht mitschicken
+            t.push({ uuid:x.id, name:x.metadata.name, type:'light', capabilities: lightCapabilities[x.id] || null });
+        });
+        [...(r.data?.data||[]), ...(z.data?.data||[])].forEach(x => { 
+            const s = x.services.find(y => y.rtype === 'grouped_light');
+            if(s) t.push({uuid:s.rid, name:x.metadata.name, type:'group'}); 
+        });
+        if(d.data?.data) d.data.data.forEach(x => {
+            const m = x.services.find(y => y.rtype === 'motion');
+            if(m) t.push({uuid:m.rid, name:x.metadata.name, type:'sensor'});
+            const b = x.services.find(y => y.rtype === 'button');
+            const rot = x.services.find(y => y.rtype === 'relative_rotary');
+            if(b || rot) {
+                const mainId = b ? b.rid : rot.rid;
+                t.push({uuid: mainId, name: `${x.metadata.name} (Switch/Dial)`, type:'button'});
+            }
+        });
+        t.sort((a,b) => a.name.localeCompare(b.name));
+        res.json(t);
     } catch(e) { res.status(500).json([]); }
 });
 
 app.post('/api/mapping', (req, res) => {
     mapping = req.body.filter(m => m.loxone_name);
-    fs.writeFileSync('mapping.json', JSON.stringify(mapping, null, 4));
+    fs.writeFileSync(MAPPING_FILE, JSON.stringify(mapping, null, 4));
     mapping.forEach(m => {
-        const mappedMeta = serviceToDeviceMap[m.hue_uuid];
+        const mapMeta = serviceToDeviceMap[m.hue_uuid];
         detectedItems = detectedItems.filter(d => {
-             if(d.type === 'command') return d.name.toLowerCase() !== m.loxone_name.toLowerCase();
-             const detectedMeta = serviceToDeviceMap[d.id];
-             if(mappedMeta && detectedMeta && mappedMeta.deviceId === detectedMeta.deviceId) return false;
+             if(d.type === 'command') return d.name !== m.loxone_name;
+             const detMeta = serviceToDeviceMap[d.id];
+             if(mapMeta && detMeta && mapMeta.deviceId === detMeta.deviceId) return false;
              return d.id !== m.hue_uuid;
         });
     });
-    res.json({ success: true });
+    res.json({success:true});
 });
 
 app.get('/api/mapping', (req, res) => res.json(mapping));
 app.get('/api/detected', (req, res) => res.json([...detectedItems].reverse()));
 app.get('/api/status', (req, res) => res.json(statusCache));
+app.get('/api/logs', (req, res) => res.json(logBuffer));
+app.get('/api/settings', (req, res) => res.json({ bridge_ip: config.bridgeIp, loxone_ip: config.loxoneIp, loxone_port: config.loxonePort, http_port: HTTP_PORT, debug: config.debug, key_configured: isConfigured }));
+app.post('/api/settings/debug', (req, res) => { config.debug = !!req.body.active; saveConfigToFile(); res.json({success:true}); });
 
-// API: SETTINGS (ÄNDERUNG: HTTP Port hinzugefügt)
-app.get('/api/settings', (req, res) => {
-    res.json({
-        bridge_ip: BRIDGE_IP,
-        loxone_ip: LOXONE_IP,
-        loxone_port: LOXONE_UDP_PORT,
-        http_port: PORT, // <--- NEU
-        debug: DEBUG,
-        key_configured: APP_KEY ? 'Ja (Maskiert)' : 'Nein'
-    });
-});
-
-app.get('/api/logs', (req, res) => {
-    res.json(logBuffer);
-});
-
-// --- HAUPTROUTE ---
 app.get('/:name/:value', async (req, res) => {
     const { name, value } = req.params;
-    if (!name) return res.status(400).send("Name missing");
-    const searchName = name.toLowerCase();
+    log.debug(`IN: /${name}/${value}`);
 
-    const entry = mapping.find(m => m.loxone_name && m.loxone_name.toLowerCase() === searchName);
-    
+    if(!isConfigured) return res.status(503).send("Not Configured");
+    const search = name.toLowerCase();
+    const entry = mapping.find(m => m.loxone_name === search);
     if (!entry) {
-        addDetectedItem({ type: 'command', name: name, id: 'cmd_'+name });
+        if(!detectedItems.find(d=>d.name===search)) { detectedItems.push({type:'command', name:name, id:'cmd_'+name}); if(detectedItems.length>10) detectedItems.shift(); }
         return res.status(200).send('Recorded');
     }
-
     if (entry.hue_type === 'sensor' || entry.hue_type === 'button') return res.status(400).send("Read-only");
 
-    const targetUuid = entry.hue_uuid;
-    const resourceType = entry.hue_type === 'group' ? 'grouped_light' : 'light';
-    let huePayload = {}; 
-    let numericVal = parseInt(value);
-    if (isNaN(numericVal)) numericVal = 0;
+    const rid = entry.hue_uuid;
+    const rtype = entry.hue_type === 'group' ? 'grouped_light' : 'light';
+    let payload = {}; let n = parseInt(value); if(isNaN(n)) n=0;
 
-    if (numericVal === 0) huePayload = { on: { on: false } };
-    else if (numericVal === 1) huePayload = { on: { on: true } };
-    else if (numericVal > 1 && numericVal <= 100) huePayload = { on: { on: true }, dimming: { brightness: numericVal } };
+    if (n === 0) payload = { on: { on: false } };
+    else if (n === 1) payload = { on: { on: true } };
+    else if (n > 1 && n <= 100) payload = { on: { on: true }, dimming: { brightness: n } };
     else {
-        const strVal = value.toString();
-        if (strVal.startsWith('20') && strVal.length >= 9) {
-            const bri = parseInt(strVal.substring(2, 5));
-            const kel = parseInt(strVal.substring(5));
-            huePayload = (bri===0) ? { on: { on: false } } : { on: { on: true }, dimming: { brightness: bri }, color_temperature: { mirek: kelvinToMirek(kel) } };
+        const s = value.toString();
+        if (s.startsWith('20') && s.length >= 9) {
+            const b = parseInt(s.substring(2, 5)); const k = parseInt(s.substring(5));
+            let targetMirek = kelvinToMirek(k);
+            const caps = lightCapabilities[rid];
+            if (caps && caps.min && caps.max) {
+                const scaled = Math.round(mapRange(targetMirek, LOX_MIN_MIREK, LOX_MAX_MIREK, caps.min, caps.max));
+                targetMirek = Math.max(caps.min, Math.min(caps.max, scaled));
+            }
+            payload = (b===0) ? { on: { on: false } } : { on: { on: true }, dimming: { brightness: b }, color_temperature: { mirek: targetMirek } };
         } else {
-            let b = Math.floor(numericVal / 1000000);
-            let rem = numericVal % 1000000;
-            let g = Math.floor(rem / 1000);
-            let r = rem % 1000;
-            let maxBri = Math.max(r, g, b);
-            huePayload = (maxBri===0) ? { on: { on: false } } : { on: { on: true }, dimming: { brightness: maxBri }, color: { xy: rgbToXy(r, g, b) } };
+            let b = Math.floor(n / 1000000), rem = n % 1000000, g = Math.floor(rem / 1000), r = rem % 1000, max = Math.max(r, g, b);
+            if (max === 0) { payload = { on: { on: false } }; } else {
+                const caps = lightCapabilities[rid];
+                const supportsColor = caps ? caps.supportsColor : true;
+                if (!supportsColor && caps && caps.supportsCt) {
+                    const minM = caps.min || 153; const maxM = caps.max || 500;
+                    const targetMirek = rgbToMirekFallback(r, g, b, minM, maxM);
+                    payload = { on: { on: true }, dimming: { brightness: max }, color_temperature: { mirek: targetMirek } };
+                    log.debug(`RGB Fallback: R${r} B${b} -> ${targetMirek}m`);
+                } else {
+                    payload = { on: { on: true }, dimming: { brightness: max }, color: { xy: rgbToXy(r, g, b) } };
+                }
+            }
         }
     }
 
     try {
-        await axios.put(`https://${BRIDGE_IP}/clip/v2/resource/${resourceType}/${targetUuid}`, huePayload, { headers: { 'hue-application-key': APP_KEY }, httpsAgent });
-        updateStatus(entry.loxone_name, 'on', huePayload.on?.on ? 1 : 0);
-        if(huePayload.dimming) updateStatus(entry.loxone_name, 'bri', huePayload.dimming.brightness);
+        await axios.put(`https://${config.bridgeIp}/clip/v2/resource/${rtype}/${rid}`, payload, { headers: { 'hue-application-key': config.appKey }, httpsAgent });
+        updateStatus(entry.loxone_name, 'on', payload.on?.on ? 1 : 0);
+        if(payload.dimming) updateStatus(entry.loxone_name, 'bri', payload.dimming.brightness);
         res.status(200).send('OK');
-    } catch (error) { log.hueError(error); res.status(500).send('Error'); }
+    } catch (e) { log.hueError(e); res.status(500).send('Error'); }
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 loxHueBridge Live auf ${PORT}`);
-    startEventStream();
-});
+app.listen(HTTP_PORT, () => { console.log(`🚀 loxHueBridge Live auf ${HTTP_PORT}`); if (isConfigured) startEventStream(); });
