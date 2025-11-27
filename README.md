@@ -237,3 +237,12 @@ Port: 7000
 
 * **Data Folder:** All settings are saved in the `./data` folder. Make sure to back it up.
 * **Host Network:** The container uses the host network mode for trouble-free UDP communication.
+
+
+---
+
+## 🤝 Credits
+
+**#kiassisted** 🤖
+This project was created with the assistance of AI.
+Code architecture, logic, and documentation support provided by Gemini.
