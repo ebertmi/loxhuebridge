@@ -17,6 +17,7 @@ pids
 # Hier speichern wir später Hue-Usernames und IPs
 .env
 .env.local
+.env.bak
 .env.development.local
 .env.test.local
 .env.production.local
