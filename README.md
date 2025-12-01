@@ -7,13 +7,12 @@ Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung u
 ## 🚀 Features
 
 * **Smart Setup:** Automatische Suche der Hue Bridge und Pairing per Web-Interface.
-* **Live Dashboard:** Zeigt alle verbundenen Lichter und Sensoren (Temperatur, Lux, Bewegung) in Echtzeit.
+* **Live Dashboard:** Zeigt alle verbundenen Lichter und Sensoren (Temperatur, Lux, Bewegung, Batterie) in Echtzeit.
 * **Smart Mapping:** Einfache Zuordnung per "Klick & Wähl".
-* **Wichtig:** Jeder Loxone-Name (z.B. `buero`) darf nur **einmal** vergeben werden. Wenn du einen Namen doppelt vergibst, fragt die Oberfläche nach Bestätigung zum Überschreiben.
 * **Loxone Integration:**
     * **Steuern:** Schalten, Dimmen, Warmweiß & RGB (via Virtueller Ausgang).
-    * **Empfangen:** Bewegung, Taster, Helligkeit, Temperatur (via UDP Eingang).
-* **Docker Ready:** Robustes Design mit Data-Persistence.
+    * **Empfangen:** Bewegung, Taster, Helligkeit, Temperatur, Batterie (via UDP Eingang).
+* **Docker Ready:** Fertiges Image auf GitHub Container Registry (GHCR).
 
 ---
 
@@ -25,21 +24,37 @@ Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung u
 
 ---
 
-## 🛠 Installation
+## 🛠 Installation (Empfohlen)
 
-Die Installation erfolgt via Docker Compose.
+Du musst keinen Code mehr bauen. Du brauchst nur Docker und eine `docker-compose.yml`.
 
-1.  **Dateien laden:**
-    Klone das Repository oder kopiere die Dateien (`docker-compose.yml`, `Dockerfile`, `package.json`, `server.js`, `public/`) in einen Ordner auf deinem Server.
+1.  **Ordner erstellen:**
+    Erstelle einen Ordner (z.B. `loxhuebridge`) auf deinem Server.
 
-2.  **Starten:**
-    ```bash
-    docker compose up -d --build
+2.  **Datei erstellen:**
+    Erstelle darin eine `docker-compose.yml` mit folgendem Inhalt:
+
+    ```yaml
+    services:
+      loxhuebridge:
+        image: ghcr.io/bausi2k/loxhuebridge:latest
+        container_name: loxhuebridge
+        restart: always
+        network_mode: "host"
+        environment:
+          - TZ=Europe/Vienna
+        volumes:
+          - ./data:/app/data
     ```
 
-3.  **Setup Assistent:**
-    Öffne `http://<DEINE-IP>:8555` im Browser.
-    Der Assistent führt dich durch die Verbindung zur Hue Bridge (Pairing-Knopf drücken) und die Konfiguration von Loxone (IP & UDP Port).
+3.  **Starten:**
+    ```bash
+    # Der Ordner 'data' wird beim ersten Start automatisch angelegt
+    docker compose up -d
+    ```
+
+4.  **Setup:**
+    Öffne `http://<DEINE-IP>:8555` für den Einrichtungsassistenten.
 
 ---
 
@@ -81,13 +96,15 @@ Anstatt Befehle manuell einzutippen, kannst du deine konfigurierte loxHueBridge 
 4.  Ein neuer UDP-Eingang mit all deinen Bewegungs-, Temperatur- und Helligkeitssensoren wird erstellt.
     * *Hinweis:* Kontrolliere, ob der **UDP Empfangsport** (Standard 7000) mit deiner loxHueBridge Einstellung übereinstimmt.
 
-### ⚠️ Wichtige Einstellung für Lichtbausteine
+### ⚠️ Wichtige Einstellungen für Lichtbausteine
 
-Damit Warmweiß/Kaltweiß korrekt dargestellt wird, müssen die Grenzen im Loxone **Lichtsteuerungs-Baustein** (oder Smart Actuator) an die Bridge angepasst werden.
+1.  **Farbtemperatur Grenzen:**
+    Damit Warmweiß/Kaltweiß korrekt dargestellt wird, setze in den Eigenschaften des Lichtbausteins:
+    * **Max. Farbtemperatur (Kalt):** `6500`
+    * **Min. Farbtemperatur (Warm):** `2700`
 
-Klicke auf den Baustein und setze in den Eigenschaften:
-* **Max. Farbtemperatur (Kalt):** `6500`
-* **Min. Farbtemperatur (Warm):** `2700`
+2.  **RGB+W Lampen (Lumitech):**
+    Wenn deine Lampen Farbe (RGB) **und** Weißtöne können, konfiguriere den Ausgang am Lichtbaustein als Typ **"Lumitech"**. Vermeide den Typ "RGB", da dieser Weißtöne oft nur durch Mischen der Farben erzeugt (schlechtere Qualität). Die Bridge versteht das Lumitech-Format automatisch.
 
 ---
 
@@ -126,13 +143,12 @@ It enables extremely fast, local control without cloud delays and uses the moder
 ## 🚀 Features
 
 * **Smart Setup:** Automatic discovery of the Hue Bridge and pairing via web interface.
-* **Live Dashboard:** Shows all connected lights and sensors (temperature, lux, motion) in real-time.
+* **Live Dashboard:** Shows all connected lights and sensors (temperature, lux, motion, battery) in real-time.
 * **Smart Mapping:** Easy assignment via "Click & Select".
-* **Important:** Each Loxone Name (e.g. `office`) must be **unique**. If you assign a name twice, the interface will ask for confirmation to overwrite the existing mapping.
 * **Loxone Integration:**
     * **Control:** Switching, Dimming, Warm White & RGB (via Virtual Output).
-    * **Receive:** Motion, Switches, Brightness, Temperature (via UDP Input).
-* **Docker Ready:** Robust design with data persistence.
+    * **Receive:** Motion, Switches, Brightness, Temperature, Battery (via UDP Input).
+* **Docker Ready:** Pre-built images on GHCR.
 
 ---
 
@@ -144,21 +160,36 @@ It enables extremely fast, local control without cloud delays and uses the moder
 
 ---
 
-## 🛠 Installation
+## 🛠 Installation (Recommended)
 
-Installation is done via Docker Compose.
+You don't need to build the code. Just use Docker Compose.
 
-1.  **Download Files:**
-    Clone the repository or copy the files (`docker-compose.yml`, `Dockerfile`, `package.json`, `server.js`, `public/`) to a folder on your server.
+1.  **Create Folder:**
+    Create a folder on your server (e.g. `loxhuebridge`).
 
-2.  **Start:**
-    ```bash
-    docker compose up -d --build
+2.  **Create File:**
+    Create a `docker-compose.yml`:
+
+    ```yaml
+    services:
+      loxhuebridge:
+        image: ghcr.io/bausi2k/loxhuebridge:latest
+        container_name: loxhuebridge
+        restart: always
+        network_mode: "host"
+        environment:
+          - TZ=Europe/Vienna
+        volumes:
+          - ./data:/app/data
     ```
 
-3.  **Setup Assistant:**
-    Open `http://<YOUR-IP>:8555` in your browser.
-    The assistant will guide you through connecting to the Hue Bridge (pressing the pairing button) and configuring Loxone (IP & UDP Port).
+3.  **Start:**
+    ```bash
+    docker compose up -d
+    ```
+
+4.  **Setup:**
+    Open `http://<YOUR-IP>:8555`. The assistant guides you through pairing.
 
 ---
 
@@ -200,12 +231,15 @@ Instead of typing commands manually, you can directly import your configured lox
 4.  A new UDP Input with all your motion, temperature, and lux sensors is created.
     * *Note:* Check if the **UDP Receive Port** (Default 7000) matches your loxHueBridge settings.
 
-### ⚠️ Important Setting for Lighting Controllers
+### ⚠️ Important Settings for Lighting Controllers
 
-To ensure Warm White/Cool White is rendered correctly, you must adjust the limits in the **Lighting Controller** block (or Smart Actuator) properties in Loxone Config:
+1.  **Color Temperature Limits:**
+    Set the properties of your Lighting Controller block to match Hue standards:
+    * **Max Color Temperature (Cool):** `6500`
+    * **Min Color Temperature (Warm):** `2700`
 
-* **Max Color Temperature (Cool):** `6500`
-* **Min Color Temperature (Warm):** `2700`
+2.  **RGB+W Lights (Lumitech):**
+    If your lights support both Color (RGB) **and** White Tones, configure the actuator type in the Lighting Controller as **"Lumitech"**. Avoid using "RGB", as Loxone might try to mix white using R/G/B channels, resulting in poor light quality. The bridge automatically handles the Lumitech format.
 
 ---
 
@@ -239,7 +273,6 @@ Port: 7000
 
 * **Data Folder:** All settings are saved in the `./data` folder. Make sure to back it up.
 * **Host Network:** The container uses the host network mode for trouble-free UDP communication.
-
 
 ---
 
