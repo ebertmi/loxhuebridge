@@ -55,8 +55,27 @@ Du musst keinen Code mehr bauen. Du brauchst nur Docker und eine `docker-compose
 
 4.  **Setup:**
     Öffne `http://<DEINE-IP>:8555` für den Einrichtungsassistenten.
-
 ---
+
+## 💻 Testen auf Mac & Windows (Docker Desktop)
+
+Der Standard-Modus (`network_mode: "host"`) funktioniert optimal auf Linux (Raspberry Pi), aber **nicht** unter macOS oder Windows. Dort ist die Bridge unter `localhost:8555` nicht erreichbar.
+
+Um die Bridge lokal auf dem Mac/PC zu testen:
+
+1.  Erstelle im gleichen Ordner eine Datei namens `docker-compose.override.yml`.
+2.  Füge folgenden Inhalt ein:
+
+    ```yaml
+    services:
+      loxhuebridge:
+        network_mode: "bridge"
+        ports:
+          - "8555:8555"
+    ```
+
+3.  Starte den Container neu: `docker compose up -d`. Docker kombiniert die Dateien automatisch.
+
 
 ## 🔌 Integration in Loxone (Smart Import)
 
@@ -192,6 +211,25 @@ You don't need to build the code. Just use Docker Compose.
     Open `http://<YOUR-IP>:8555`. The assistant guides you through pairing.
 
 ---
+
+## 💻 Testing on Mac & Windows (Docker Desktop)
+
+The default mode (`network_mode: "host"`) works perfectly on Linux (Raspberry Pi) but **not** on macOS or Windows due to Docker Desktop limitations. The bridge will not be reachable at `localhost:8555`.
+
+To run the bridge locally on your Mac/PC:
+
+1.  Create a file named `docker-compose.override.yml` in the same folder.
+2.  Paste the following content:
+
+    ```yaml
+    services:
+      loxhuebridge:
+        network_mode: "bridge"
+        ports:
+          - "8555:8555"
+    ```
+
+3.  Restart the container: `docker compose up -d`. Docker will automatically merge the files.
 
 ## 🔌 Integration in Loxone (Smart Import)
 
