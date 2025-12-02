@@ -31,10 +31,9 @@ let config = {
 let isConfigured = false;
 const logBuffer = []; const MAX_LOGS = 50;
 
-// --- LOGGING (24h Format) ---
+// --- LOGGING ---
 const getTime = () => {
     const now = new Date();
-    // Erzwingt deutsches Format (24h)
     return now.toLocaleTimeString('de-DE', { hour12: false }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
 };
 
@@ -142,15 +141,18 @@ function rgbToMirekFallback(r, g, b, minM, maxM) {
 }
 function hueLightToLux(v) { return Math.round(Math.pow(10, (v - 1) / 10000)); }
 
-// --- QUEUE LOGIC (STABLE: 1-SLOT BUFFER) ---
+// --- QUEUE LOGIC ---
 const commandState = {};
 
-async function updateLightWithQueue(uuid, type, payload, loxName) {
+async function updateLightWithQueue(uuid, type, payload, loxName, forcedDuration = null) {
     if (!commandState[uuid]) commandState[uuid] = { busy: false, next: null };
 
     const isDigitalSwitch = Object.keys(payload).length === 1 && payload.on !== undefined;
     let duration = config.transitionTime !== undefined ? config.transitionTime : 400;
     if (isDigitalSwitch) duration = 0; 
+
+    // Override durch "All"-Loop (0ms)
+    if (forcedDuration !== null) duration = forcedDuration;
 
     payload.dynamics = { duration: duration };
 
@@ -168,22 +170,62 @@ async function sendToHueRecursive(uuid, type, payload, loxName) {
         const url = `https://${config.bridgeIp}/clip/v2/resource/${type}/${uuid}`;
         log.debug(`OUT -> Hue (${loxName}): ${JSON.stringify(payload)}`);
         await axios.put(url, payload, { headers: { 'hue-application-key': config.appKey }, httpsAgent });
-        
         updateStatus(loxName, 'on', payload.on?.on ? 1 : 0);
         if(payload.dimming) updateStatus(loxName, 'bri', payload.dimming.brightness);
-
     } catch (e) {
         log.hueError(e);
         await new Promise(r => setTimeout(r, 100));
     } finally {
         if (commandState[uuid].next) {
             const nextPayload = commandState[uuid].next;
-            commandState[uuid].next = null;
+            commandState[uuid].next = null; 
             await sendToHueRecursive(uuid, type, nextPayload, loxName);
         } else {
             commandState[uuid].busy = false;
         }
     }
+}
+
+// --- EXECUTE COMMAND ---
+async function executeCommand(entry, value, forcedTransition = null) {
+    const rid = entry.hue_uuid;
+    const rtype = entry.hue_type === 'group' ? 'grouped_light' : 'light';
+    let payload = {}; 
+    let n = parseInt(value); 
+    if(isNaN(n)) n=0;
+
+    if (n === 0) payload = { on: { on: false } };
+    else if (n === 1) payload = { on: { on: true } };
+    else if (n > 1 && n <= 100) payload = { on: { on: true }, dimming: { brightness: n } };
+    else {
+        const s = value.toString();
+        if (s.startsWith('20') && s.length >= 9) {
+            const b = parseInt(s.substring(2, 5)); const k = parseInt(s.substring(5));
+            let targetMirek = kelvinToMirek(k);
+            const caps = lightCapabilities[rid];
+            if (caps && caps.min && caps.max) {
+                const scaled = Math.round(mapRange(targetMirek, LOX_MIN_MIREK, LOX_MAX_MIREK, caps.min, caps.max));
+                targetMirek = Math.max(caps.min, Math.min(caps.max, scaled));
+            }
+            payload = (b===0) ? { on: { on: false } } : { on: { on: true }, dimming: { brightness: b }, color_temperature: { mirek: targetMirek } };
+        } else {
+            let b = Math.floor(n / 1000000), rem = n % 1000000, g = Math.floor(rem / 1000), r = rem % 1000, max = Math.max(r, g, b);
+            if (max === 0) { payload = { on: { on: false } }; } else {
+                const caps = lightCapabilities[rid];
+                const supportsColor = caps ? caps.supportsColor : true;
+                if (!supportsColor && caps && caps.supportsCt) {
+                    const minM = caps.min || 153; const maxM = caps.max || 500;
+                    const targetMirek = rgbToMirekFallback(r, g, b, minM, maxM);
+                    payload = { on: { on: true }, dimming: { brightness: max }, color_temperature: { mirek: targetMirek } };
+                    log.debug(`RGB Fallback: R${r} B${b} -> ${targetMirek}m`);
+                } else {
+                    payload = { on: { on: true }, dimming: { brightness: max }, color: { xy: rgbToXy(r, g, b) } };
+                }
+            }
+        }
+    }
+    
+    await updateLightWithQueue(rid, rtype, payload, entry.loxone_name, forcedTransition);
 }
 
 
@@ -335,55 +377,102 @@ app.get('/api/logs', (req, res) => res.json(logBuffer));
 app.get('/api/settings', (req, res) => res.json({ bridge_ip: config.bridgeIp, loxone_ip: config.loxoneIp, loxone_port: config.loxonePort, http_port: HTTP_PORT, debug: config.debug, key_configured: isConfigured, transitionTime: config.transitionTime }));
 app.post('/api/settings/debug', (req, res) => { config.debug = !!req.body.active; saveConfigToFile(); res.json({success:true}); });
 
+// --- DIAGNOSTICS ---
+app.get('/api/diagnostics', async (req, res) => {
+    if(!isConfigured) return res.status(503).json({ error: "Not configured" });
+    try {
+        const [resZigbee, resDev, resPower] = await Promise.all([
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/zigbee_connectivity`, { headers: { 'hue-application-key': config.appKey }, httpsAgent }),
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/device`, { headers: { 'hue-application-key': config.appKey }, httpsAgent }),
+            axios.get(`https://${config.bridgeIp}/clip/v2/resource/device_power`, { headers: { 'hue-application-key': config.appKey }, httpsAgent })
+        ]);
+
+        const devMap = {};
+        resDev.data.data.forEach(d => devMap[d.id] = d);
+        
+        const powerMap = {};
+        if(resPower.data?.data) {
+            resPower.data.data.forEach(p => { if(p.owner && p.owner.rid) powerMap[p.owner.rid] = p.power_state; });
+        }
+
+        const result = resZigbee.data.data.map(z => {
+            const deviceId = z.owner.rid;
+            const device = devMap[deviceId];
+            const power = powerMap[deviceId];
+            
+            let type = 'Sonstiges';
+            if (device) {
+                if (device.services.some(s => s.rtype === 'light')) type = 'Licht';
+                else if (device.services.some(s => s.rtype === 'motion')) type = 'Sensor';
+                else if (device.services.some(s => s.rtype === 'button' || s.rtype === 'relative_rotary')) type = 'Taster';
+            }
+
+            return {
+                name: device ? device.metadata.name : "Unbekannt",
+                model: device ? device.product_data.product_name : "-",
+                type: type,
+                status: z.status,
+                mac: z.mac_address,
+                battery: power ? power.battery_level : null,
+                last_seen: z.last_seen
+            };
+        });
+        
+        result.sort((a,b) => {
+            const aCrit = (a.status !== 'connected') || (a.battery !== null && a.battery <= 20);
+            const bCrit = (b.status !== 'connected') || (b.battery !== null && b.battery <= 20);
+            if (aCrit && !bCrit) return -1; 
+            if (!aCrit && bCrit) return 1;  
+            if (a.type !== b.type) return a.type.localeCompare(b.type);
+            return a.name.localeCompare(b.name);
+        });
+
+        res.json(result);
+    } catch (e) {
+        log.error("Diag Error: " + e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/:name/:value', async (req, res) => {
     const { name, value } = req.params;
     log.debug(`IN: /${name}/${value}`);
 
     if(!isConfigured) return res.status(503).send("Not Configured");
+    
     const search = name.toLowerCase();
     const entry = mapping.find(m => m.loxone_name === search);
+
+    // 1. CHECK GLOBAL "ALL" COMMAND
+    const isGlobalAll = (search === 'all' || search === 'alles');
+    const isMappedAll = (entry && entry.hue_uuid === 'pseudo-all');
+
+    if (isGlobalAll || isMappedAll) {
+        const targets = mapping.filter(e => e.hue_type === 'light' || e.hue_type === 'group');
+        
+        res.status(200).send(`Starting sequence for ${targets.length} devices`);
+
+        (async () => {
+            log.info(`Starte Sequenz für ${targets.length} Geräte...`);
+            const delay = 100;
+            for (const target of targets) {
+                executeCommand(target, value, 0);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        })();
+        return;
+    }
+
     if (!entry) {
-        if(!detectedItems.find(d=>d.name===search)) { detectedItems.push({type:'command', name:name, id:'cmd_'+name}); if(detectedItems.length>10) detectedItems.shift(); }
+        if(!detectedItems.find(d=>d.name===search)) { 
+            detectedItems.push({type:'command', name:name, id:'cmd_'+name}); 
+            if(detectedItems.length>10) detectedItems.shift(); 
+        }
         return res.status(200).send('Recorded');
     }
     if (entry.hue_type === 'sensor' || entry.hue_type === 'button') return res.status(400).send("Read-only");
 
-    const rid = entry.hue_uuid;
-    const rtype = entry.hue_type === 'group' ? 'grouped_light' : 'light';
-    let payload = {}; let n = parseInt(value); if(isNaN(n)) n=0;
-
-    if (n === 0) payload = { on: { on: false } };
-    else if (n === 1) payload = { on: { on: true } };
-    else if (n > 1 && n <= 100) payload = { on: { on: true }, dimming: { brightness: n } };
-    else {
-        const s = value.toString();
-        if (s.startsWith('20') && s.length >= 9) {
-            const b = parseInt(s.substring(2, 5)); const k = parseInt(s.substring(5));
-            let targetMirek = kelvinToMirek(k);
-            const caps = lightCapabilities[rid];
-            if (caps && caps.min && caps.max) {
-                const scaled = Math.round(mapRange(targetMirek, LOX_MIN_MIREK, LOX_MAX_MIREK, caps.min, caps.max));
-                targetMirek = Math.max(caps.min, Math.min(caps.max, scaled));
-            }
-            payload = (b===0) ? { on: { on: false } } : { on: { on: true }, dimming: { brightness: b }, color_temperature: { mirek: targetMirek } };
-        } else {
-            let b = Math.floor(n / 1000000), rem = n % 1000000, g = Math.floor(rem / 1000), r = rem % 1000, max = Math.max(r, g, b);
-            if (max === 0) { payload = { on: { on: false } }; } else {
-                const caps = lightCapabilities[rid];
-                const supportsColor = caps ? caps.supportsColor : true;
-                if (!supportsColor && caps && caps.supportsCt) {
-                    const minM = caps.min || 153; const maxM = caps.max || 500;
-                    const targetMirek = rgbToMirekFallback(r, g, b, minM, maxM);
-                    payload = { on: { on: true }, dimming: { brightness: max }, color_temperature: { mirek: targetMirek } };
-                    log.debug(`RGB Fallback: R${r} B${b} -> ${targetMirek}m`);
-                } else {
-                    payload = { on: { on: true }, dimming: { brightness: max }, color: { xy: rgbToXy(r, g, b) } };
-                }
-            }
-        }
-    }
-
-    updateLightWithQueue(rid, rtype, payload, entry.loxone_name);
+    await executeCommand(entry, value);
     res.status(200).send('OK');
 });
 
