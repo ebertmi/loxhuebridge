@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2025-12-03
+
+### 🛠 Verbesserungen
+- **UI Fix:** Layout-Korrektur beim Hinweis für den "All"-Befehl (Text überlappte mit Eingabefeld).
+- **Styling:** Abstände in der Verbindungs-Karte optimiert.
+
+---
 
 ## [1.6.0] - 2025-12-03
 
