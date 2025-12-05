@@ -1,5 +1,7 @@
 # loxHueBridge 🇦🇹
 
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/bausi2k)
+
 **loxHueBridge** ist eine bidirektionale Schnittstelle zwischen dem **Loxone Miniserver** und der **Philips Hue Bridge (V2 / API)**.
 
 Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung und nutzt die moderne Hue Event-Schnittstelle (SSE), um Statusänderungen (Bewegung, Temperatur, externe Schaltungen) in Echtzeit an Loxone zurückzumelden.
@@ -329,9 +331,11 @@ Port: 7000
 * **Host Network:** The container uses the host network mode for trouble-free UDP communication.
 
 ---
-
 ## 🤝 Credits
 
 **#kiassisted** 🤖
 This project was created with the assistance of AI.
 Code architecture, logic, and documentation support provided by Gemini.
+
+---
+<a href="https://www.buymeacoffee.com/bausi2k" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
