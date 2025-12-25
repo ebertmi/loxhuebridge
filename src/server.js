@@ -25,6 +25,7 @@ const StatusManager = require('./services/status-manager');
 // Middleware
 const { errorHandler, notFoundHandler } = require('./middleware/error-handler');
 const { redirectIfNotConfigured } = require('./middleware/redirect');
+const { setLogger } = require('./middleware/validation');
 
 // Routes
 const createSetupRoutes = require('./routes/setup');
@@ -50,6 +51,9 @@ const logger = new Logger({
     debug: process.env.DEBUG === 'true',
     maxLogs: CONSTANTS.LOG.MAX_BUFFER_SIZE
 });
+
+// Set logger for validation middleware
+setLogger(logger);
 
 logger.info(`loxHueBridge v${version} starting...`, 'SYSTEM');
 

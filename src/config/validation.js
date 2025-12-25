@@ -9,9 +9,25 @@
  * @returns {boolean} True if valid
  */
 function isValidDeviceName(name) {
-    // Alphanumeric, underscore, hyphen only
-    // Length: 1-50 characters
-    return /^[a-zA-Z0-9_-]{1,50}$/.test(name);
+    if (!name || typeof name !== 'string') {
+        return false;
+    }
+
+    // Allow alphanumeric, spaces, underscore, hyphen, dots
+    // No leading/trailing spaces allowed
+    // Length: 1-100 characters
+    // Prevent control characters and special chars that could cause injection
+    if (name !== name.trim()) {
+        return false; // No leading/trailing spaces
+    }
+
+    // Allow letters, numbers, spaces, underscore, hyphen, dots
+    // Prevent multiple consecutive spaces
+    if (/\s{2,}/.test(name)) {
+        return false; // No multiple spaces
+    }
+
+    return /^[a-zA-Z0-9_\-\.\s]{1,100}$/.test(name);
 }
 
 /**
@@ -85,9 +101,19 @@ function isValidLoxoneName(name) {
         return false;
     }
 
-    // More permissive than device name: allows letters, numbers, underscore, hyphen
+    // No leading/trailing spaces
+    if (name !== name.trim()) {
+        return false;
+    }
+
+    // Prevent multiple consecutive spaces
+    if (/\s{2,}/.test(name)) {
+        return false;
+    }
+
+    // Allow letters, numbers, spaces, underscore, hyphen, dots
     // Length: 1-100 characters
-    return /^[a-zA-Z0-9_-]{1,100}$/.test(name);
+    return /^[a-zA-Z0-9_\-\.\s]{1,100}$/.test(name);
 }
 
 /**
