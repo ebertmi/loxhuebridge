@@ -27,6 +27,16 @@ const CONSTANTS = {
         EVENT_STREAM_ERROR_DELAY_MS: 10000,
         MAX_BACKOFF_MS: 60000
     },
+    RETRY: {
+        MAX_ATTEMPTS: 3,           // Maximum retry attempts
+        INITIAL_BACKOFF_MS: 1000,  // Initial backoff delay (1 second)
+        MAX_BACKOFF_MS: 10000,     // Maximum backoff delay (10 seconds)
+        BACKOFF_MULTIPLIER: 2,     // Exponential backoff multiplier
+        // HTTP status codes that should trigger a retry
+        RETRYABLE_STATUS_CODES: [408, 429, 500, 502, 503, 504],
+        // Network error codes that should trigger a retry
+        RETRYABLE_ERROR_CODES: ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED', 'ENETUNREACH']
+    },
     HTTP: {
         DEFAULT_PORT: 8555
     },

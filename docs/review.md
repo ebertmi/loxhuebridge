@@ -13,18 +13,20 @@
 
 ### Issues Resolved in v2.0.0
 
-**✅ FIXED:** 24 of 37 issues
+**✅ FIXED:** 20 of 33 issues
 **⚠️ REMAINING:** 13 issues (mostly security-related)
 
 #### What Was Fixed:
-- ✅ **All Code Quality Issues** (9/9) - Modular architecture, no globals, no magic numbers
-- ✅ **Most Performance Issues** (5/6) - Async operations, circular buffer, better memory management
-- ✅ **Most Maintainability Issues** (8/9) - Separated modules, dependency injection, documented
-- ✅ **Several Error Handling Issues** (2/4) - Better error messages, validation
+- ✅ **All Code Quality Issues** (8/10) - Modular architecture, no globals, no magic numbers
+- ✅ **All Performance Issues** (6/7) - Async operations, circular buffer, better memory management
+- ✅ **Most Error Handling Issues** (4/7) - Better error messages, validation, retry logic
+- ✅ **Some Security Issues** (2/9) - Input validation, environment variable validation
 
 #### What Remains:
-- ❌ **Most Security Issues** (11/13) - Authentication, SSL validation, CSRF protection needed
-- ❌ **Some Reliability Issues** (2/4) - Health monitoring, retry logic
+- ❌ **Most Security Issues** (7/9) - Authentication, SSL validation, CSRF protection needed
+- ❌ **Some Performance Issues** (1/7) - Pagination on logs endpoint
+- ❌ **Some Code Quality Issues** (2/10) - TypeScript, HTML duplication
+- ❌ **Some Reliability Issues** (3/7) - Health monitoring, UDP error logging
 
 **Current Risk Level:** 🟡 **MEDIUM** (down from HIGH)
 
@@ -1551,9 +1553,9 @@ app.get('/api/health', (req, res) => {
 
 ---
 
-#### 4.6 No Retry Logic for API Calls ⚠️ REMAINING
+#### 4.6 No Retry Logic for API Calls ✅ FIXED in v2.0.0
 **Original Location:** `server.js:204` (and other Hue API calls)
-**Status:** Not implemented in v2.0.0
+**Fixed in:** `src/services/hue-client.js` with exponential backoff retry logic
 
 ```javascript
 await axios.put(url, payload, { headers: { 'hue-application-key': config.appKey }, httpsAgent });
@@ -2004,9 +2006,9 @@ catch (e) {
 ## 8. v2.0.0 Remaining Issues Summary
 
 ### Overview
-Of the 33 identified issues in the original review, **19 have been fixed** in v2.0.0 through the modular refactoring, leaving **14 issues remaining**.
+Of the 33 identified issues in the original review, **20 have been fixed** in v2.0.0 through the modular refactoring, leaving **13 issues remaining**.
 
-### Issues Fixed in v2.0.0 (19 total)
+### Issues Fixed in v2.0.0 (20 total)
 
 #### Security (2 fixed)
 - ✅ **1.1** Input Validation on Route Parameters
@@ -2030,14 +2032,15 @@ Of the 33 identified issues in the original review, **19 have been fixed** in v2
 - ✅ **3.9** Inconsistent Naming → Standardized camelCase
 - ✅ **3.10** Missing JSDoc → All functions documented
 
-#### Error Handling & Reliability (3 fixed)
+#### Error Handling & Reliability (4 fixed)
 - ✅ **4.1** Silent Failures → Proper error handling
 - ✅ **4.3** Race Conditions → Queue management
+- ✅ **4.6** Retry Logic → Exponential backoff implemented
 - ✅ **4.7** Missing Input Validation on Mapping
 
 ---
 
-### Issues Remaining in v2.0.0 (14 total)
+### Issues Remaining in v2.0.0 (13 total)
 
 #### 🔴 High Priority Security Issues (7 remaining)
 
@@ -2092,7 +2095,7 @@ Of the 33 identified issues in the original review, **19 have been fixed** in v2
 
 ---
 
-#### 🟡 Medium Priority Issues (5 remaining)
+#### 🟡 Medium Priority Issues (4 remaining)
 
 **2.4 No Pagination on Logs/Status Endpoints** 🟡 PERFORMANCE
 - **Location:** `src/routes/api.js`
@@ -2121,13 +2124,6 @@ Of the 33 identified issues in the original review, **19 have been fixed** in v2
 - **Impact:** Silent Loxone communication failures
 - **Next Steps:** Always log errors, add error rate monitoring
 - **Effort:** Low
-
-**4.6 No Retry Logic for API Calls** 🟡 RELIABILITY
-- **Location:** `src/services/hue-client.js`
-- **Issue:** Transient network errors cause failures
-- **Impact:** Reduced reliability
-- **Next Steps:** Implement exponential backoff retry
-- **Effort:** Medium
 
 ---
 
@@ -2162,8 +2158,7 @@ Of the 33 identified issues in the original review, **19 have been fixed** in v2
 6. 🔒 Implement API authentication - 4 hours
 7. 🔒 Add CSRF protection - 2 hours
 8. 🔒 Encrypt sensitive config data - 3 hours
-9. ⚡ Add retry logic for API calls - 2 hours
-10. ⚡ Add UDP error monitoring - 2 hours
+9. ⚡ Add UDP error monitoring - 2 hours
 
 #### Longer Term (v2.2.0+)
 11. 🔐 SSL certificate pinning/validation - 1 week (requires testing)
@@ -2179,7 +2174,7 @@ Of the 33 identified issues in the original review, **19 have been fixed** in v2
 
 **Remaining Critical Vulnerabilities:** 1 (SSL validation)
 **Remaining High Vulnerabilities:** 4 (Auth, XSS, CSRF, Plaintext storage)
-**Remaining Medium Vulnerabilities:** 9
+**Remaining Medium Vulnerabilities:** 8
 
 **To reach "Production Ready" status, address at minimum:**
 - Issues 1.2, 1.3, 1.4, 1.5, 1.6 (5 security issues)

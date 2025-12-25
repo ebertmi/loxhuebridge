@@ -48,7 +48,46 @@ class HueClient {
     }
 
     /**
-     * Make authenticated request to Hue Bridge
+     * Determine if an error is retryable
+     * @param {Error} error - Error object
+     * @returns {boolean} True if error should trigger a retry
+     */
+    _isRetryableError(error) {
+        // Network errors (ECONNRESET, ETIMEDOUT, etc.)
+        if (error.code && CONSTANTS.RETRY.RETRYABLE_ERROR_CODES.includes(error.code)) {
+            return true;
+        }
+
+        // HTTP status codes (5xx, 408, 429)
+        if (error.response && error.response.status) {
+            return CONSTANTS.RETRY.RETRYABLE_STATUS_CODES.includes(error.response.status);
+        }
+
+        return false;
+    }
+
+    /**
+     * Calculate exponential backoff delay
+     * @param {number} attempt - Current attempt number (0-indexed)
+     * @returns {number} Delay in milliseconds
+     */
+    _getBackoffDelay(attempt) {
+        const delay = CONSTANTS.RETRY.INITIAL_BACKOFF_MS *
+                     Math.pow(CONSTANTS.RETRY.BACKOFF_MULTIPLIER, attempt);
+        return Math.min(delay, CONSTANTS.RETRY.MAX_BACKOFF_MS);
+    }
+
+    /**
+     * Sleep for specified duration
+     * @param {number} ms - Milliseconds to sleep
+     * @returns {Promise<void>}
+     */
+    _sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Make authenticated request to Hue Bridge with retry logic
      * @param {string} method - HTTP method
      * @param {string} path - API path
      * @param {Object} data - Request data
@@ -67,13 +106,55 @@ class HueClient {
             config.data = data;
         }
 
-        try {
-            const response = await axios(config);
-            return response.data;
-        } catch (error) {
-            this.logger.hueError(error, 'HUE');
-            throw error;
+        let lastError = null;
+
+        for (let attempt = 0; attempt < CONSTANTS.RETRY.MAX_ATTEMPTS; attempt++) {
+            try {
+                const response = await axios(config);
+
+                // Success - reset backoff if this was a retry
+                if (attempt > 0) {
+                    this.logger.success(
+                        `Request succeeded after ${attempt} ${attempt === 1 ? 'retry' : 'retries'}`,
+                        'HUE'
+                    );
+                }
+
+                return response.data;
+            } catch (error) {
+                lastError = error;
+
+                // Check if we should retry this error
+                const shouldRetry = this._isRetryableError(error);
+                const isLastAttempt = attempt === CONSTANTS.RETRY.MAX_ATTEMPTS - 1;
+
+                if (!shouldRetry || isLastAttempt) {
+                    // Don't retry, or this was the last attempt
+                    this.logger.hueError(error, 'HUE');
+                    throw error;
+                }
+
+                // Calculate backoff delay
+                const delay = this._getBackoffDelay(attempt);
+
+                // Log retry attempt
+                const errorContext = error.response
+                    ? `HTTP ${error.response.status}`
+                    : error.code || 'Network error';
+
+                this.logger.warn(
+                    `${errorContext} - Retry ${attempt + 1}/${CONSTANTS.RETRY.MAX_ATTEMPTS} in ${delay}ms (${path})`,
+                    'HUE'
+                );
+
+                // Wait before retrying
+                await this._sleep(delay);
+            }
         }
+
+        // This shouldn't be reached, but just in case
+        this.logger.hueError(lastError, 'HUE');
+        throw lastError;
     }
 
     /**

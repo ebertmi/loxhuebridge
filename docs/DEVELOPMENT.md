@@ -521,6 +521,211 @@ Press `F5` to start debugging!
 
 ---
 
+## Structured Logging with Winston
+
+### Overview
+
+The application uses **Winston** for structured logging with both human-readable console output and machine-parsable JSON file logs.
+
+**Key Features:**
+- ✅ Emojis for console readability
+- ✅ JSON format for file logs (easy parsing)
+- ✅ Automatic log rotation (5MB max, 5 files)
+- ✅ Multiple log levels (error, warn, success, info, debug)
+- ✅ Category-based organization
+- ✅ Metadata support for structured data
+
+### Log Levels
+
+```javascript
+error   - Critical errors (logged to error.log)
+warn    - Warnings and issues
+success - Successful operations (custom level)
+info    - General information
+debug   - Detailed debugging (only in debug mode)
+```
+
+### Log Outputs
+
+**Console (with emojis):**
+```
+✅ [15:04:03.427] [HUE] Connected to Hue Bridge
+⚠️  [15:04:03.427] [HUE] Rate limit approaching
+❌ [15:04:03.428] [LIGHT] Failed to connect to device
+🐛 [15:04:03.429] [DEBUG] Processing event data
+```
+
+**File Logs (JSON format):**
+
+`logs/error.log` - Errors only:
+```json
+{
+  "level": "error",
+  "message": "Failed to update light",
+  "category": "LIGHT",
+  "deviceId": "light-abc123",
+  "statusCode": 503,
+  "timestamp": "2025-12-25T14:04:03.429Z"
+}
+```
+
+`logs/combined.log` - All levels:
+```json
+{
+  "level": "success",
+  "message": "Connected to Hue Bridge",
+  "category": "HUE",
+  "bridgeIp": "192.168.1.100",
+  "timestamp": "2025-12-25T14:04:03.427Z"
+}
+```
+
+### Using the Logger
+
+**Basic Logging:**
+```javascript
+const logger = new Logger({ debug: true });
+
+logger.info('Server started', 'SYSTEM');
+logger.success('Connection established', 'HUE');
+logger.warn('Rate limit approaching', 'API');
+logger.error('Connection failed', 'HUE');
+logger.debug('Processing event', 'EVENT');
+```
+
+**With Metadata:**
+```javascript
+logger.success('Light updated', 'LIGHT', {
+    deviceId: 'light-123',
+    brightness: 75,
+    color: { x: 0.3, y: 0.4 }
+});
+
+// Console: ✅ [time] [LIGHT] Light updated {"deviceId":"light-123",...}
+// File: JSON with all fields
+```
+
+**Error Handling:**
+```javascript
+try {
+    await updateLight();
+} catch (error) {
+    logger.error('Failed to update light', 'LIGHT', {
+        deviceId: light.id,
+        error: error.message,
+        stack: error.stack
+    });
+}
+```
+
+### Log Categories
+
+Common categories used in the codebase:
+
+- `SYSTEM` - Application lifecycle
+- `HUE` - Hue Bridge communication
+- `LIGHT` - Light control operations
+- `EVENT` - Event stream processing
+- `BUTTON` - Button events
+- `UDP` - Loxone UDP communication
+- `API` - HTTP API requests
+
+### Testing Logging
+
+```bash
+# Run logging demonstration
+node test-logging.js
+
+# View error logs
+cat logs/error.log | jq .
+
+# View all logs
+cat logs/combined.log | jq .
+
+# Follow logs in real-time
+tail -f logs/combined.log | jq .
+```
+
+### Log Rotation
+
+Logs automatically rotate when:
+- File size exceeds 5MB
+- Maximum of 5 files kept
+- Old files deleted automatically
+
+Files: `combined.log`, `combined.1.log`, `combined.2.log`, etc.
+
+### In-Memory Buffer
+
+For the `/api/logs` endpoint, logs are also kept in a circular buffer:
+- Max 100 entries
+- O(1) insertion
+- Returns most recent logs first
+
+---
+
+## Retry Logic & Error Handling
+
+### Automatic Retry for API Calls
+
+The Hue Client automatically retries failed API calls with exponential backoff to handle transient network errors.
+
+**Configuration** (in `src/constants.js`):
+```javascript
+RETRY: {
+    MAX_ATTEMPTS: 3,              // Maximum retry attempts
+    INITIAL_BACKOFF_MS: 1000,     // Initial backoff (1 second)
+    MAX_BACKOFF_MS: 10000,        // Maximum backoff (10 seconds)
+    BACKOFF_MULTIPLIER: 2         // Exponential multiplier
+}
+```
+
+**Retry Schedule:**
+- Attempt 1: Immediate
+- Attempt 2: After 1 second delay
+- Attempt 3: After 2 second delay
+- Total max time: ~3 seconds
+
+**What Gets Retried:**
+
+✅ **Network Errors:**
+- `ECONNRESET` - Connection reset
+- `ETIMEDOUT` - Request timeout
+- `ENOTFOUND` - DNS lookup failed
+- `ECONNREFUSED` - Connection refused
+- `ENETUNREACH` - Network unreachable
+
+✅ **HTTP Status Codes:**
+- `408` - Request Timeout
+- `429` - Too Many Requests (Rate Limited)
+- `500` - Internal Server Error
+- `502` - Bad Gateway
+- `503` - Service Unavailable
+- `504` - Gateway Timeout
+
+❌ **What Does NOT Get Retried:**
+- `4xx` client errors (except 429)
+- `400` - Bad Request
+- `401` - Unauthorized
+- `404` - Not Found
+
+**Testing Retry Logic:**
+
+```bash
+# View retry configuration and examples
+node test-retry-logic.js
+```
+
+**Example Log Output:**
+
+```
+⚠️ [10:23:15.123] [HUE] HTTP 503 - Retry 1/3 in 1000ms (/light/abc123)
+⚠️ [10:23:16.234] [HUE] HTTP 503 - Retry 2/3 in 2000ms (/light/abc123)
+✅  [10:23:18.456] [HUE] Request succeeded after 2 retries
+```
+
+---
+
 ## Summary
 
 **Quick Development:**

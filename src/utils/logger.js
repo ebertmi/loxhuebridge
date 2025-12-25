@@ -1,12 +1,15 @@
 /**
  * Logger Utility
- * Provides structured logging with level support and buffer management
+ * Provides structured logging with Winston backend and buffer management
  */
 
+const winston = require('winston');
+const path = require('path');
 const CONSTANTS = require('../constants');
 
 /**
  * Circular buffer implementation for efficient log storage
+ * Used for the /api/logs endpoint
  */
 class CircularBuffer {
     constructor(size) {
@@ -39,12 +42,110 @@ class CircularBuffer {
 }
 
 /**
- * Logger class with buffer management and console output
+ * Define custom log levels including 'success'
+ */
+const customLevels = {
+    levels: {
+        error: 0,
+        warn: 1,
+        success: 2,
+        info: 3,
+        debug: 4
+    },
+    colors: {
+        error: 'red',
+        warn: 'yellow',
+        success: 'green',
+        info: 'cyan',
+        debug: 'gray'
+    }
+};
+
+// Add custom colors to Winston
+winston.addColors(customLevels.colors);
+
+/**
+ * Custom console format with emojis for better UX
+ */
+const consoleFormat = winston.format.printf(({ timestamp, level, message, category, ...meta }) => {
+    const now = new Date(timestamp);
+    const time = now.toLocaleTimeString('de-DE', { hour12: false }) +
+                 '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+    // Map Winston levels to emojis
+    const emojiMap = {
+        'error': '❌',
+        'warn': '⚠️ ',
+        'info': 'ℹ️ ',
+        'debug': '🐛',
+        'success': '✅'
+    };
+
+    const emoji = emojiMap[level] || 'ℹ️ ';
+    const cat = category || 'SYSTEM';
+
+    // Build message with metadata if present
+    let fullMessage = message;
+    const metaKeys = Object.keys(meta).filter(k => k !== 'level' && k !== 'timestamp');
+    if (metaKeys.length > 0) {
+        const metaStr = JSON.stringify(meta);
+        if (metaStr !== '{}') {
+            fullMessage += ` ${metaStr}`;
+        }
+    }
+
+    return `${emoji} [${time}] [${cat}] ${fullMessage}`;
+});
+
+/**
+ * Logger class with Winston backend and buffer management
  */
 class Logger {
     constructor(options = {}) {
         this.debugEnabled = options.debug || false;
         this.logBuffer = new CircularBuffer(options.maxLogs || CONSTANTS.LOG.MAX_BUFFER_SIZE);
+
+        // Determine log level
+        const level = this.debugEnabled ? 'debug' : 'info';
+
+        // Create Winston logger with custom levels
+        this.winston = winston.createLogger({
+            levels: customLevels.levels,
+            level: level,
+            format: winston.format.combine(
+                winston.format.timestamp(),
+                winston.format.errors({ stack: true }),
+                winston.format.json()
+            ),
+            transports: [
+                // Console output with emojis
+                new winston.transports.Console({
+                    format: winston.format.combine(
+                        winston.format.timestamp(),
+                        consoleFormat
+                    )
+                }),
+                // Error log file (JSON format)
+                new winston.transports.File({
+                    filename: path.join('logs', 'error.log'),
+                    level: 'error',
+                    format: winston.format.combine(
+                        winston.format.timestamp(),
+                        winston.format.json()
+                    )
+                }),
+                // Combined log file (JSON format)
+                new winston.transports.File({
+                    filename: path.join('logs', 'combined.log'),
+                    format: winston.format.combine(
+                        winston.format.timestamp(),
+                        winston.format.json()
+                    ),
+                    maxsize: 5242880, // 5MB
+                    maxFiles: 5
+                })
+            ]
+        });
     }
 
     /**
@@ -76,19 +177,22 @@ class Logger {
      * Info level logging
      * @param {string} msg - Message
      * @param {string} category - Category
+     * @param {Object} meta - Additional metadata
      */
-    info(msg, category = 'SYSTEM') {
-        console.log(`ℹ️  [${this.getTime()}] [${category}] ${msg}`);
+    info(msg, category = 'SYSTEM', meta = {}) {
+        this.winston.info(msg, { category, ...meta });
         this.addToLogBuffer('INFO', msg, category);
     }
 
     /**
-     * Success level logging
+     * Success level logging (maps to info with custom level)
      * @param {string} msg - Message
      * @param {string} category - Category
+     * @param {Object} meta - Additional metadata
      */
-    success(msg, category = 'SYSTEM') {
-        console.log(`✅  [${this.getTime()}] [${category}] ${msg}`);
+    success(msg, category = 'SYSTEM', meta = {}) {
+        // Winston doesn't have 'success', so we use info with a custom level indicator
+        this.winston.log('success', msg, { category, ...meta });
         this.addToLogBuffer('SUCCESS', msg, category);
     }
 
@@ -96,9 +200,10 @@ class Logger {
      * Warning level logging
      * @param {string} msg - Message
      * @param {string} category - Category
+     * @param {Object} meta - Additional metadata
      */
-    warn(msg, category = 'SYSTEM') {
-        console.log(`⚠️  [${this.getTime()}] [${category}] ${msg}`);
+    warn(msg, category = 'SYSTEM', meta = {}) {
+        this.winston.warn(msg, { category, ...meta });
         this.addToLogBuffer('WARN', msg, category);
     }
 
@@ -106,9 +211,10 @@ class Logger {
      * Error level logging
      * @param {string} msg - Message
      * @param {string} category - Category
+     * @param {Object} meta - Additional metadata
      */
-    error(msg, category = 'SYSTEM') {
-        console.error(`❌ [${this.getTime()}] [${category}] ${msg}`);
+    error(msg, category = 'SYSTEM', meta = {}) {
+        this.winston.error(msg, { category, ...meta });
         this.addToLogBuffer('ERROR', msg, category);
     }
 
@@ -116,10 +222,11 @@ class Logger {
      * Debug level logging (only when debug mode is enabled)
      * @param {string} msg - Message
      * @param {string} category - Category
+     * @param {Object} meta - Additional metadata
      */
-    debug(msg, category = 'SYSTEM') {
+    debug(msg, category = 'SYSTEM', meta = {}) {
         if (this.debugEnabled) {
-            console.log(`🐛 [${this.getTime()}] [${category}] ${msg}`);
+            this.winston.debug(msg, { category, ...meta });
             this.addToLogBuffer('DEBUG', msg, category);
         }
     }
@@ -133,8 +240,10 @@ class Logger {
         const status = error.response ? error.response.status : 'Net';
 
         if (status === 429) {
-            console.warn(`⚠️ [${this.getTime()}] RATE LIMIT (429) - Slowing down...`);
-            this.addToLogBuffer('WARN', 'HUE RATE LIMIT (429)', category);
+            this.warn('HUE RATE LIMIT (429) - Slowing down...', category, {
+                statusCode: 429,
+                error: 'Rate Limited'
+            });
             return;
         }
 
@@ -142,8 +251,11 @@ class Logger {
             ? JSON.stringify(error.response.data)
             : error.message;
 
-        console.error(`❌ [${this.getTime()}] HUE ERR ${status}: ${details}`);
-        this.addToLogBuffer('ERROR', `HUE ERR ${status}: ${details}`, category);
+        this.error(`HUE ERR ${status}: ${details}`, category, {
+            statusCode: status,
+            errorDetails: error.response?.data,
+            stack: error.stack
+        });
     }
 
     /**
@@ -160,6 +272,7 @@ class Logger {
      */
     setDebugMode(enabled) {
         this.debugEnabled = enabled;
+        this.winston.level = enabled ? 'debug' : 'info';
         this.info(`Debug mode ${enabled ? 'enabled' : 'disabled'}`, 'SYSTEM');
     }
 }
