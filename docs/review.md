@@ -68,35 +68,58 @@ app.get('/:name/:value', async (req, res) => {
 - Potential for DoS attacks by sending malformed data
 - Risk of buffer overflow with extremely long strings
 
-**Recommendation:**
+**Implementation:**
 ```javascript
-// Add input validation middleware
+// src/config/validation.js
+function isValidDeviceName(name) {
+    if (!name || typeof name !== 'string') return false;
+
+    // No leading/trailing spaces
+    if (name !== name.trim()) return false;
+
+    // No multiple consecutive spaces
+    if (/\s{2,}/.test(name)) return false;
+
+    // Allow alphanumeric, spaces, hyphens, underscores, dots (1-100 chars)
+    return /^[a-zA-Z0-9_\-\.\s]{1,100}$/.test(name);
+}
+
+// src/middleware/validation.js
 function validateLightCommand(req, res, next) {
     const { name, value } = req.params;
 
-    // Validate name: alphanumeric + underscore only
-    if (!/^[a-zA-Z0-9_-]{1,50}$/.test(name)) {
-        return res.status(400).send('Invalid name format');
+    if (!isValidDeviceName(name)) {
+        logger.warn('Validation failed: Invalid device name', 'API', {
+            name: name,
+            hasLeadingSpace: name !== name?.trim()
+        });
+        return res.status(400).json({
+            error: 'Invalid device name format',
+            details: 'Name must be alphanumeric with optional spaces (1-100 chars)'
+        });
     }
 
-    // Validate value: numeric or specific patterns only
-    const numValue = parseInt(value);
-    if (isNaN(numValue) && !/^20\d{7,}$/.test(value)) {
-        return res.status(400).send('Invalid value format');
-    }
-
-    // Limit value range
-    if (numValue < 0 || numValue > 999999999) {
-        return res.status(400).send('Value out of range');
+    if (!isValidControlValue(value)) {
+        logger.warn('Validation failed: Invalid control value', 'API', {
+            name: name, value: value
+        });
+        return res.status(400).json({
+            error: 'Invalid control value',
+            details: 'Value must be 0-100 or valid color format'
+        });
     }
 
     next();
 }
-
-app.get('/:name/:value', validateLightCommand, async (req, res) => {
-    // Safe to proceed
-});
 ```
+
+**Enhancements:**
+- ✅ Supports spaces in names (e.g., "Living Room Light")
+- ✅ Validates all route parameters
+- ✅ Logs all validation failures with metadata
+- ✅ Protection against XSS, command injection, path traversal
+- ✅ Clear error messages with context
+- ✅ Maximum length limits (100 chars)
 
 ---
 
@@ -1609,7 +1632,7 @@ await retryableRequest(async () => {
 
 #### 4.7 Missing Input Validation on Mapping ✅ FIXED in v2.0.0
 **Original Location:** `server.js:469`
-**Fixed in:** `src/config/validation.js` and `src/routes/api.js`
+**Fixed in:** `src/config/validation.js` and `src/middleware/validation.js`
 
 ```javascript
 app.post('/api/mapping', (req, res) => {
@@ -1617,36 +1640,58 @@ app.post('/api/mapping', (req, res) => {
     // No validation of structure!
 ```
 
-**Recommendation:**
+**Implementation:**
 ```javascript
-function validateMapping(data) {
-    if (!Array.isArray(data)) {
-        throw new Error('Mapping must be an array');
+// src/middleware/validation.js
+function validateMapping(req, res, next) {
+    const mapping = req.body;
+
+    if (!Array.isArray(mapping)) {
+        logger.warn('Validation failed: Mapping not an array', 'API');
+        return res.status(400).json({
+            error: 'Invalid mapping format',
+            details: 'Mapping must be an array'
+        });
     }
 
-    return data.filter(m => {
-        return (
-            m.loxone_name &&
-            typeof m.loxone_name === 'string' &&
-            m.loxone_name.length > 0 &&
-            m.loxone_name.length < 100 &&
-            m.hue_uuid &&
-            m.hue_name &&
-            ['light', 'group', 'sensor', 'button'].includes(m.hue_type)
-        );
-    });
+    // Validate each entry
+    for (let i = 0; i < mapping.length; i++) {
+        const entry = mapping[i];
+
+        if (!entry.loxone_name || !isValidLoxoneName(entry.loxone_name)) {
+            logger.warn('Validation failed: Invalid Loxone name in mapping', 'API', {
+                index: i,
+                loxoneName: entry.loxone_name
+            });
+            return res.status(400).json({
+                error: 'Invalid Loxone name',
+                details: 'Name must be alphanumeric with optional spaces (1-100 chars)',
+                index: i
+            });
+        }
+
+        if (!entry.hue_uuid || !isValidHueUuid(entry.hue_uuid)) {
+            logger.warn('Validation failed: Invalid Hue UUID in mapping', 'API');
+            return res.status(400).json({ error: 'Invalid Hue UUID', index: i });
+        }
+
+        if (!entry.hue_type || !isValidDeviceType(entry.hue_type)) {
+            logger.warn('Validation failed: Invalid device type in mapping', 'API');
+            return res.status(400).json({ error: 'Invalid device type', index: i });
+        }
+    }
+
+    next();
 }
-
-app.post('/api/mapping', (req, res) => {
-    try {
-        mapping = validateMapping(req.body);
-        fs.writeFileSync(MAPPING_FILE, JSON.stringify(mapping, null, 4));
-        res.json({ success: true });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
 ```
+
+**Enhancements:**
+- ✅ Validates mapping array structure
+- ✅ Validates each entry (Loxone name, Hue UUID, device type)
+- ✅ Supports spaces in Loxone names
+- ✅ Logs validation failures with entry index
+- ✅ Clear error messages with context
+- ✅ Prevents invalid data from being saved
 
 ---
 
