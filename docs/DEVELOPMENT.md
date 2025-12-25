@@ -178,16 +178,16 @@ Edit `ecosystem.config.js` to adjust:
 ### Enable Debug Logs
 
 All debug-enabled modes show:
-- 🐛 Detailed event processing
-- 🐛 UDP messages sent/received
-- 🐛 Hue API requests/responses
-- 🐛 Command queue operations
+- Detailed event processing
+- UDP messages sent/received
+- Hue API requests/responses
+- Command queue operations
 
 Example output:
 ```
-🐛 [15:30:45.123] [LIGHT] OUT -> Hue (kitchen): {"on":{"on":true}}
-🐛 [15:30:45.150] [UDP] UDP OUT: hue.kitchen.on 1
-🐛 [15:30:45.200] [BUTTON] Event: switch1 Btn=short_release
+[15:30:45.123] DEBUG   [LIGHT] OUT -> Hue (kitchen): {"on":{"on":true}}
+[15:30:45.150] DEBUG   [UDP] UDP OUT: hue.kitchen.on 1
+[15:30:45.200] DEBUG   [BUTTON] Event: switch1 Btn=short_release
 ```
 
 ### Debug Specific Components
@@ -528,7 +528,7 @@ Press `F5` to start debugging!
 The application uses **Winston** for structured logging with both human-readable console output and machine-parsable JSON file logs.
 
 **Key Features:**
-- ✅ Emojis for console readability
+- ✅ Standard color-coded output for console readability
 - ✅ JSON format for file logs (easy parsing)
 - ✅ Automatic log rotation (5MB max, 5 files)
 - ✅ Multiple log levels (error, warn, success, info, debug)
@@ -547,12 +547,12 @@ debug   - Detailed debugging (only in debug mode)
 
 ### Log Outputs
 
-**Console (with emojis):**
+**Console (with standard colors):**
 ```
-✅ [15:04:03.427] [HUE] Connected to Hue Bridge
-⚠️  [15:04:03.427] [HUE] Rate limit approaching
-❌ [15:04:03.428] [LIGHT] Failed to connect to device
-🐛 [15:04:03.429] [DEBUG] Processing event data
+[15:04:03.427] SUCCESS [HUE] Connected to Hue Bridge
+[15:04:03.427] WARN    [HUE] Rate limit approaching
+[15:04:03.428] ERROR   [LIGHT] Failed to connect to device
+[15:04:03.429] DEBUG   [EVENT] Processing event data
 ```
 
 **File Logs (JSON format):**
@@ -601,7 +601,7 @@ logger.success('Light updated', 'LIGHT', {
     color: { x: 0.3, y: 0.4 }
 });
 
-// Console: ✅ [time] [LIGHT] Light updated {"deviceId":"light-123",...}
+// Console: [time] SUCCESS [LIGHT] Light updated {"deviceId":"light-123",...}
 // File: JSON with all fields
 ```
 

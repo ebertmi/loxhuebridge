@@ -12,26 +12,26 @@ loxHueBridge uses **Winston** for structured, production-grade logging with both
 
 The logging system provides two output formats simultaneously:
 
-1. **Console Output** - Human-readable with emojis and colors
+1. **Console Output** - Human-readable with standard colors
 2. **File Output** - Structured JSON for parsing and analysis
 
 ### Log Levels
 
 ```
-error   → Critical errors (❌)
-warn    → Warnings (⚠️)
-success → Successful operations (✅) [custom level]
-info    → General information (ℹ️)
-debug   → Detailed debugging (🐛) [only when debug=true]
+error   → Critical errors (red)
+warn    → Warnings (yellow)
+success → Successful operations (green) [custom level]
+info    → General information (cyan)
+debug   → Detailed debugging (gray) [only when debug=true]
 ```
 
 ---
 
 ## Features
 
-### ✅ Console Output with Emojis
-- Visual indicators for quick scanning
+### ✅ Console Output with Standard Colors
 - Colorized output for better readability
+- Standard log level colors (error=red, warn=yellow, info=cyan, debug=gray, success=green)
 - Timestamp with milliseconds
 - Category-based organization
 
@@ -98,7 +98,7 @@ logger.success('Light updated successfully', 'LIGHT', {
 
 **Console Output:**
 ```
-✅ [15:04:03.427] [LIGHT] Light updated successfully {"deviceId":"light-abc123","brightness":75,...}
+[15:04:03.427] SUCCESS [LIGHT] Light updated successfully {"deviceId":"light-abc123","brightness":75,...}
 ```
 
 **File Output (JSON):**
@@ -280,7 +280,7 @@ logs/
 ### Console Output
 - Synchronous (for debugging)
 - Colorized formatting
-- Emoji support
+- Standard color coding
 
 ---
 
@@ -443,7 +443,7 @@ npm test
 - Log rotation prevents disk issues
 
 ✅ **Developer Experience**
-- Emojis for quick visual scanning
+- Standard color-coded levels for quick visual scanning
 - Colorized output
 - Consistent, predictable format
 
@@ -458,7 +458,7 @@ npm test
 
 The Winston-based logging system provides:
 
-- 🎨 **Console**: Human-readable with emojis
+- 🎨 **Console**: Human-readable with standard colors
 - 📄 **Files**: Structured JSON for parsing
 - 🔄 **Rotation**: Automatic (5MB, 5 files)
 - 📊 **Levels**: error, warn, success, info, debug

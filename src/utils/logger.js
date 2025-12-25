@@ -65,24 +65,15 @@ const customLevels = {
 winston.addColors(customLevels.colors);
 
 /**
- * Custom console format with emojis for better UX
+ * Custom console format with standard colors
  */
 const consoleFormat = winston.format.printf(({ timestamp, level, message, category, ...meta }) => {
     const now = new Date(timestamp);
     const time = now.toLocaleTimeString('de-DE', { hour12: false }) +
                  '.' + String(now.getMilliseconds()).padStart(3, '0');
 
-    // Map Winston levels to emojis
-    const emojiMap = {
-        'error': '❌',
-        'warn': '⚠️ ',
-        'info': 'ℹ️ ',
-        'debug': '🐛',
-        'success': '✅'
-    };
-
-    const emoji = emojiMap[level] || 'ℹ️ ';
     const cat = category || 'SYSTEM';
+    const levelUpper = level.toUpperCase().padEnd(7);
 
     // Build message with metadata if present
     let fullMessage = message;
@@ -94,7 +85,7 @@ const consoleFormat = winston.format.printf(({ timestamp, level, message, catego
         }
     }
 
-    return `${emoji} [${time}] [${cat}] ${fullMessage}`;
+    return `[${time}] ${levelUpper} [${cat}] ${fullMessage}`;
 });
 
 /**
@@ -118,10 +109,11 @@ class Logger {
                 winston.format.json()
             ),
             transports: [
-                // Console output with emojis
+                // Console output with standard colors
                 new winston.transports.Console({
                     format: winston.format.combine(
                         winston.format.timestamp(),
+                        winston.format.colorize(),
                         consoleFormat
                     )
                 }),
