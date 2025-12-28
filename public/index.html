@@ -66,7 +66,7 @@
         .log-time { color: #888; margin-right: 10px; }
         .log-level { font-weight: bold; margin-right: 10px; }
         .log-cat { display:inline-block; padding:1px 4px; border-radius:3px; font-size:0.75rem; margin-right:10px; color:#000; font-weight:bold; }
-        .cat-LIGHT { background:#85c440; } .cat-SENSOR { background:#ff9500; } .cat-BUTTON { background:#007aff; } .cat-SYSTEM { background:#999; }
+        .cat-LIGHT { background:#85c440; } .cat-SENSOR { background:#ff9500; } .cat-BUTTON { background:#007aff; } .cat-SYSTEM { background:#999; } .cat-HUE { background:#9b59b6; } .cat-UDP { background:#3498db; }
         .level-INFO { color: #61afef; } .level-SUCCESS { color: #98c379; } .level-WARN { color: #e5c07b; } .level-ERROR { color: #e06c75; } .level-DEBUG { color: #c678dd; }
         
         /* Filter Buttons */
@@ -167,11 +167,13 @@
         </div>
         <h2>Server Logs</h2>
         <div class="filter-bar">
-            <button class="filter-btn active" onclick="setLogFilter('ALL')">Alle</button>
-            <button class="filter-btn" onclick="setLogFilter('LIGHT')">💡 Lichter</button>
-            <button class="filter-btn" onclick="setLogFilter('SENSOR')">📡 Sensoren</button>
-            <button class="filter-btn" onclick="setLogFilter('BUTTON')">🔘 Schalter</button>
-            <button class="filter-btn" onclick="setLogFilter('SYSTEM')">⚙️ System</button>
+            <button class="filter-btn active" data-filter="ALL" onclick="setLogFilter('ALL')">Alle</button>
+            <button class="filter-btn" data-filter="LIGHT" onclick="setLogFilter('LIGHT')">💡 Lichter</button>
+            <button class="filter-btn" data-filter="SENSOR" onclick="setLogFilter('SENSOR')">📡 Sensoren</button>
+            <button class="filter-btn" data-filter="BUTTON" onclick="setLogFilter('BUTTON')">🔘 Schalter</button>
+            <button class="filter-btn" data-filter="HUE" onclick="setLogFilter('HUE')">🌉 Hue Bridge</button>
+            <button class="filter-btn" data-filter="UDP" onclick="setLogFilter('UDP')">📤 UDP</button>
+            <button class="filter-btn" data-filter="SYSTEM" onclick="setLogFilter('SYSTEM')">⚙️ System</button>
         </div>
         <div class="log-console" id="logConsole"><div style="text-align:center; padding-top:20px; color:#666;">Warte auf Logs...</div></div>
     </div>
@@ -269,7 +271,7 @@
     function setLogFilter(filter) {
         currentLogFilter = filter;
         document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.toggle('active', b.innerText.includes(filter) || (filter === 'ALL' && b.innerText === 'Alle'));
+            b.classList.toggle('active', b.dataset.filter === filter);
         });
         renderLogs(); // Re-Render cache
     }
