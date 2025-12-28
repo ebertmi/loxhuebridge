@@ -14,11 +14,8 @@ class HueClient {
         this.logger = logger;
         this.rateLimiter = rateLimiter;
 
-        // HTTPS agent with disabled certificate validation
-        // TODO: Implement proper certificate pinning for security
-        this.httpsAgent = new https.Agent({
-            rejectUnauthorized: false
-        });
+        // Create HTTPS agent with optional certificate pinning
+        this.httpsAgent = this._createHttpsAgent();
 
         // Device and capability caches
         this.serviceToDeviceMap = {};
@@ -26,6 +23,52 @@ class HueClient {
 
         // Command state for handling queued commands
         this.commandState = {};
+    }
+
+    /**
+     * Create HTTPS agent with optional certificate pinning
+     * @returns {https.Agent} Configured HTTPS agent
+     */
+    _createHttpsAgent() {
+        const certPinningEnabled = this.config.get('certPinningEnabled');
+        const certFingerprint = this.config.get('certFingerprint');
+
+        if (certPinningEnabled && certFingerprint) {
+            this.logger.info('Certificate pinning enabled for Hue Bridge', 'HUE');
+
+            return new https.Agent({
+                rejectUnauthorized: true,
+                checkServerIdentity: (host, cert) => {
+                    // Normalize fingerprints (remove colons, convert to uppercase)
+                    const expectedFingerprint = certFingerprint.replace(/:/g, '').toUpperCase();
+                    const actualFingerprint = cert.fingerprint256.replace(/:/g, '').toUpperCase();
+
+                    if (actualFingerprint !== expectedFingerprint) {
+                        const error = new Error(
+                            `Certificate fingerprint mismatch!\n` +
+                            `Expected: ${certFingerprint}\n` +
+                            `Actual: ${cert.fingerprint256}`
+                        );
+                        this.logger.error(error.message, 'HUE');
+                        throw error;
+                    }
+
+                    this.logger.debug('Certificate fingerprint validated', 'HUE');
+                }
+            });
+        } else {
+            // Certificate pinning disabled - use insecure mode
+            if (!certPinningEnabled) {
+                this.logger.warn(
+                    'Certificate validation DISABLED - HTTPS traffic is vulnerable to MITM attacks',
+                    'HUE'
+                );
+            }
+
+            return new https.Agent({
+                rejectUnauthorized: false
+            });
+        }
     }
 
     /**

@@ -57,6 +57,37 @@ Du musst keinen Code mehr bauen. Du brauchst nur Docker und eine `docker-compose
 
 4.  **Setup:**
     Öffne `http://<DEINE-IP>:8555` für den Einrichtungsassistenten.
+
+---
+
+## 🔒 Sicherheit: SSL Zertifikats-Pinning (Optional)
+
+Standardmäßig ist die SSL-Zertifikatsvalidierung deaktiviert, da die Hue Bridge selbstsignierte Zertifikate verwendet. Dies macht die Kommunikation anfällig für Man-in-the-Middle (MITM) Angriffe.
+
+**Für erhöhte Sicherheit kannst du Certificate Pinning aktivieren:**
+
+1.  **Fingerprint extrahieren:**
+    ```bash
+    echo | openssl s_client -connect <HUE-BRIDGE-IP>:443 2>&1 | openssl x509 -fingerprint -sha256 -noout
+    ```
+    Beispiel-Ausgabe: `sha256 Fingerprint=26:7F:89:0F:4B:6E:0E:11:40:6B:AC:D2:2F:6A:6A:BC:64:45:56:93:FB:B5:B2:76:80:67:52:51:AD:E6:50:22`
+
+2.  **Umgebungsvariablen setzen:**
+    Füge in deiner `docker-compose.yml` folgende Zeilen hinzu:
+    ```yaml
+    environment:
+      - TZ=Europe/Vienna
+      - HUE_CERT_PINNING_ENABLED=true
+      - HUE_CERT_FINGERPRINT=26:7F:89:0F:4B:6E:0E:11:40:6B:AC:D2:2F:6A:6A:BC:64:45:56:93:FB:B5:B2:76:80:67:52:51:AD:E6:50:22
+    ```
+
+3.  **Container neu starten:**
+    ```bash
+    docker compose up -d
+    ```
+
+**Hinweis:** Wenn die Hue Bridge ihr Zertifikat ändert (z.B. nach Firmware-Update), musst du den Fingerprint aktualisieren.
+
 ---
 
 ## 💻 Testen auf Mac & Windows (Docker Desktop)
@@ -232,6 +263,36 @@ You don't need to build the code. Just use Docker Compose.
 
 4.  **Setup:**
     Open `http://<YOUR-IP>:8555`. The assistant guides you through pairing.
+
+---
+
+## 🔒 Security: SSL Certificate Pinning (Optional)
+
+By default, SSL certificate validation is disabled because the Hue Bridge uses self-signed certificates. This makes communication vulnerable to Man-in-the-Middle (MITM) attacks.
+
+**For enhanced security, you can enable certificate pinning:**
+
+1.  **Extract the fingerprint:**
+    ```bash
+    echo | openssl s_client -connect <HUE-BRIDGE-IP>:443 2>&1 | openssl x509 -fingerprint -sha256 -noout
+    ```
+    Example output: `sha256 Fingerprint=26:7F:89:0F:4B:6E:0E:11:40:6B:AC:D2:2F:6A:6A:BC:64:45:56:93:FB:B5:B2:76:80:67:52:51:AD:E6:50:22`
+
+2.  **Set environment variables:**
+    Add these lines to your `docker-compose.yml`:
+    ```yaml
+    environment:
+      - TZ=Europe/Vienna
+      - HUE_CERT_PINNING_ENABLED=true
+      - HUE_CERT_FINGERPRINT=26:7F:89:0F:4B:6E:0E:11:40:6B:AC:D2:2F:6A:6A:BC:64:45:56:93:FB:B5:B2:76:80:67:52:51:AD:E6:50:22
+    ```
+
+3.  **Restart the container:**
+    ```bash
+    docker compose up -d
+    ```
+
+**Note:** If the Hue Bridge changes its certificate (e.g., after a firmware update), you'll need to update the fingerprint.
 
 ---
 

@@ -21,7 +21,9 @@ class Config {
             loxoneIp: process.env.LOXONE_IP || null,
             loxonePort: parseInt(process.env.LOXONE_UDP_PORT || CONSTANTS.LOXONE.DEFAULT_UDP_PORT),
             debug: process.env.DEBUG === 'true',
-            transitionTime: 400
+            transitionTime: 400,
+            certPinningEnabled: process.env.HUE_CERT_PINNING_ENABLED === 'true',
+            certFingerprint: process.env.HUE_CERT_FINGERPRINT || null
         };
 
         this.mapping = [];
@@ -60,7 +62,9 @@ class Config {
             typeof config.loxonePort === 'number' &&
             config.loxonePort > 0 &&
             config.loxonePort <= 65535 &&
-            typeof config.debug === 'boolean'
+            typeof config.debug === 'boolean' &&
+            (config.certPinningEnabled === undefined || typeof config.certPinningEnabled === 'boolean') &&
+            (config.certFingerprint === undefined || config.certFingerprint === null || typeof config.certFingerprint === 'string')
         );
     }
 
@@ -119,6 +123,14 @@ class Config {
                 // Ensure transitionTime exists
                 if (this.config.transitionTime === undefined) {
                     this.config.transitionTime = 400;
+                }
+
+                // Ensure certificate pinning fields exist
+                if (this.config.certPinningEnabled === undefined) {
+                    this.config.certPinningEnabled = false;
+                }
+                if (this.config.certFingerprint === undefined) {
+                    this.config.certFingerprint = null;
                 }
 
                 this.logger.success('Configuration loaded', 'SYSTEM');
