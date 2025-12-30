@@ -195,7 +195,48 @@
             <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px">
                 Hier werden alle in der Hue Bridge gespeicherten Szenen angezeigt.
             </p>
-            <button class="add-btn" style="width:auto; padding: 8px 15px; margin-bottom:15px" onclick="loadScenes()">🔄 Aktualisieren</button>
+            <div style="display:flex; gap:10px; margin-bottom:15px">
+                <button class="add-btn" style="width:auto; padding: 8px 15px" onclick="loadScenes()">🔄 Aktualisieren</button>
+                <button class="action-btn" onclick="openSceneExportModal()">📥 XML Exportieren</button>
+            </div>
+
+            <details style="margin-bottom:20px; padding:15px; background:var(--input-bg); border-radius:8px; border:1px solid var(--border)">
+                <summary style="cursor:pointer; font-weight:600; color:var(--accent)">💡 Loxone Integration Hilfe</summary>
+                <div style="margin-top:15px; font-size:0.9rem; line-height:1.6">
+                    <p style="margin-top:0"><strong>Nach dem XML Export stehen dir zwei Optionen zur Verfügung:</strong></p>
+
+                    <div style="background:var(--card-bg); padding:12px; border-radius:6px; margin-bottom:12px; border-left:3px solid var(--accent)">
+                        <strong>Option 1: Direkte Szenensteuerung</strong>
+                        <ul style="margin:8px 0 0 0; padding-left:20px">
+                            <li>Jede Szene erhält einen eigenen virtuellen Ausgang</li>
+                            <li>Einfach, aber viele Ausgänge bei vielen Szenen</li>
+                            <li>Ideal für feste Szenen-Buttons</li>
+                        </ul>
+                    </div>
+
+                    <div style="background:var(--card-bg); padding:12px; border-radius:6px; border-left:3px solid #9b59b6">
+                        <strong>Option 2: Status-Baustein + Generischer Ausgang (empfohlen)</strong>
+                        <ul style="margin:8px 0 0 0; padding-left:20px">
+                            <li>Ein <strong>generischer Ausgang</strong> "Scene (Generic)" wird exportiert</li>
+                            <li>Nutze den <strong>Status-Baustein</strong> in Loxone:
+                                <ul style="margin-top:4px">
+                                    <li>Stimmung 1 → Szenen-UUID (z.B. <code style="background:var(--input-bg); padding:2px 4px; border-radius:3px; font-size:0.85rem">abc-123...</code>)</li>
+                                    <li>Stimmung 2 → andere Szenen-UUID</li>
+                                    <li>usw.</li>
+                                </ul>
+                            </li>
+                            <li>Verbinde Status-Ausgang mit "Scene (Generic)"</li>
+                            <li>✅ Nur ein virtueller Ausgang für alle Szenen!</li>
+                            <li>✅ Szenen ändern ohne Loxone Config zu bearbeiten</li>
+                        </ul>
+                    </div>
+
+                    <p style="margin-bottom:0; color:var(--text-muted); font-size:0.85rem">
+                        <strong>Tipp:</strong> Die Szenen-UUIDs werden in grau neben dem Szenennamen angezeigt. Kopiere diese für den Status-Baustein.
+                    </p>
+                </div>
+            </details>
+
             <div id="scenesList" class="mapping-list">
                 <div style="text-align:center; color:var(--text-muted)">Klicke auf Aktualisieren...</div>
             </div>
@@ -214,6 +255,20 @@
         <div class="modal-actions">
             <button class="btn-sec" onclick="closeModal('exportModal')">Abbrechen</button>
             <button class="btn-prim" onclick="doExport()">Exportieren</button>
+        </div>
+    </div>
+</div>
+
+<div id="sceneExportModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 style="margin:0">Szenen Export</h2>
+            <button class="btn-link" onclick="toggleSelectAllScenes()">Alles markieren</button>
+        </div>
+        <div class="modal-list" id="sceneExportList"></div>
+        <div class="modal-actions">
+            <button class="btn-sec" onclick="closeModal('sceneExportModal')">Abbrechen</button>
+            <button class="btn-prim" onclick="doSceneExport()">Exportieren</button>
         </div>
     </div>
 </div>
@@ -238,6 +293,7 @@
     let status = {};
     let detectedHistory = [];
     let scenes = [];
+    let activeScenes = new Set(); // Track which scenes are currently active
     let logInterval = null;
     let allSelected = false;
     let currentLogFilter = 'ALL';
@@ -732,6 +788,101 @@
         return `rgb(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)})`;
     }
 
+    async function activateSceneFromUI(uuid, sceneName) {
+        try {
+            const res = await fetch(`/scene/${uuid}/on`);
+            const text = await res.text();
+
+            if (res.ok) {
+                activeScenes.add(uuid);
+                renderScenes();
+                console.log(`Scene "${sceneName}" activated`);
+            } else {
+                alert(`Fehler beim Aktivieren der Szene: ${text}`);
+            }
+        } catch(e) {
+            alert(`Fehler: ${e.message}`);
+        }
+    }
+
+    async function deactivateSceneFromUI(uuid, sceneName) {
+        try {
+            const res = await fetch(`/scene/${uuid}/off`);
+            const text = await res.text();
+
+            if (res.ok) {
+                activeScenes.delete(uuid);
+                renderScenes();
+                console.log(`Scene "${sceneName}" deactivated`);
+            } else {
+                alert(`Fehler beim Deaktivieren der Szene: ${text}`);
+            }
+        } catch(e) {
+            alert(`Fehler: ${e.message}`);
+        }
+    }
+
+    function openSceneExportModal() {
+        const list = document.getElementById('sceneExportList');
+        list.innerHTML = '';
+
+        if (scenes.length === 0) {
+            return alert("Keine Szenen zum Exportieren.\nBitte zuerst Szenen laden.");
+        }
+
+        // Sort scenes alphabetically
+        const sortedScenes = [...scenes].sort((a, b) => a.name.localeCompare(b.name));
+
+        // Create checkbox items
+        sortedScenes.forEach(scene => {
+            const item = document.createElement('div');
+            item.className = 'modal-item';
+
+            // Build description line
+            const groupName = scene.group ? scene.group.name : 'Keine Gruppe';
+            const lightInfo = `${scene.lightCount} ${scene.lightCount === 1 ? 'Licht' : 'Lichter'}`;
+            const description = `${groupName} · ${lightInfo}`;
+
+            item.innerHTML = `
+                <input type="checkbox" class="modal-checkbox" value="${scene.uuid}">
+                <div>
+                    <div style="font-weight:bold">${scene.name}</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted)">${description}</div>
+                </div>
+            `;
+
+            list.appendChild(item);
+        });
+
+        document.getElementById('sceneExportModal').style.display = 'flex';
+    }
+
+    function toggleSelectAllScenes() {
+        const checkboxes = document.querySelectorAll('#sceneExportList .modal-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+        });
+    }
+
+    function doSceneExport() {
+        const checked = document.querySelectorAll('#sceneExportList .modal-checkbox:checked');
+
+        if (checked.length === 0) {
+            return alert("Bitte wähle mindestens eine Szene aus.");
+        }
+
+        // Collect selected scene UUIDs
+        const uuids = Array.from(checked).map(cb => cb.value).join(',');
+
+        // Download XML via API
+        window.location.href = `/api/download/scenes?uuids=${uuids}`;
+
+        // Close modal
+        closeModal('sceneExportModal');
+    }
+
     function renderScenes() {
         const container = document.getElementById('scenesList');
 
@@ -793,13 +944,41 @@
             // Light count badge
             const countBadge = `<span class="badge">${scene.lightCount} ${scene.lightCount === 1 ? 'Licht' : 'Lichter'}</span>`;
 
+            // Check if scene is active
+            const isActive = activeScenes.has(scene.uuid);
+
+            // Active status badge
+            const activeBadge = isActive ? '<span class="badge" style="background:var(--accent); color:white; margin-right:8px">✓ Aktiv</span>' : '';
+
+            // Change border color if active
+            if (isActive) {
+                div.style.borderLeftColor = 'var(--accent)';
+                div.style.borderLeftWidth = '4px';
+            }
+
+            // Control buttons
+            const buttons = `
+                <div style="display:flex; gap:8px; margin-top:10px">
+                    <button class="add-btn" style="width:auto; padding:6px 12px; font-size:0.85rem; background:var(--accent)"
+                            onclick="activateSceneFromUI('${scene.uuid}', '${scene.name.replace(/'/g, "\\'")}')">
+                        ▶ Aktivieren
+                    </button>
+                    <button class="add-btn" style="width:auto; padding:6px 12px; font-size:0.85rem; background:#666"
+                            onclick="deactivateSceneFromUI('${scene.uuid}', '${scene.name.replace(/'/g, "\\'")}')">
+                        ⏹ Aus
+                    </button>
+                </div>
+            `;
+
             div.innerHTML = `
                 <div>
                     <div class="mapping-lox" style="font-weight:700">${scene.name} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400">(${scene.uuid})</span></div>
                     ${lightsList}
                     ${extraInfo}
+                    ${buttons}
                 </div>
                 <div class="status-badges">
+                    ${activeBadge}
                     ${groupBadge}
                     ${countBadge}
                 </div>

@@ -109,6 +109,49 @@ function generateInputsXML(sensors, udpPort) {
 }
 
 /**
+ * Generate Loxone VirtualOut XML for Hue scenes
+ * @param {Array} scenes - Scene objects from hueClient.getScenes()
+ * @param {string} serverIp - Server IP address
+ * @param {number} serverPort - Server HTTP port
+ * @returns {string} XML content
+ */
+function generateScenesXML(scenes, serverIp, serverPort) {
+    const xmlParts = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        `<VirtualOut Title="LoxHueBridge Scenes" Address="http://${serverIp}:${serverPort}" CmdInit="" CloseAfterSend="true" CmdSep=";">`,
+        '\t<Info templateType="3" minVersion="16011106"/>'
+    ];
+
+    // Add generic scene command (use with Status block)
+    xmlParts.push(
+        `\t<VirtualOutCmd Title="Scene (Generic)" ` +
+        `Comment="Use with Status block - pass scene UUID as value" ` +
+        `CmdOn="/scene/<v>/on" ` +
+        `CmdOff="/scene/<v>/off" ` +
+        `Analog="false"/>`
+    );
+
+    scenes.forEach(scene => {
+        const title = `${scene.name} (Scene)`;
+        const comment = scene.group
+            ? `${scene.group.name} - ${scene.lightCount} lights`
+            : `${scene.lightCount} lights`;
+
+        // Scene activation command (on/off)
+        xmlParts.push(
+            `\t<VirtualOutCmd Title="${escapeXml(title)}" ` +
+            `Comment="${escapeXml(comment)}" ` +
+            `CmdOn="/scene/${scene.uuid}/on" ` +
+            `CmdOff="/scene/${scene.uuid}/off" ` +
+            `Analog="false"/>`
+        );
+    });
+
+    xmlParts.push('</VirtualOut>');
+    return xmlParts.join('\n');
+}
+
+/**
  * Escapes special XML characters
  * @param {string} str - String to escape
  * @returns {string} Escaped string
@@ -125,5 +168,6 @@ function escapeXml(str) {
 module.exports = {
     generateOutputsXML,
     generateInputsXML,
+    generateScenesXML,
     escapeXml
 };

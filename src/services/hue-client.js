@@ -606,6 +606,65 @@ class HueClient {
     }
 
     /**
+     * Activate a scene
+     * @param {string} sceneId - Scene UUID
+     * @returns {Promise<void>}
+     */
+    async activateScene(sceneId) {
+        try {
+            this.logger.info(`Activating scene ${sceneId}`, 'HUE');
+
+            await this._request('PUT', `/scene/${sceneId}`, {
+                recall: {
+                    action: 'active'
+                }
+            });
+
+            this.logger.success(`Scene ${sceneId} activated`, 'HUE');
+        } catch (error) {
+            this.logger.error(`Failed to activate scene ${sceneId}: ${error.message}`, 'HUE');
+            throw error;
+        }
+    }
+
+    /**
+     * Deactivate a scene by turning off all lights in the scene
+     * @param {string} sceneId - Scene UUID
+     * @returns {Promise<void>}
+     */
+    async deactivateScene(sceneId) {
+        try {
+            this.logger.info(`Deactivating scene ${sceneId}`, 'HUE');
+
+            // Get scene details to find lights
+            const sceneRes = await this._request('GET', `/scene/${sceneId}`);
+            const scene = sceneRes.data && sceneRes.data.length > 0 ? sceneRes.data[0] : sceneRes.data;
+
+            if (!scene || !scene.actions || scene.actions.length === 0) {
+                this.logger.warn(`Scene ${sceneId} has no lights to turn off`, 'HUE');
+                return;
+            }
+
+            // Turn off all lights in the scene
+            const turnOffPromises = scene.actions.map(action => {
+                if (action.target && action.target.rid) {
+                    return this._request('PUT', `/light/${action.target.rid}`, {
+                        on: { on: false }
+                    }).catch(err => {
+                        this.logger.error(`Failed to turn off light ${action.target.rid}: ${err.message}`, 'HUE');
+                    });
+                }
+            });
+
+            await Promise.all(turnOffPromises.filter(p => p));
+            this.logger.success(`Scene ${sceneId} deactivated (lights turned off)`, 'HUE');
+        } catch (error) {
+            this.logger.error(`Failed to deactivate scene ${sceneId}: ${error.message}`, 'HUE');
+            throw error;
+        }
+    }
+
+    /**
      * Get diagnostics information
      * @returns {Promise<Array>} Diagnostics data
      */

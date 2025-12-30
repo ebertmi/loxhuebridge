@@ -31,6 +31,7 @@ const { setLogger } = require('./middleware/validation');
 const createSetupRoutes = require('./routes/setup');
 const createApiRoutes = require('./routes/api');
 const createLightsRoutes = require('./routes/lights');
+const createSceneRoutes = require('./routes/scenes');
 
 // --- VERSION INFO ---
 let version = 'unknown';
@@ -112,6 +113,14 @@ app.use('/api', createApiRoutes({
     detectedItems,
     httpPort: HTTP_PORT,
     version
+}));
+
+// Scene control routes (must be before light routes to avoid pattern collision)
+app.use('/', createSceneRoutes({
+    config,
+    hueClient,
+    logger,
+    detectedItems
 }));
 
 // Light control routes

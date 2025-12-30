@@ -7,7 +7,7 @@ const express = require('express');
 const os = require('os');
 const { asyncHandler } = require('../middleware/error-handler');
 const { validateMapping } = require('../middleware/validation');
-const { generateOutputsXML, generateInputsXML } = require('../utils/xml-generator');
+const { generateOutputsXML, generateInputsXML, generateScenesXML } = require('../utils/xml-generator');
 
 const router = express.Router();
 
@@ -246,6 +246,34 @@ function createApiRoutes(dependencies) {
         res.set('Content-Disposition', 'attachment; filename="lox_inputs.xml"');
         res.send(xml);
     });
+
+    /**
+     * Download scenes as Loxone VirtualOut XML
+     * GET /api/download/scenes?uuids=uuid1,uuid2
+     */
+    router.get('/download/scenes', asyncHandler(async (req, res) => {
+        if (!config.isReady()) {
+            return res.status(503).send('Not configured');
+        }
+
+        const filterUuids = req.query.uuids ? req.query.uuids.split(',') : null;
+
+        // Get all scenes from Hue Bridge
+        let scenes = await hueClient.getScenes();
+
+        // Filter by selected UUIDs if provided
+        if (filterUuids) {
+            scenes = scenes.filter(s => filterUuids.includes(s.uuid));
+        }
+
+        // Generate XML
+        const xml = generateScenesXML(scenes, getServerIp(), httpPort);
+
+        // Send as downloadable file
+        res.set('Content-Type', 'text/xml');
+        res.set('Content-Disposition', 'attachment; filename="lox_scenes.xml"');
+        res.send(xml);
+    }));
 
     return router;
 }
