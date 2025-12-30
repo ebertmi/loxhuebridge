@@ -59,6 +59,19 @@ function createApiRoutes(dependencies) {
     }));
 
     /**
+     * Get all available scenes
+     * GET /api/scenes
+     */
+    router.get('/scenes', asyncHandler(async (req, res) => {
+        if (!config.isReady()) {
+            return res.status(503).json([]);
+        }
+
+        const scenes = await hueClient.getScenes();
+        res.json(scenes);
+    }));
+
+    /**
      * Get current mapping
      * GET /api/mapping
      */

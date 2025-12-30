@@ -17,7 +17,7 @@
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; overflow-x: auto; }
         .tab { padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
         .tab.active { background: var(--text-main); color: var(--bg); }
-        .tab[data-tab="light"].active { background: var(--accent); } .tab[data-tab="sensor"].active { background: var(--sensor); } .tab[data-tab="button"].active { background: var(--button); } .tab[data-tab="system"].active, .tab[data-tab="diag"].active { background: #666; }
+        .tab[data-tab="light"].active { background: var(--accent); } .tab[data-tab="sensor"].active { background: var(--sensor); } .tab[data-tab="button"].active { background: var(--button); } .tab[data-tab="scene"].active { background: #9b59b6; } .tab[data-tab="system"].active, .tab[data-tab="diag"].active { background: #666; }
         
         .card { background: var(--card-bg); padding: 25px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 30px; }
         
@@ -122,6 +122,7 @@
         <div class="tab active" data-tab="light" onclick="setTab('light')">💡 Lichter</div>
         <div class="tab" data-tab="sensor" onclick="setTab('sensor')">📡 Sensoren</div>
         <div class="tab" data-tab="button" onclick="setTab('button')">🔘 Schalter</div>
+        <div class="tab" data-tab="scene" onclick="setTab('scene')">🎬 Szenen</div>
         <div class="tab" data-tab="system" onclick="setTab('system')">⚙️ System</div>
         <div class="tab" data-tab="diag" onclick="setTab('diag')">🩺 Diagnose</div>
     </div>
@@ -187,6 +188,19 @@
             </div>
         </div>
     </div>
+
+    <div id="scene-interface" class="tab-content">
+        <h2>Hue Szenen</h2>
+        <div class="card">
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px">
+                Hier werden alle in der Hue Bridge gespeicherten Szenen angezeigt.
+            </p>
+            <button class="add-btn" style="width:auto; padding: 8px 15px; margin-bottom:15px" onclick="loadScenes()">🔄 Aktualisieren</button>
+            <div id="scenesList" class="mapping-list">
+                <div style="text-align:center; color:var(--text-muted)">Klicke auf Aktualisieren...</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="exportModal" class="modal-overlay">
@@ -223,6 +237,7 @@
     let mappings = [];
     let status = {};
     let detectedHistory = [];
+    let scenes = [];
     let logInterval = null;
     let allSelected = false;
     let currentLogFilter = 'ALL';
@@ -249,6 +264,7 @@
         document.getElementById('main-interface').classList.remove('active');
         document.getElementById('system-interface').classList.remove('active');
         document.getElementById('diag-interface').classList.remove('active');
+        document.getElementById('scene-interface').classList.remove('active');
         if(logInterval) { clearInterval(logInterval); logInterval = null; }
 
         if (tab === 'system') {
@@ -259,6 +275,9 @@
         } else if (tab === 'diag') {
             document.getElementById('diag-interface').classList.add('active');
             loadDiagnostics();
+        } else if (tab === 'scene') {
+            document.getElementById('scene-interface').classList.add('active');
+            loadScenes();
         } else {
             document.getElementById('main-interface').classList.add('active');
             const btn = document.querySelector('.add-btn');
@@ -680,6 +699,114 @@
             cachedLogs = logs; // Cache for filtering
             renderLogs();
         } catch(e) {}
+    }
+
+    // --- SCENES ---
+    async function loadScenes() {
+        const container = document.getElementById('scenesList');
+        container.innerHTML = '<div style="text-align:center">Lade Szenen...</div>';
+
+        try {
+            const res = await fetch('/api/scenes');
+            scenes = await res.json();
+            renderScenes();
+        } catch(e) {
+            container.innerHTML = `<div style="color:red">Fehler beim Laden: ${e.message}</div>`;
+        }
+    }
+
+    function xyToRgb(x, y, brightness = 100) {
+        const z = 1.0 - x - y;
+        const Y = brightness / 100;
+        const X = (Y / y) * x;
+        const Z = (Y / y) * z;
+
+        let r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
+        let g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
+        let b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
+
+        r = Math.max(0, Math.min(1, r));
+        g = Math.max(0, Math.min(1, g));
+        b = Math.max(0, Math.min(1, b));
+
+        return `rgb(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)})`;
+    }
+
+    function renderScenes() {
+        const container = document.getElementById('scenesList');
+
+        if (scenes.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:var(--text-muted)">Keine Szenen gefunden.</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        scenes.forEach(scene => {
+            const div = document.createElement('div');
+            div.className = 'mapping-item';
+            div.style.borderLeftColor = '#9b59b6'; // Purple accent
+
+            // Build light names list
+            let lightsList = '';
+            if (scene.lights && scene.lights.length > 0) {
+                const lightNames = scene.lights.map(l => l.name).join(', ');
+                lightsList = `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px">💡 ${lightNames}</div>`;
+            }
+
+            // Build palette and speed info line
+            let extraInfo = '';
+            let paletteHtml = '';
+            let speedHtml = '';
+
+            // Color palette preview
+            if (scene.palette && scene.palette.color && scene.palette.color.length > 0) {
+                const colors = scene.palette.color.slice(0, 5); // Max 5 colors
+                const colorDots = colors.map(c => {
+                    // Palette structure: c.color.xy.x and c.color.xy.y
+                    if (c.color && c.color.xy) {
+                        const rgb = xyToRgb(c.color.xy.x, c.color.xy.y, 100);
+                        return `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${rgb}; margin-right:4px; border:1px solid var(--border)"></span>`;
+                    }
+                    return '';
+                }).join('');
+                paletteHtml = `🎨 ${colorDots}`;
+            }
+
+            // Speed badge
+            if (scene.speed !== null && scene.speed !== undefined) {
+                const speedMs = Math.round(scene.speed * 1000);
+                speedHtml = `⚡ ${speedMs}ms`;
+            }
+
+            if (paletteHtml || speedHtml) {
+                extraInfo = `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px">${paletteHtml}${paletteHtml && speedHtml ? ' ' : ''}${speedHtml}</div>`;
+            }
+
+            // Group/Room badge
+            let groupBadge = '';
+            if (scene.group) {
+                const icon = scene.group.type === 'room' ? '🏠' : '📍';
+                groupBadge = `<span class="badge" style="margin-right:8px">${icon} ${scene.group.name}</span>`;
+            }
+
+            // Light count badge
+            const countBadge = `<span class="badge">${scene.lightCount} ${scene.lightCount === 1 ? 'Licht' : 'Lichter'}</span>`;
+
+            div.innerHTML = `
+                <div>
+                    <div class="mapping-lox" style="font-weight:700">${scene.name} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400">(${scene.uuid})</span></div>
+                    ${lightsList}
+                    ${extraInfo}
+                </div>
+                <div class="status-badges">
+                    ${groupBadge}
+                    ${countBadge}
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
     }
 
     init();

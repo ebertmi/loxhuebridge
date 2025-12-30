@@ -519,6 +519,93 @@ class HueClient {
     }
 
     /**
+     * Get all scenes from Hue Bridge with enriched data
+     * @returns {Promise<Array>} Array of scenes with resolved light names and group info
+     */
+    async getScenes() {
+        try {
+            const [scenesRes, lightsRes, roomsRes, zonesRes] = await Promise.all([
+                this._request('GET', '/scene'),
+                this._request('GET', '/light'),
+                this._request('GET', '/room'),
+                this._request('GET', '/zone')
+            ]);
+
+            // Build light lookup map (UUID -> name)
+            const lightMap = {};
+            if (lightsRes.data) {
+                lightsRes.data.forEach(light => {
+                    lightMap[light.id] = light.metadata.name;
+                });
+            }
+
+            // Build group lookup map (UUID -> name and type)
+            const groupMap = {};
+            const allGroups = [...(roomsRes.data || []), ...(zonesRes.data || [])];
+            allGroups.forEach(group => {
+                groupMap[group.id] = {
+                    name: group.metadata.name,
+                    type: group.type // 'room' or 'zone'
+                };
+            });
+
+            const scenes = [];
+
+            if (scenesRes.data) {
+                scenesRes.data.forEach(scene => {
+                    // Extract lights involved in this scene
+                    const lights = [];
+                    if (scene.actions && Array.isArray(scene.actions)) {
+                        scene.actions.forEach(action => {
+                            if (action.target && action.target.rid) {
+                                const lightName = lightMap[action.target.rid];
+                                if (lightName) {
+                                    lights.push({
+                                        uuid: action.target.rid,
+                                        name: lightName,
+                                        action: action.action // on/off, dimming, color info
+                                    });
+                                }
+                            }
+                        });
+                    }
+
+                    // Get group/room information
+                    let groupInfo = null;
+                    if (scene.group && scene.group.rid) {
+                        const group = groupMap[scene.group.rid];
+                        if (group) {
+                            groupInfo = {
+                                uuid: scene.group.rid,
+                                name: group.name,
+                                type: group.type
+                            };
+                        }
+                    }
+
+                    scenes.push({
+                        uuid: scene.id,
+                        name: scene.metadata ? scene.metadata.name : 'Unnamed Scene',
+                        lights: lights,
+                        lightCount: lights.length,
+                        group: groupInfo,
+                        speed: scene.speed || null,
+                        palette: scene.palette || null
+                    });
+                });
+            }
+
+            // Sort alphabetically by name
+            scenes.sort((a, b) => a.name.localeCompare(b.name));
+
+            return scenes;
+        } catch (error) {
+            this.logger.error(`Failed to get scenes: ${error.message}`, 'HUE');
+            return [];
+        }
+    }
+
+    /**
      * Get diagnostics information
      * @returns {Promise<Array>} Diagnostics data
      */
