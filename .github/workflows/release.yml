@@ -33,9 +33,10 @@ jobs:
           cp package-lock.json release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp ecosystem.config.js release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp README.md release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
-          cp QUICKSTART.md release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp CHANGELOG.md release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp LICENSE release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
+          # Optional files
+          [ -f QUICKSTART.md ] && cp QUICKSTART.md release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/ || true
 
       - name: Create tar.gz archive
         run: |
