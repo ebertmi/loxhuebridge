@@ -13,7 +13,7 @@
     "pm2:restart": "pm2 restart loxhuebridge",
     "pm2:logs": "pm2 logs loxhuebridge",
     "pm2:status": "pm2 status",
-    "test": "node test-refactored.js",
+    "test": "node test/test-refactored.js",
     "legacy": "node server.legacy.js"
   },
   "dependencies": {

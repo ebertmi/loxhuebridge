@@ -9,7 +9,7 @@ const {
     isValidControlValue,
     isValidIpAddress,
     isValidPort
-} = require('./src/config/validation');
+} = require('../src/config/validation');
 
 console.log('\n📋 Testing Enhanced Parameter Validation\n');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');

@@ -3,7 +3,7 @@
  * Demonstrates the exponential backoff retry mechanism
  */
 
-const CONSTANTS = require('./src/constants');
+const CONSTANTS = require('../src/constants');
 
 console.log('\n📋 Retry Configuration:');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

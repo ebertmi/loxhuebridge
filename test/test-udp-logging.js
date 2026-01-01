@@ -3,9 +3,9 @@
  * Demonstrates enhanced UDP error monitoring and health tracking
  */
 
-const Logger = require('./src/utils/logger');
-const Config = require('./src/config');
-const LoxoneUDP = require('./src/services/loxone-udp');
+const Logger = require('../src/utils/logger');
+const Config = require('../src/config');
+const LoxoneUDP = require('../src/services/loxone-udp');
 
 console.log('\n📋 Testing Enhanced UDP Logging\n');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');

@@ -3,7 +3,7 @@
  * Demonstrates Winston-based structured logging
  */
 
-const Logger = require('./src/utils/logger');
+const Logger = require('../src/utils/logger');
 const fs = require('fs');
 const path = require('path');
 
