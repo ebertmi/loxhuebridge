@@ -5,6 +5,34 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-12-30
+
+### 🚀 Neu (Features)
+- **Szenen-Steuerung:** Vollständige Unterstützung für Philips Hue Szenen!
+    - **Neuer Tab "Szenen":** Zeigt alle verfügbaren Hue-Szenen mit Details (beteiligte Lichter, Raum/Zone, Geschwindigkeit, Farbpalette, UUID).
+    - **Aktivierung/Deaktivierung:** Szenen können direkt aus dem Dashboard aktiviert oder deaktiviert werden (mit visueller Statusanzeige).
+    - **API-Endpunkte:** `/scene/:id/on` und `/scene/:id/off` für die Steuerung via Loxone Virtual Outputs.
+    - **XML-Export:** Automatischer Export von Loxone VirtualOut XML für Szenen (analog zum Lichter-Export).
+        - **Option 1 (Direkt):** Ein Virtual Output pro Szene (sofort einsatzbereit).
+        - **Option 2 (Status-Block):** Ein generischer Virtual Output mit `<v>` Platzhalter – ermöglicht die Zuordnung von Loxone-Stimmungen zu Hue-Szenen via Status-Baustein.
+    - **Hilfe-Bereich:** Integrierte Dokumentation im Szenen-Tab erklärt beide Integrationsmethoden.
+
+### 🛠 Verbesserungen
+- **Farbpaletten-Anzeige:** Szenen zeigen die Farbpalette als kleine Farbpunkte (XY zu RGB konvertiert).
+- **Geschwindigkeitsanzeige:** Transitionszeit wird in Millisekunden (ms) statt Sekunden angezeigt (gerundet auf ganze Zahlen).
+- **UUID-Anzeige:** Szenen-UUIDs werden für einfaches Kopieren in kleinerer, grauer Schrift dargestellt.
+- **GitHub Actions:** Workflow für automatisierte Releases (ZIP/TAR.GZ) bei Version-Tags.
+
+### 📝 Backend
+- **Neue Methoden in `hue-client.js`:**
+    - `getScenes()` – Ruft alle Szenen ab und reichert sie mit Licht- und Gruppeninformationen an.
+    - `activateScene(sceneId)` – Aktiviert eine Szene.
+    - `deactivateScene(sceneId)` – Deaktiviert eine Szene (schaltet alle Lichter aus).
+- **Neue Route:** `src/routes/scenes.js` mit UUID-Validierung und Fehlerbehandlung.
+- **XML-Generator:** `generateScenesXML()` in `xml-generator.js` für Loxone VirtualOut XML.
+
+---
+
 ## [1.7.2] - 2025-12-15
 
 ### 🐛 Bugfixes
