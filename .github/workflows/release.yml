@@ -17,14 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install production dependencies
-        run: npm ci --omit=dev
-
       - name: Get version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -37,7 +29,6 @@ jobs:
         run: |
           cp -r src release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp -r public release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
-          cp -r node_modules release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp package.json release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp package-lock.json release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
           cp ecosystem.config.js release/loxhuebridge-${{ steps.get_version.outputs.VERSION }}/
