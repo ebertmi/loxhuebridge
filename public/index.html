@@ -183,15 +183,19 @@
         /* Button utilities */
         .btn-compact {
             width: auto;
-            padding: 6px 12px;
+            padding: 6px 12px !important;
             font-size: 0.85rem;
-            margin: 0;
+            margin: 0 !important;
+            line-height: 1.5;
         }
 
         .btn-small {
-            width: auto;
-            padding: 8px 15px;
-            margin: 0;
+            width: auto !important;
+            padding: 8px 15px !important;
+            margin: 0 !important;
+            margin-top: 0 !important;
+            line-height: 1.5;
+            font-size: inherit;
         }
 
         /* Info/Hint text */
@@ -285,8 +289,8 @@
             </div>
             <div>
                 <div class="header-actions">
-                    <h2 style="margin:0">Aktiv</h2>
-                    <button class="secondary-btn" style="margin:0" onclick="openExportModal()">📥 XML Exportieren</button>
+                    <h2 class="m-0">Aktiv</h2>
+                    <button class="secondary-btn m-0" onclick="openExportModal()">📥 XML Exportieren</button>
                 </div>
                 <div id="mappingList" class="mapping-list"></div>
             </div>
@@ -311,15 +315,15 @@
             <button class="filter-btn" data-filter="UDP" onclick="setLogFilter('UDP')">📤 UDP</button>
             <button class="filter-btn" data-filter="SYSTEM" onclick="setLogFilter('SYSTEM')">⚙️ System</button>
         </div>
-        <div class="log-console" id="logConsole"><div style="text-align:center; padding-top:20px; color:#666;">Warte auf Logs...</div></div>
+        <div class="log-console" id="logConsole"><div class="text-center text-gray" style="padding-top:20px">Warte auf Logs...</div></div>
     </div>
 
     <div id="diag-interface" class="tab-content">
         <h2>Zigbee Netzwerk Status</h2>
         <div class="card">
-            <button class="primary-btn" style="width:auto; padding: 8px 15px; margin-top:0" onclick="loadDiagnostics()">🔄 Aktualisieren</button>
-            <div id="diagContent" style="margin-top:15px">
-                <div style="text-align:center; color:var(--text-muted)">Klicke auf Aktualisieren...</div>
+            <button class="primary-btn btn-small mt-0" onclick="loadDiagnostics()">🔄 Aktualisieren</button>
+            <div id="diagContent" class="mt-3">
+                <div class="text-center text-muted-primary">Klicke auf Aktualisieren...</div>
             </div>
         </div>
     </div>
@@ -327,22 +331,22 @@
     <div id="scene-interface" class="tab-content">
         <h2>Hue Szenen</h2>
         <div class="card">
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px">
+            <p class="scene-meta">
                 Hier werden alle in der Hue Bridge gespeicherten Szenen angezeigt.
             </p>
-            <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center">
-                <button class="primary-btn" style="width:auto; padding: 8px 15px; margin:0" onclick="loadScenes()">🔄 Aktualisieren</button>
-                <button class="secondary-btn" style="width:auto; padding: 8px 15px; margin:0" onclick="openSceneExportModal()">📥 XML Exportieren</button>
+            <div class="flex-center gap-3 mb-3">
+                <button class="primary-btn btn-small" onclick="loadScenes()">🔄 Aktualisieren</button>
+                <button class="secondary-btn btn-small" onclick="openSceneExportModal()">📥 XML Exportieren</button>
             </div>
 
-            <details style="margin-bottom:20px; padding:15px; background:var(--input-bg); border-radius:8px; border:1px solid var(--border)">
-                <summary style="cursor:pointer; font-weight:600; color:var(--accent)">💡 Loxone Integration Hilfe</summary>
-                <div style="margin-top:15px; font-size:0.9rem; line-height:1.6">
-                    <p style="margin-top:0"><strong>Nach dem XML Export stehen dir zwei Optionen zur Verfügung:</strong></p>
+            <details class="help-section">
+                <summary class="help-summary">💡 Loxone Integration Hilfe</summary>
+                <div class="help-content">
+                    <p class="mt-0"><strong>Nach dem XML Export stehen dir zwei Optionen zur Verfügung:</strong></p>
 
                     <div style="background:var(--card-bg); padding:12px; border-radius:6px; margin-bottom:12px; border-left:3px solid var(--accent)">
                         <strong>Option 1: Direkte Szenensteuerung</strong>
-                        <ul style="margin:8px 0 0 0; padding-left:20px">
+                        <ul class="mt-2 pl-4 mb-0">
                             <li>Jede Szene erhält einen eigenen virtuellen Ausgang</li>
                             <li>Einfach, aber viele Ausgänge bei vielen Szenen</li>
                             <li>Ideal für feste Szenen-Buttons</li>
@@ -351,10 +355,10 @@
 
                     <div style="background:var(--card-bg); padding:12px; border-radius:6px; border-left:3px solid #9b59b6">
                         <strong>Option 2: Status-Baustein + Generischer Ausgang (empfohlen)</strong>
-                        <ul style="margin:8px 0 0 0; padding-left:20px">
+                        <ul class="mt-2 pl-4 mb-0">
                             <li>Ein <strong>generischer Ausgang</strong> "Scene (Generic)" wird exportiert</li>
                             <li>Nutze den <strong>Status-Baustein</strong> in Loxone:
-                                <ul style="margin-top:4px">
+                                <ul class="mt-1">
                                     <li>Stimmung 1 → Szenen-UUID (z.B. <code style="background:var(--input-bg); padding:2px 4px; border-radius:3px; font-size:0.85rem">abc-123...</code>)</li>
                                     <li>Stimmung 2 → andere Szenen-UUID</li>
                                     <li>usw.</li>
@@ -373,7 +377,7 @@
             </details>
 
             <div id="scenesList" class="mapping-list">
-                <div style="text-align:center; color:var(--text-muted)">Klicke auf Aktualisieren...</div>
+                <div class="text-center text-muted-primary">Klicke auf Aktualisieren...</div>
             </div>
         </div>
     </div>
@@ -382,7 +386,7 @@
 <div id="exportModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-header">
-            <h2 style="margin:0">Export Auswahl</h2>
+            <h2 class="m-0">Export Auswahl</h2>
             <button class="btn-link" onclick="toggleSelectAll()">Alles markieren</button>
         </div>
         <div class="modal-list" id="exportList">
@@ -397,7 +401,7 @@
 <div id="sceneExportModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-header">
-            <h2 style="margin:0">Szenen Export</h2>
+            <h2 class="m-0">Szenen Export</h2>
             <button class="btn-link" onclick="toggleSelectAllScenes()">Alles markieren</button>
         </div>
         <div class="modal-list" id="sceneExportList"></div>
@@ -411,11 +415,11 @@
 <div id="detailsModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-header">
-            <h2 style="margin:0">Geräte Details</h2>
+            <h2 class="m-0">Geräte Details</h2>
             <button class="btn-link" onclick="closeModal('detailsModal')">✕</button>
         </div>
         <div id="detailsContent"></div>
-        <div class="modal-actions" style="margin-top:20px">
+        <div class="modal-actions mt-4">
             <button class="btn-sec" onclick="closeModal('detailsModal')">Schließen</button>
         </div>
     </div>
@@ -504,7 +508,7 @@
         }
         
         if (filtered.length === 0) {
-            consoleDiv.innerHTML = '<div style="text-align:center; color:#555">Keine Logs in dieser Kategorie.</div>';
+            consoleDiv.innerHTML = '<div class="text-center text-gray-light">Keine Logs in dieser Kategorie.</div>';
             return;
         }
 
@@ -520,7 +524,7 @@
     // --- DIAGNOSTICS (OPTIMIZED) ---
     async function loadDiagnostics() {
         const container = document.getElementById('diagContent');
-        container.innerHTML = '<div style="text-align:center">Lade Daten...</div>';
+        container.innerHTML = '<div class="text-center">Lade Daten...</div>';
         try {
             const res = await fetch('/api/diagnostics');
             const data = await res.json();
@@ -897,7 +901,7 @@
     // --- SCENES ---
     async function loadScenes() {
         const container = document.getElementById('scenesList');
-        container.innerHTML = '<div style="text-align:center">Lade Szenen...</div>';
+        container.innerHTML = '<div class="text-center">Lade Szenen...</div>';
 
         try {
             const res = await fetch('/api/scenes');
@@ -1024,7 +1028,7 @@
         const container = document.getElementById('scenesList');
 
         if (scenes.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:var(--text-muted)">Keine Szenen gefunden.</div>';
+            container.innerHTML = '<div class="text-center text-muted-primary">Keine Szenen gefunden.</div>';
             return;
         }
 
@@ -1095,12 +1099,12 @@
 
             // Control buttons
             const buttons = `
-                <div style="display:flex; gap:8px; margin-top:10px">
-                    <button class="primary-btn btn-accent" style="width:auto; padding:6px 12px; font-size:0.85rem; margin:0"
+                <div class="flex-center gap-2 mt-2">
+                    <button class="primary-btn btn-accent btn-compact"
                             onclick="activateSceneFromUI('${scene.uuid}', '${scene.name.replace(/'/g, "\\'")}')">
                         ▶ Aktivieren
                     </button>
-                    <button class="primary-btn btn-gray" style="width:auto; padding:6px 12px; font-size:0.85rem; margin:0"
+                    <button class="primary-btn btn-gray btn-compact"
                             onclick="deactivateSceneFromUI('${scene.uuid}', '${scene.name.replace(/'/g, "\\'")}')">
                         ⏹ Aus
                     </button>
