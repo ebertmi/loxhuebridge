@@ -934,6 +934,18 @@
             return alert("Keine Szenen zum Exportieren.\nBitte zuerst Szenen laden.");
         }
 
+        // Add generic scene VQ option at the top (always checked and disabled)
+        const genericItem = document.createElement('div');
+        genericItem.className = 'modal-item';
+        genericItem.innerHTML = `
+            <input type="checkbox" class="modal-checkbox" value="__generic__" checked disabled>
+            <div>
+                <div style="font-weight:bold">Generischer Szenen VQ</div>
+                <div style="font-size:0.8rem; color:var(--text-muted)">Für Status-Block - UUID als Wert übergeben (immer aktiv)</div>
+            </div>
+        `;
+        list.appendChild(genericItem);
+
         // Sort scenes alphabetically
         const sortedScenes = [...scenes].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -962,7 +974,7 @@
     }
 
     function toggleSelectAllScenes() {
-        const checkboxes = document.querySelectorAll('#sceneExportList .modal-checkbox');
+        const checkboxes = document.querySelectorAll('#sceneExportList .modal-checkbox:not([disabled])');
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
 
         checkboxes.forEach(cb => {
@@ -977,10 +989,14 @@
             return alert("Bitte wähle mindestens eine Szene aus.");
         }
 
-        // Collect selected scene UUIDs
-        const uuids = Array.from(checked).map(cb => cb.value).join(',');
+        // Collect selected scene UUIDs (filter out the generic scene marker)
+        const uuids = Array.from(checked)
+            .map(cb => cb.value)
+            .filter(value => value !== '__generic__')
+            .join(',');
 
         // Download XML via API
+        // Always pass uuids parameter - if empty, only the generic scene command will be exported
         window.location.href = `/api/download/scenes?uuids=${uuids}`;
 
         // Close modal

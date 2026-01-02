@@ -256,7 +256,8 @@ function createApiRoutes(dependencies) {
             return res.status(503).send('Not configured');
         }
 
-        const filterUuids = req.query.uuids ? req.query.uuids.split(',') : null;
+        // Check if uuids parameter exists (even if empty)
+        const filterUuids = 'uuids' in req.query ? req.query.uuids.split(',').filter(u => u) : null;
 
         // Get all scenes from Hue Bridge
         let scenes = await hueClient.getScenes();
