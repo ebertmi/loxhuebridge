@@ -39,7 +39,7 @@ Du musst keinen Code mehr bauen. Du brauchst nur Docker und eine `docker-compose
     ```yaml
     services:
       loxhuebridge:
-        image: ghcr.io/bausi2k/loxhuebridge:latest
+        image: ghcr.io/ebertmi/loxhuebridge:latest
         container_name: loxhuebridge
         restart: always
         network_mode: "host"
@@ -246,7 +246,7 @@ You don't need to build the code. Just use Docker Compose.
     ```yaml
     services:
       loxhuebridge:
-        image: ghcr.io/bausi2k/loxhuebridge:latest
+        image: ghcr.io/ebertmi/loxhuebridge:latest
         container_name: loxhuebridge
         restart: always
         network_mode: "host"
