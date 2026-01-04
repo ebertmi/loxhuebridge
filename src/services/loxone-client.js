@@ -51,6 +51,7 @@ class LoxoneClient extends EventEmitter {
         this.structure = null;
         this.stateUuidIndex = new Map(); // stateUuid → control info
         this.structureVersion = null; // lastModified timestamp
+        this.stateValues = new Map(); // stateUuid → current value
 
         // Keepalive
         this.keepaliveInterval = null;
@@ -195,13 +196,23 @@ class LoxoneClient extends EventEmitter {
             throw new Error('Session key not initialized');
         }
 
-        // Generate new salt if needed
-        if (!this.currentSalt) {
-            this.currentSalt = generateSalt();
-        }
+        // Generate new salt for replay protection
+        const prevSalt = this.currentSalt;
+        const nextSalt = generateSalt();
 
         // Build payload with salt
-        const payload = `salt/${this.currentSalt}/${command}`;
+        // First command or salt update
+        let payload;
+        if (prevSalt) {
+            // Use nextSalt format for replay protection
+            payload = `nextSalt/${prevSalt}/${nextSalt}/${command}`;
+        } else {
+            // First command - simple salt format
+            payload = `salt/${nextSalt}/${command}`;
+        }
+
+        // Update current salt for next command
+        this.currentSalt = nextSalt;
 
         // Encrypt
         const encrypted = aesEncrypt(payload, this.sessionKey, this.sessionIv);
@@ -477,6 +488,15 @@ class LoxoneClient extends EventEmitter {
             // Load structure file (uses cache if version unchanged)
             await this.loadStructureFile();
 
+            // Wait for initial binary status updates to be processed
+            // This ensures we receive the initial Text States before triggering state queries
+            this.logger.debug('Waiting for initial binary status updates...', 'LOXONE');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Query initial color states
+            // Triggers /state commands which generate Text State updates for ColorPickerV2
+            await this._queryColorStates();
+
             // Reset reconnect attempts on successful connection
             this.reconnectAttempts = 0;
 
@@ -621,6 +641,11 @@ class LoxoneClient extends EventEmitter {
             case 'value_states':
                 this.logger.debug(`Value states: ${message.data.length} updates`, 'LOXONE');
 
+                // Store state values
+                message.data.forEach(state => {
+                    this.stateValues.set(state.uuid, state.value);
+                });
+
                 // Process and enrich state updates with control info
                 const enrichedUpdates = message.data.map(state => {
                     const controlInfo = this.getControlByStateUuid(state.uuid);
@@ -637,6 +662,22 @@ class LoxoneClient extends EventEmitter {
 
             case 'text_states':
                 this.logger.debug(`Text states: ${message.data.length} updates`, 'LOXONE');
+
+                // Store text states (contains color values for ColorPickerV2)
+                message.data.forEach(state => {
+                    this.stateValues.set(state.uuid, state.text);
+
+                    // Log ALL text state updates for debugging (including UUID)
+                    this.logger.debug(`Text state: UUID=${state.uuid}, text="${state.text}"`, 'LOXONE');
+
+                    const controlInfo = this.getControlByStateUuid(state.uuid);
+                    if (controlInfo) {
+                        this.logger.debug(`  → Control: ${controlInfo.controlName} (${controlInfo.stateName})`, 'LOXONE');
+                    } else {
+                        this.logger.debug(`  → UUID not found in state index`, 'LOXONE');
+                    }
+                });
+
                 this.emit('text_states', message.data);
                 break;
 
@@ -751,7 +792,8 @@ class LoxoneClient extends EventEmitter {
             const command = `jdev/sps/io/${uuid}/${value}`;
             this.logger.debug(`Sending control command: ${command}`, 'LOXONE');
 
-            const response = await this._sendCommand(command, true);
+            // Try unencrypted first (works after JWT auth according to docs)
+            const response = await this._sendCommand(command, false);
             const data = JSON.parse(response);
 
             if (!data || !data.LL || data.LL.Code !== '200') {
@@ -947,6 +989,87 @@ class LoxoneClient extends EventEmitter {
     }
 
     /**
+     * Query initial control states by triggering state updates
+     * Sends /state command to each SubControl, which triggers a Binary Status Update
+     * with the current value.
+     */
+    async _queryColorStates() {
+        if (!this.structure || !this.structure.controls) {
+            return;
+        }
+
+        const controlsToQuery = [];
+
+        // Collect all SubControls (Dimmer, ColorPickerV2, Switch)
+        for (const [controlUuid, control] of Object.entries(this.structure.controls)) {
+            if (control.subControls) {
+                for (const [subUuid, subControl] of Object.entries(control.subControls)) {
+                    // Query Dimmer, ColorPickerV2, and Switch subControls
+                    if (['Dimmer', 'ColorPickerV2', 'Switch'].includes(subControl.type)) {
+                        controlsToQuery.push({
+                            uuid: subControl.uuidAction, // Use uuidAction, not state UUID!
+                            name: subControl.name,
+                            type: subControl.type
+                        });
+                    }
+                }
+            }
+        }
+
+        this.logger.debug(`Triggering state updates for ${controlsToQuery.length} controls...`, 'LOXONE');
+
+        // Log expected color state UUIDs for ColorPickerV2
+        const colorPickerControls = controlsToQuery.filter(c => c.type === 'ColorPickerV2');
+        if (colorPickerControls.length > 0) {
+            this.logger.debug(`Expected color state UUIDs for ${colorPickerControls.length} ColorPickerV2 controls:`, 'LOXONE');
+            for (const cp of colorPickerControls) {
+                // Find the color state UUID from the structure
+                const colorStateUuid = this._findColorStateUuid(cp.uuid);
+                this.logger.debug(`  - ${cp.name}: ${colorStateUuid}`, 'LOXONE');
+            }
+        }
+
+        // Trigger state update for each control
+        for (const controlInfo of controlsToQuery) {
+            try {
+                // Send /state command - this triggers a Binary Status Update
+                const response = await this._sendCommand(`jdev/sps/io/${controlInfo.uuid}/state`, false);
+                const data = JSON.parse(response);
+
+                if (data && data.LL && data.LL.Code === '200') {
+                    this.logger.debug(`State update triggered for ${controlInfo.name} (${controlInfo.type})`, 'LOXONE');
+                } else {
+                    this.logger.warn(`Failed to trigger state update for ${controlInfo.name}: ${JSON.stringify(data)}`, 'LOXONE');
+                }
+            } catch (error) {
+                this.logger.warn(`Failed to trigger state update for ${controlInfo.name}: ${error.message}`, 'LOXONE');
+            }
+        }
+
+        this.logger.success(`Triggered state updates for ${controlsToQuery.length} controls`, 'LOXONE');
+    }
+
+    /**
+     * Find color state UUID for a ColorPickerV2 control
+     */
+    _findColorStateUuid(uuidAction) {
+        if (!this.structure || !this.structure.controls) {
+            return null;
+        }
+
+        for (const control of Object.values(this.structure.controls)) {
+            if (control.subControls) {
+                for (const [subUuid, subControl] of Object.entries(control.subControls)) {
+                    if (subControl.uuidAction === uuidAction && subControl.type === 'ColorPickerV2') {
+                        return subControl.states?.color || null;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get control info for a state UUID
      *
      * @param {string} stateUuid - State UUID
@@ -954,6 +1077,16 @@ class LoxoneClient extends EventEmitter {
      */
     getControlByStateUuid(stateUuid) {
         return this.stateUuidIndex.get(stateUuid) || null;
+    }
+
+    /**
+     * Get current value for a state UUID
+     *
+     * @param {string} stateUuid - State UUID
+     * @returns {number|null} Current value or null if not available
+     */
+    getStateValue(stateUuid) {
+        return this.stateValues.has(stateUuid) ? this.stateValues.get(stateUuid) : null;
     }
 }
 

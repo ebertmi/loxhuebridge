@@ -303,11 +303,24 @@ function createApiRoutes(dependencies) {
 
         for (const [uuid, control] of Object.entries(structure.controls || {})) {
             if (lightTypes.includes(control.type)) {
+                // Get current state values
+                const stateValues = {};
+                if (control.states) {
+                    for (const [stateName, stateUuid] of Object.entries(control.states)) {
+                        const value = loxoneClient.getStateValue(stateUuid);
+                        if (value !== null) {
+                            stateValues[stateName] = value;
+                        }
+                    }
+                }
+
                 const controlData = {
                     uuid,
                     name: control.name,
                     type: control.type,
                     states: control.states || {},
+                    stateValues: stateValues,
+                    details: control.details || {},
                     subControls: []
                 };
 
@@ -316,11 +329,23 @@ function createApiRoutes(dependencies) {
                     for (const [subUuid, subControl] of Object.entries(control.subControls)) {
                         // Only include light-related subcontrols
                         if (lightTypes.includes(subControl.type)) {
+                            // Get current state values for subcontrol
+                            const subStateValues = {};
+                            if (subControl.states) {
+                                for (const [stateName, stateUuid] of Object.entries(subControl.states)) {
+                                    const value = loxoneClient.getStateValue(stateUuid);
+                                    if (value !== null) {
+                                        subStateValues[stateName] = value;
+                                    }
+                                }
+                            }
+
                             controlData.subControls.push({
                                 uuid: subUuid,
                                 name: subControl.name,
                                 type: subControl.type,
                                 states: subControl.states || {},
+                                stateValues: subStateValues,
                                 details: subControl.details || {}
                             });
                         }

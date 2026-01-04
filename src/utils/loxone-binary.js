@@ -50,10 +50,31 @@ function parseMessageHeader(buffer) {
 }
 
 /**
+ * Convert 16-byte binary UUID to Loxone string format
+ * Loxone UUIDs use little-endian byte order for first 3 components
+ *
+ * @param {Buffer} bytes - 16 bytes representing UUID
+ * @returns {string} UUID in format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ */
+function formatLoxoneUuid(bytes) {
+    // Read components in little-endian format
+    const part1 = bytes.readUInt32LE(0).toString(16).padStart(8, '0');
+    const part2 = bytes.readUInt16LE(4).toString(16).padStart(4, '0');
+    const part3 = bytes.readUInt16LE(6).toString(16).padStart(4, '0');
+    // Last two parts are big-endian - Loxone format merges them without hyphen
+    const part4 = bytes.toString('hex', 8, 10);
+    const part5 = bytes.toString('hex', 10, 16);
+
+    // Loxone uses non-standard UUID format: xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx (3 hyphens)
+    const result = `${part1}-${part2}-${part3}-${part4}${part5}`;
+    return result;
+}
+
+/**
  * Parse value states payload
  *
  * Payload structure:
- * - UUID (36 bytes, UTF-8 string)
+ * - UUID (16 bytes, binary)
  * - Value (8 bytes, double little-endian)
  * - Repeat for each state...
  *
@@ -64,11 +85,12 @@ function parseValueStates(payload) {
     const states = [];
     let offset = 0;
 
-    while (offset + 44 <= payload.length) { // 36 bytes UUID + 8 bytes value
+    while (offset + 24 <= payload.length) { // 16 bytes UUID + 8 bytes value
         try {
-            // Read UUID (36 bytes)
-            const uuid = payload.toString('utf8', offset, offset + 36);
-            offset += 36;
+            // Read UUID (16 bytes binary)
+            const uuidBytes = payload.slice(offset, offset + 16);
+            const uuid = formatLoxoneUuid(uuidBytes);
+            offset += 16;
 
             // Read value (8 bytes, double)
             const value = payload.readDoubleLE(offset);
@@ -93,8 +115,8 @@ function parseValueStates(payload) {
  * Parse text states payload
  *
  * Payload structure:
- * - UUID (36 bytes, UTF-8 string)
- * - UUID icon (36 bytes, UTF-8 string)
+ * - UUID (16 bytes, binary)
+ * - UUID icon (16 bytes, binary)
  * - Text length (32-bit unsigned little-endian)
  * - Text (variable length, UTF-8 string)
  * - Repeat for each state...
@@ -108,13 +130,15 @@ function parseTextStates(payload) {
 
     while (offset < payload.length) {
         try {
-            // Read UUID (36 bytes)
-            const uuid = payload.toString('utf8', offset, offset + 36);
-            offset += 36;
+            // Read UUID (16 bytes binary)
+            const uuidBytes = payload.slice(offset, offset + 16);
+            const uuid = formatLoxoneUuid(uuidBytes);
+            offset += 16;
 
-            // Read UUID icon (36 bytes)
-            const uuidIcon = payload.toString('utf8', offset, offset + 36);
-            offset += 36;
+            // Read UUID icon (16 bytes binary)
+            const uuidIconBytes = payload.slice(offset, offset + 16);
+            const uuidIcon = formatLoxoneUuid(uuidIconBytes);
+            offset += 16;
 
             // Read text length (4 bytes)
             const textLength = payload.readUInt32LE(offset);
@@ -122,7 +146,10 @@ function parseTextStates(payload) {
 
             // Read text
             const text = payload.toString('utf8', offset, offset + textLength);
-            offset += textLength;
+
+            // Text is padded to 4-byte boundary
+            const paddedLength = (textLength + 3) & ~3;
+            offset += paddedLength;
 
             states.push({ uuid, uuidIcon, text });
         } catch (error) {

@@ -422,6 +422,7 @@
     let scenes = [];
     let activeScenes = new Set(); // Track which scenes are currently active
     let logInterval = null;
+    let loxControlsInterval = null;
     let allSelected = false;
     let currentLogFilter = 'ALL';
     let cachedLogs = [];
@@ -450,6 +451,7 @@
         document.getElementById('scene-interface').classList.remove('active');
         document.getElementById('loxctrl-interface').classList.remove('active');
         if(logInterval) { clearInterval(logInterval); logInterval = null; }
+        if(loxControlsInterval) { clearInterval(loxControlsInterval); loxControlsInterval = null; }
 
         if (tab === 'system') {
             document.getElementById('system-interface').classList.add('active');
@@ -464,6 +466,8 @@
             loadScenes();
         } else if (tab === 'loxctrl') {
             document.getElementById('loxctrl-interface').classList.add('active');
+            loadLoxoneControls();
+            if(!loxControlsInterval) loxControlsInterval = setInterval(loadLoxoneControls, 3000);
         } else {
             document.getElementById('main-interface').classList.add('active');
             const btn = document.querySelector('.primary-btn');
@@ -1192,6 +1196,10 @@
             controlDiv.style.background = 'var(--card-bg)';
 
             // Main control header
+            const controlTypeDisplay = control.type === 'ColorPickerV2' && control.details?.pickerType
+                ? `${control.type} (${control.details.pickerType})`
+                : control.type;
+
             const headerHtml = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
@@ -1199,7 +1207,7 @@
                             ${control.name}
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
-                            ${control.type} • ${control.uuid}
+                            ${controlTypeDisplay} • ${control.uuid}
                             <button onclick="copyToClipboard('${control.uuid}')" class="btn-link" style="margin-left: 8px;">📋</button>
                         </div>
                     </div>
@@ -1214,13 +1222,17 @@
             if (control.subControls && control.subControls.length > 0) {
                 subControlsHtml = '<div style="margin-top: 15px; padding-left: 20px; border-left: 3px solid var(--border);">';
                 control.subControls.forEach(sub => {
+                    const subTypeDisplay = sub.type === 'ColorPickerV2' && sub.details?.pickerType
+                        ? `${sub.type} (${sub.details.pickerType})`
+                        : sub.type;
+
                     subControlsHtml += `
                         <div style="margin-bottom: 12px; padding: 10px; background: var(--input-bg); border-radius: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <div style="font-weight: 600;">${sub.name}</div>
                                     <div style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">
-                                        ${sub.type} • ${sub.uuid}
+                                        ${subTypeDisplay} • ${sub.uuid}
                                         <button onclick="copyToClipboard('${sub.uuid}')" class="btn-link" style="margin-left: 8px;">📋</button>
                                     </div>
                                 </div>
@@ -1240,23 +1252,74 @@
     }
 
     function renderControlButtons(control) {
-        // Determine appropriate commands based on control type
-        let buttons = '';
+        // Determine appropriate display based on control type
+        let content = '';
 
-        if (control.type === 'Dimmer' || control.type === 'ColorPickerV2' || control.type === 'Switch') {
-            buttons = `
-                <button class="primary-btn btn-accent btn-compact"
-                        onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
-                    💡 Ein
-                </button>
-                <button class="primary-btn btn-gray btn-compact"
-                        onclick="sendLoxoneCommand('${control.uuid}', 'Off', '${control.name}')">
-                    ⚫ Aus
-                </button>
+        if (control.type === 'Switch') {
+            // Switch: Show On/Off buttons and current state
+            const isActive = control.stateValues?.active === 1;
+            const statusDisplay = isActive
+                ? '<span style="color: var(--success); font-weight: 600;">● AN</span>'
+                : '<span style="color: var(--text-muted);">○ AUS</span>';
+
+            content = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 0.9rem;">
+                        ${statusDisplay}
+                    </div>
+                    <button class="primary-btn btn-accent btn-compact"
+                            onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
+                        💡 Ein
+                    </button>
+                    <button class="primary-btn btn-gray btn-compact"
+                            onclick="sendLoxoneCommand('${control.uuid}', 'Off', '${control.name}')">
+                        ⚫ Aus
+                    </button>
+                </div>
+            `;
+        } else if (control.type === 'Dimmer') {
+            // Dimmer: Show brightness value
+            const brightness = control.stateValues?.position;
+            const brightnessDisplay = brightness !== undefined
+                ? `${Math.round(brightness)}%`
+                : 'N/A';
+            content = `
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Dimmer</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: var(--accent);">
+                        ${brightnessDisplay}
+                    </div>
+                </div>
+            `;
+        } else if (control.type === 'ColorPickerV2') {
+            // ColorPickerV2: Show color and type
+            const pickerType = control.details?.pickerType || 'RGB';
+            const colorValue = control.stateValues?.color;
+            let colorDisplay = '';
+
+            if (colorValue && colorValue !== '') {
+                // Parse Loxone color format and display
+                const color = parseLoxoneColor(colorValue);
+                colorDisplay = `
+                    <div style="width: 40px; height: 20px; background-color: ${color}; border: 1px solid var(--border); border-radius: 4px; margin-top: 4px;"></div>
+                `;
+            } else {
+                colorDisplay = `
+                    <div style="font-size: 0.65rem; color: var(--text-muted); font-style: italic; margin-top: 4px;">
+                        Farbe ändern<br>um zu sehen
+                    </div>
+                `;
+            }
+
+            content = `
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${pickerType}</div>
+                    ${colorDisplay}
+                </div>
             `;
         } else if (control.type === 'LightControllerV2') {
-            // For LightController, we can control via masterValue subcontrol
-            buttons = `
+            // LightController: Show "Alle Ein/Aus" buttons
+            content = `
                 <button class="primary-btn btn-accent btn-compact"
                         onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
                     💡 Alle Ein
@@ -1268,7 +1331,88 @@
             `;
         }
 
-        return buttons;
+        return content;
+    }
+
+    function parseLoxoneColor(colorValue) {
+        // Handle empty/undefined values
+        if (!colorValue || colorValue === '') {
+            return '#808080'; // Gray default
+        }
+
+        // Handle string format: hsv(hue,sat,val) or temp(kelvin,val)
+        if (typeof colorValue === 'string') {
+            // Parse hsv(h,s,v) format
+            const hsvMatch = colorValue.match(/hsv\((\d+),(\d+),(\d+)\)/);
+            if (hsvMatch) {
+                const h = parseInt(hsvMatch[1]);
+                const s = parseInt(hsvMatch[2]);
+                const v = parseInt(hsvMatch[3]);
+                return hsvToHex(h, s, v);
+            }
+
+            // Parse temp(brightness,kelvin) format - show as warm/cool white
+            const tempMatch = colorValue.match(/temp\((\d+),(\d+)\)/);
+            if (tempMatch) {
+                const brightness = parseInt(tempMatch[1]);
+                const kelvin = parseInt(tempMatch[2]);
+                return kelvinToHex(kelvin);
+            }
+
+            return '#808080'; // Fallback
+        }
+
+        // Handle numeric format: RGB as integer (R + G*1000 + B*1000000)
+        if (typeof colorValue === 'number') {
+            const r = Math.floor(colorValue) % 1000;
+            const g = Math.floor(colorValue / 1000) % 1000;
+            const b = Math.floor(colorValue / 1000000);
+
+            const toHex = (v) => Math.min(255, Math.max(0, Math.round(v * 2.55))).toString(16).padStart(2, '0');
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        return '#808080';
+    }
+
+    function hsvToHex(h, s, v) {
+        // Convert HSV to RGB
+        const c = (v / 100) * (s / 100);
+        const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+        const m = (v / 100) - c;
+
+        let r, g, b;
+        if (h < 60) { r = c; g = x; b = 0; }
+        else if (h < 120) { r = x; g = c; b = 0; }
+        else if (h < 180) { r = 0; g = c; b = x; }
+        else if (h < 240) { r = 0; g = x; b = c; }
+        else if (h < 300) { r = x; g = 0; b = c; }
+        else { r = c; g = 0; b = x; }
+
+        const toHex = (val) => Math.round((val + m) * 255).toString(16).padStart(2, '0');
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function kelvinToHex(kelvin) {
+        // Approximate kelvin to RGB
+        const temp = kelvin / 100;
+        let r, g, b;
+
+        // Red
+        if (temp <= 66) r = 255;
+        else r = 329.698727446 * Math.pow(temp - 60, -0.1332047592);
+
+        // Green
+        if (temp <= 66) g = 99.4708025861 * Math.log(temp) - 161.1195681661;
+        else g = 288.1221695283 * Math.pow(temp - 60, -0.0755148492);
+
+        // Blue
+        if (temp >= 66) b = 255;
+        else if (temp <= 19) b = 0;
+        else b = 138.5177312231 * Math.log(temp - 10) - 305.0447927307;
+
+        const toHex = (val) => Math.max(0, Math.min(255, Math.round(val))).toString(16).padStart(2, '0');
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
     }
 
     async function sendLoxoneCommand(uuid, command, name) {
