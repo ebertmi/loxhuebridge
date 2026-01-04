@@ -16,7 +16,7 @@ const router = express.Router();
  * @returns {Router} Express router
  */
 function createLightsRoutes(dependencies) {
-    const { config, hueClient, logger, statusManager, detectedItems } = dependencies;
+    const { config, hueClient, logger, statusManager, detectedItems, bidirectionalSync } = dependencies;
 
     /**
      * Execute light control command
@@ -28,6 +28,11 @@ function createLightsRoutes(dependencies) {
     async function executeCommand(entry, value, forcedTransition = null) {
         const uuid = entry.hue_uuid;
         const resourceType = entry.hue_type === 'group' ? 'grouped_light' : 'light';
+
+        // Mark change source as Loxone (for bidirectional sync loop prevention)
+        if (bidirectionalSync && entry.bidirectional) {
+            bidirectionalSync.markChangeSource(uuid, 'loxone');
+        }
 
         // Build payload
         const payload = hueClient.buildLightPayload(value, uuid, forcedTransition);

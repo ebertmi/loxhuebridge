@@ -181,6 +181,121 @@ function hueLightToLux(v) {
     return Math.round(Math.pow(10, (v - 1) / 10000));
 }
 
+/**
+ * Converts RGB values to HSV color space
+ * @param {number} r - Red (0-255)
+ * @param {number} g - Green (0-255)
+ * @param {number} b - Blue (0-255)
+ * @returns {{h: number, s: number, v: number}} HSV values (H: 0-360, S: 0-100, V: 0-100)
+ */
+function rgbToHsv(r, g, b) {
+    r = r / 255;
+    g = g / 255;
+    b = b / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const diff = max - min;
+
+    let h = 0;
+    let s = max === 0 ? 0 : (diff / max) * 100;
+    let v = max * 100;
+
+    if (diff !== 0) {
+        if (max === r) {
+            h = 60 * (((g - b) / diff) % 6);
+        } else if (max === g) {
+            h = 60 * (((b - r) / diff) + 2);
+        } else {
+            h = 60 * (((r - g) / diff) + 4);
+        }
+    }
+
+    if (h < 0) h += 360;
+
+    return {
+        h: Math.round(h),
+        s: Math.round(s),
+        v: Math.round(v)
+    };
+}
+
+/**
+ * Converts XY color to RGB (reverse of xyToHex without hex conversion)
+ * @param {number} x - X coordinate in CIE color space
+ * @param {number} y - Y coordinate in CIE color space
+ * @param {number} bri - Brightness (0.0-1.0)
+ * @returns {{r: number, g: number, b: number}} RGB values (0-255)
+ */
+function xyToRgb(x, y, bri = 1.0) {
+    const z = 1.0 - x - y;
+    const Y = bri;
+    const X = (Y / y) * x;
+    const Z = (Y / y) * z;
+
+    // Convert XYZ to RGB using Wide RGB D65 conversion
+    let r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
+    let g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
+    let b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
+
+    // Apply gamma correction
+    r = r <= 0.0031308 ? 12.92 * r : (1.0 + 0.055) * Math.pow(r, (1.0 / 2.4)) - 0.055;
+    g = g <= 0.0031308 ? 12.92 * g : (1.0 + 0.055) * Math.pow(g, (1.0 / 2.4)) - 0.055;
+    b = b <= 0.0031308 ? 12.92 * b : (1.0 + 0.055) * Math.pow(b, (1.0 / 2.4)) - 0.055;
+
+    // Clamp to valid range and convert to 0-255
+    return {
+        r: Math.max(0, Math.min(255, r * 255)),
+        g: Math.max(0, Math.min(255, g * 255)),
+        b: Math.max(0, Math.min(255, b * 255))
+    };
+}
+
+/**
+ * Converts Hue XY color to Loxone HSV string format
+ * Used for sending color commands to Loxone ColorPickerV2 controls
+ *
+ * @param {number} x - X coordinate in CIE color space
+ * @param {number} y - Y coordinate in CIE color space
+ * @param {number} brightness - Brightness (0-100)
+ * @returns {string} Loxone HSV format "hsv(hue,sat,val)" where H: 0-360, S: 0-100, V: 0-100
+ */
+function xyToLoxoneHsv(x, y, brightness) {
+    const rgb = xyToRgb(x, y, 1.0);
+    const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+
+    // Use provided brightness instead of calculated V
+    const v = Math.round(Math.max(0, Math.min(100, brightness)));
+
+    return `hsv(${hsv.h},${hsv.s},${v})`;
+}
+
+/**
+ * Converts Hue Mirek to Loxone temperature string format
+ * Used for sending color temperature commands to Loxone TunableWhite controls
+ *
+ * @param {number} mirek - Color temperature in Mirek
+ * @param {number} brightness - Brightness (0-100)
+ * @returns {string} Loxone temp format "temp(kelvin,val)" where kelvin: 2000-6500, val: 0-100
+ */
+function mirekToLoxoneTemp(mirek, brightness) {
+    const kelvin = Math.round(1000000 / mirek);
+    const val = Math.round(Math.max(0, Math.min(100, brightness)));
+
+    return `temp(${kelvin},${val})`;
+}
+
+/**
+ * Converts Hue brightness (0-100) to Loxone dimmer value
+ * Simple pass-through since both use 0-100 range
+ *
+ * @param {number} brightness - Hue brightness (0-100)
+ * @returns {number} Loxone dimmer value (0-100)
+ */
+function hueBrightnessToLoxoneDimmer(brightness) {
+    return Math.round(Math.max(0, Math.min(100, brightness)));
+}
+
 module.exports = {
     mapRange,
     kelvinToMirek,
@@ -190,5 +305,10 @@ module.exports = {
     mirekToHex,
     rgbToXy,
     rgbToMirekFallback,
-    hueLightToLux
+    hueLightToLux,
+    rgbToHsv,
+    xyToRgb,
+    xyToLoxoneHsv,
+    mirekToLoxoneTemp,
+    hueBrightnessToLoxoneDimmer
 };

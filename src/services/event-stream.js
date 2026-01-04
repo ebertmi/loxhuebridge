@@ -9,16 +9,27 @@ const { xyToHex, mirekToHex, hueLightToLux } = require('../utils/color');
 const CONSTANTS = require('../constants');
 
 class EventStream {
-    constructor(config, logger, hueClient, loxoneUdp, statusManager) {
+    constructor(config, logger, hueClient, loxoneUdp, statusManager, bidirectionalSync = null) {
         this.config = config;
         this.logger = logger;
         this.hueClient = hueClient;
         this.loxoneUdp = loxoneUdp;
         this.statusManager = statusManager;
+        this.bidirectionalSync = bidirectionalSync;
 
         this.isActive = false;
         this.reconnectAttempts = 0;
         this.lastSuccessfulEvent = Date.now();
+    }
+
+    /**
+     * Set bidirectional sync manager (can be set after construction)
+     *
+     * @param {Object} bidirectionalSync - BidirectionalSyncManager instance
+     */
+    setBidirectionalSync(bidirectionalSync) {
+        this.bidirectionalSync = bidirectionalSync;
+        this.logger.debug('BidirectionalSync manager attached to EventStream', 'SYSTEM');
     }
 
     /**
@@ -178,6 +189,14 @@ class EventStream {
         if (data.color_temperature && data.color_temperature.mirek) {
             const hex = mirekToHex(data.color_temperature.mirek);
             this.statusManager.update(loxName, 'hex', hex, entry);
+        }
+
+        // Notify bidirectional sync for light/group changes
+        if (this.bidirectionalSync && (entry.hue_type === 'light' || entry.hue_type === 'group')) {
+            // Only notify for relevant light changes (not sensors/buttons)
+            if (data.on || data.dimming || data.color || data.color_temperature) {
+                this.bidirectionalSync.onHueChange(data.id, data);
+            }
         }
     }
 

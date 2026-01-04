@@ -36,6 +36,7 @@ function createApiRoutes(dependencies) {
     const {
         config,
         hueClient,
+        loxoneClient,
         logger,
         statusManager,
         eventStream,
@@ -274,6 +275,103 @@ function createApiRoutes(dependencies) {
         res.set('Content-Type', 'text/xml');
         res.set('Content-Disposition', 'attachment; filename="lox_scenes.xml"');
         res.send(xml);
+    }));
+
+    /**
+     * Get Loxone light controls from structure file
+     * GET /api/loxone/controls
+     */
+    router.get('/loxone/controls', asyncHandler(async (req, res) => {
+        if (!loxoneClient.structure) {
+            return res.status(503).json({
+                error: 'Loxone structure file not loaded',
+                controls: []
+            });
+        }
+
+        const controls = [];
+        const structure = loxoneClient.structure;
+
+        // Filter light-related controls
+        const lightTypes = [
+            'LightControllerV2',
+            'Dimmer',
+            'ColorPickerV2',
+            'Switch',
+            'IRoomControllerV2'
+        ];
+
+        for (const [uuid, control] of Object.entries(structure.controls || {})) {
+            if (lightTypes.includes(control.type)) {
+                const controlData = {
+                    uuid,
+                    name: control.name,
+                    type: control.type,
+                    states: control.states || {},
+                    subControls: []
+                };
+
+                // Process subControls if they exist
+                if (control.subControls) {
+                    for (const [subUuid, subControl] of Object.entries(control.subControls)) {
+                        // Only include light-related subcontrols
+                        if (lightTypes.includes(subControl.type)) {
+                            controlData.subControls.push({
+                                uuid: subUuid,
+                                name: subControl.name,
+                                type: subControl.type,
+                                states: subControl.states || {},
+                                details: subControl.details || {}
+                            });
+                        }
+                    }
+                }
+
+                controls.push(controlData);
+            }
+        }
+
+        res.json({
+            projectName: structure.msInfo?.projectName || 'Unknown',
+            controls
+        });
+    }));
+
+    /**
+     * Send command to Loxone control
+     * POST /api/loxone/command
+     * Body: { uuid, command }
+     */
+    router.post('/loxone/command', asyncHandler(async (req, res) => {
+        const { uuid, command } = req.body;
+
+        if (!uuid || command === undefined) {
+            return res.status(400).json({
+                error: 'Missing uuid or command'
+            });
+        }
+
+        if (!loxoneClient.isConnected) {
+            return res.status(503).json({
+                error: 'Loxone client not connected'
+            });
+        }
+
+        try {
+            await loxoneClient.sendCommand(uuid, command);
+            logger.info(`Sent command to ${uuid}: ${command}`, 'LOXONE');
+
+            res.json({
+                success: true,
+                uuid,
+                command
+            });
+        } catch (error) {
+            logger.error(`Failed to send command to ${uuid}: ${error.message}`, 'LOXONE');
+            res.status(500).json({
+                error: error.message
+            });
+        }
     }));
 
     return router;

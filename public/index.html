@@ -225,6 +225,7 @@
         <div class="tab" data-tab="sensor" onclick="setTab('sensor')">📡 Sensoren</div>
         <div class="tab" data-tab="button" onclick="setTab('button')">🔘 Schalter</div>
         <div class="tab" data-tab="scene" onclick="setTab('scene')">🎬 Szenen</div>
+        <div class="tab" data-tab="loxctrl" onclick="setTab('loxctrl')">🏠 Lichtsteuerungen</div>
         <div class="tab" data-tab="system" onclick="setTab('system')">⚙️ System</div>
         <div class="tab" data-tab="diag" onclick="setTab('diag')">🩺 Diagnose</div>
     </div>
@@ -287,6 +288,30 @@
             <button class="primary-btn btn-small mt-0" onclick="loadDiagnostics()">🔄 Aktualisieren</button>
             <div id="diagContent" class="mt-4">
                 <div class="text-center text-muted-primary">Klicke auf Aktualisieren...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loxctrl-interface" class="tab-content">
+        <div class="header-actions">
+            <h2 class="m-0">Loxone Lichtsteuerungen</h2>
+            <button class="primary-btn btn-small" onclick="loadLoxoneControls()">🔄 Aktualisieren</button>
+        </div>
+        <div class="card">
+            <p class="hint-text" style="margin-top:0">
+                Alle Lichtsteuerungen aus der Loxone Konfiguration (LoxAPP3.json).
+                Verwende die Buttons zum Schalten oder kopiere UUIDs für Mappings.
+            </p>
+
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="loxControlSearch" placeholder="🔍 Suche nach Name oder Typ..."
+                       oninput="filterLoxoneControls()" style="width: 100%;">
+            </div>
+
+            <div id="loxControlsContent">
+                <div class="text-center text-muted" style="padding: 40px 0;">
+                    Klicke auf "Aktualisieren" um die Loxone Lichtsteuerungen zu laden...
+                </div>
             </div>
         </div>
     </div>
@@ -423,6 +448,7 @@
         document.getElementById('system-interface').classList.remove('active');
         document.getElementById('diag-interface').classList.remove('active');
         document.getElementById('scene-interface').classList.remove('active');
+        document.getElementById('loxctrl-interface').classList.remove('active');
         if(logInterval) { clearInterval(logInterval); logInterval = null; }
 
         if (tab === 'system') {
@@ -436,6 +462,8 @@
         } else if (tab === 'scene') {
             document.getElementById('scene-interface').classList.add('active');
             loadScenes();
+        } else if (tab === 'loxctrl') {
+            document.getElementById('loxctrl-interface').classList.add('active');
         } else {
             document.getElementById('main-interface').classList.add('active');
             const btn = document.querySelector('.primary-btn');
@@ -1105,6 +1133,201 @@
             `;
 
             container.appendChild(div);
+        });
+    }
+
+    // ========================================================================
+    // LOXONE CONTROLS TAB
+    // ========================================================================
+
+    let loxoneControlsData = [];
+
+    async function loadLoxoneControls() {
+        try {
+            const response = await fetch('/api/loxone/controls');
+            const data = await response.json();
+
+            if (data.error) {
+                document.getElementById('loxControlsContent').innerHTML = `
+                    <div class="text-center text-muted" style="padding: 40px 0; color: var(--danger);">
+                        ❌ ${data.error}
+                    </div>
+                `;
+                return;
+            }
+
+            loxoneControlsData = data.controls || [];
+            renderLoxoneControls(loxoneControlsData);
+
+        } catch (error) {
+            console.error('Failed to load Loxone controls:', error);
+            document.getElementById('loxControlsContent').innerHTML = `
+                <div class="text-center text-muted" style="padding: 40px 0; color: var(--danger);">
+                    ❌ Fehler beim Laden: ${error.message}
+                </div>
+            `;
+        }
+    }
+
+    function renderLoxoneControls(controls) {
+        const container = document.getElementById('loxControlsContent');
+        container.innerHTML = '';
+
+        if (!controls || controls.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted" style="padding: 40px 0;">
+                    Keine Lichtsteuerungen gefunden.
+                </div>
+            `;
+            return;
+        }
+
+        controls.forEach(control => {
+            const controlDiv = document.createElement('div');
+            controlDiv.className = 'lox-control-item';
+            controlDiv.style.marginBottom = '20px';
+            controlDiv.style.border = '1px solid var(--border)';
+            controlDiv.style.borderRadius = '8px';
+            controlDiv.style.padding = '15px';
+            controlDiv.style.background = 'var(--card-bg)';
+
+            // Main control header
+            const headerHtml = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent);">
+                            ${control.name}
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
+                            ${control.type} • ${control.uuid}
+                            <button onclick="copyToClipboard('${control.uuid}')" class="btn-link" style="margin-left: 8px;">📋</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        ${renderControlButtons(control)}
+                    </div>
+                </div>
+            `;
+
+            // SubControls
+            let subControlsHtml = '';
+            if (control.subControls && control.subControls.length > 0) {
+                subControlsHtml = '<div style="margin-top: 15px; padding-left: 20px; border-left: 3px solid var(--border);">';
+                control.subControls.forEach(sub => {
+                    subControlsHtml += `
+                        <div style="margin-bottom: 12px; padding: 10px; background: var(--input-bg); border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600;">${sub.name}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">
+                                        ${sub.type} • ${sub.uuid}
+                                        <button onclick="copyToClipboard('${sub.uuid}')" class="btn-link" style="margin-left: 8px;">📋</button>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    ${renderControlButtons(sub)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                subControlsHtml += '</div>';
+            }
+
+            controlDiv.innerHTML = headerHtml + subControlsHtml;
+            container.appendChild(controlDiv);
+        });
+    }
+
+    function renderControlButtons(control) {
+        // Determine appropriate commands based on control type
+        let buttons = '';
+
+        if (control.type === 'Dimmer' || control.type === 'ColorPickerV2' || control.type === 'Switch') {
+            buttons = `
+                <button class="primary-btn btn-accent btn-compact"
+                        onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
+                    💡 Ein
+                </button>
+                <button class="primary-btn btn-gray btn-compact"
+                        onclick="sendLoxoneCommand('${control.uuid}', 'Off', '${control.name}')">
+                    ⚫ Aus
+                </button>
+            `;
+        } else if (control.type === 'LightControllerV2') {
+            // For LightController, we can control via masterValue subcontrol
+            buttons = `
+                <button class="primary-btn btn-accent btn-compact"
+                        onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
+                    💡 Alle Ein
+                </button>
+                <button class="primary-btn btn-gray btn-compact"
+                        onclick="sendLoxoneCommand('${control.uuid}', 'Off', '${control.name}')">
+                    ⚫ Alle Aus
+                </button>
+            `;
+        }
+
+        return buttons;
+    }
+
+    async function sendLoxoneCommand(uuid, command, name) {
+        try {
+            const response = await fetch('/api/loxone/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuid, command })
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                alert(`❌ Fehler: ${result.error}`);
+            } else {
+                console.log(`✅ Command sent to ${name}: ${command}`);
+            }
+        } catch (error) {
+            console.error('Failed to send command:', error);
+            alert(`❌ Fehler beim Senden: ${error.message}`);
+        }
+    }
+
+    function filterLoxoneControls() {
+        const search = document.getElementById('loxControlSearch').value.toLowerCase();
+
+        if (!search) {
+            renderLoxoneControls(loxoneControlsData);
+            return;
+        }
+
+        const filtered = loxoneControlsData.filter(control => {
+            // Search in main control
+            if (control.name.toLowerCase().includes(search) ||
+                control.type.toLowerCase().includes(search) ||
+                control.uuid.toLowerCase().includes(search)) {
+                return true;
+            }
+
+            // Search in subControls
+            if (control.subControls && control.subControls.some(sub =>
+                sub.name.toLowerCase().includes(search) ||
+                sub.type.toLowerCase().includes(search) ||
+                sub.uuid.toLowerCase().includes(search)
+            )) {
+                return true;
+            }
+
+            return false;
+        });
+
+        renderLoxoneControls(filtered);
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('Copied to clipboard:', text);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
         });
     }
 

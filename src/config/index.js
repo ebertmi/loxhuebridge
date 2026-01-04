@@ -20,6 +20,13 @@ class Config {
             appKey: process.env.HUE_APP_KEY || null,
             loxoneIp: process.env.LOXONE_IP || null,
             loxonePort: parseInt(process.env.LOXONE_UDP_PORT || CONSTANTS.LOXONE.DEFAULT_UDP_PORT),
+            loxoneHttpPort: parseInt(process.env.LOXONE_HTTP_PORT || 80),
+            loxoneUser: process.env.LOXONE_USER || null,
+            loxonePassword: process.env.LOXONE_PASSWORD || null,
+            loxoneToken: null,
+            loxoneTokenExpiry: null,
+            bidirectionalSync: false,
+            bidirectionalDebounceMs: 2000,
             debug: process.env.DEBUG === 'true',
             transitionTime: 400,
             certPinningEnabled: process.env.HUE_CERT_PINNING_ENABLED === 'true',
@@ -62,6 +69,13 @@ class Config {
             typeof config.loxonePort === 'number' &&
             config.loxonePort > 0 &&
             config.loxonePort <= 65535 &&
+            (config.loxoneHttpPort === undefined || (typeof config.loxoneHttpPort === 'number' && config.loxoneHttpPort > 0 && config.loxoneHttpPort <= 65535)) &&
+            (config.loxoneUser === undefined || config.loxoneUser === null || typeof config.loxoneUser === 'string') &&
+            (config.loxonePassword === undefined || config.loxonePassword === null || typeof config.loxonePassword === 'string') &&
+            (config.loxoneToken === undefined || config.loxoneToken === null || typeof config.loxoneToken === 'string') &&
+            (config.loxoneTokenExpiry === undefined || config.loxoneTokenExpiry === null || typeof config.loxoneTokenExpiry === 'number') &&
+            (config.bidirectionalSync === undefined || typeof config.bidirectionalSync === 'boolean') &&
+            (config.bidirectionalDebounceMs === undefined || typeof config.bidirectionalDebounceMs === 'number') &&
             typeof config.debug === 'boolean' &&
             (config.certPinningEnabled === undefined || typeof config.certPinningEnabled === 'boolean') &&
             (config.certFingerprint === undefined || config.certFingerprint === null || typeof config.certFingerprint === 'string')
@@ -86,7 +100,12 @@ class Config {
                 m.loxone_name.length > 0 &&
                 m.hue_uuid &&
                 m.hue_name &&
-                ['light', 'group', 'sensor', 'button'].includes(m.hue_type)
+                ['light', 'group', 'sensor', 'button'].includes(m.hue_type) &&
+                // Optional bidirectional fields
+                (m.loxone_control_uuid === undefined || typeof m.loxone_control_uuid === 'string') &&
+                (m.loxone_state_uuid === undefined || typeof m.loxone_state_uuid === 'string') &&
+                (m.loxone_dimmer_uuid === undefined || typeof m.loxone_dimmer_uuid === 'string') &&
+                (m.bidirectional === undefined || typeof m.bidirectional === 'boolean')
             );
 
             if (!isValid) {
@@ -131,6 +150,29 @@ class Config {
                 }
                 if (this.config.certFingerprint === undefined) {
                     this.config.certFingerprint = null;
+                }
+
+                // Ensure Loxone bidirectional sync fields exist
+                if (this.config.loxoneHttpPort === undefined) {
+                    this.config.loxoneHttpPort = 80;
+                }
+                if (this.config.loxoneUser === undefined) {
+                    this.config.loxoneUser = null;
+                }
+                if (this.config.loxonePassword === undefined) {
+                    this.config.loxonePassword = null;
+                }
+                if (this.config.loxoneToken === undefined) {
+                    this.config.loxoneToken = null;
+                }
+                if (this.config.loxoneTokenExpiry === undefined) {
+                    this.config.loxoneTokenExpiry = null;
+                }
+                if (this.config.bidirectionalSync === undefined) {
+                    this.config.bidirectionalSync = false;
+                }
+                if (this.config.bidirectionalDebounceMs === undefined) {
+                    this.config.bidirectionalDebounceMs = 2000;
                 }
 
                 this.logger.success('Configuration loaded', 'SYSTEM');

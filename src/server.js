@@ -21,6 +21,8 @@ const LoxoneUDP = require('./services/loxone-udp');
 const HueClient = require('./services/hue-client');
 const EventStream = require('./services/event-stream');
 const StatusManager = require('./services/status-manager');
+const LoxoneClient = require('./services/loxone-client');
+const BidirectionalSyncManager = require('./services/bidirectional-sync');
 
 // Middleware
 const { errorHandler, notFoundHandler } = require('./middleware/error-handler');
@@ -76,8 +78,27 @@ const statusManager = new StatusManager(loxoneUdp, logger);
 // Hue Client
 const hueClient = new HueClient(config, logger, rateLimiter);
 
-// Event Stream
-const eventStream = new EventStream(config, logger, hueClient, loxoneUdp, statusManager);
+// Loxone Client (for bidirectional sync)
+const loxoneClient = new LoxoneClient(config, logger);
+
+// Bidirectional Sync Manager
+const bidirectionalSync = new BidirectionalSyncManager(
+    config,
+    logger,
+    hueClient,
+    loxoneClient,
+    loxoneUdp
+);
+
+// Event Stream (with bidirectional sync support)
+const eventStream = new EventStream(
+    config,
+    logger,
+    hueClient,
+    loxoneUdp,
+    statusManager,
+    bidirectionalSync
+);
 
 // Detected items storage
 const detectedItems = {
@@ -106,6 +127,7 @@ app.use('/api/setup', createSetupRoutes(config, eventStream));
 app.use('/api', createApiRoutes({
     config,
     hueClient,
+    loxoneClient,
     logger,
     statusManager,
     eventStream,
@@ -129,7 +151,8 @@ app.use('/', createLightsRoutes({
     hueClient,
     logger,
     statusManager,
-    detectedItems
+    detectedItems,
+    bidirectionalSync
 }));
 
 // --- ERROR HANDLERS ---
@@ -137,12 +160,33 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // --- START SERVER ---
-app.listen(HTTP_PORT, () => {
+app.listen(HTTP_PORT, async () => {
     console.log(`🚀 loxHueBridge v${version} running on port ${HTTP_PORT}`);
 
     // Start event stream if already configured
     if (config.isReady()) {
         logger.info('Bridge configured, starting event stream...', 'SYSTEM');
+
+        // Start bidirectional sync if enabled
+        if (config.get('bidirectionalSync')) {
+            const loxoneUser = config.get('loxoneUser');
+            const loxonePassword = config.get('loxonePassword');
+
+            if (loxoneUser && loxonePassword) {
+                try {
+                    logger.info('Starting Loxone bidirectional sync...', 'SYNC');
+                    await loxoneClient.connect();
+                    await bidirectionalSync.start();
+                    logger.success('Bidirectional sync enabled', 'SYNC');
+                } catch (error) {
+                    logger.error(`Failed to start bidirectional sync: ${error.message}`, 'SYNC');
+                    logger.warn('Continuing in one-way mode', 'SYNC');
+                }
+            } else {
+                logger.warn('Bidirectional sync enabled but Loxone credentials missing', 'SYNC');
+            }
+        }
+
         eventStream.start();
     } else {
         logger.warn('Bridge not configured - visit http://localhost:' + HTTP_PORT + ' to setup', 'SYSTEM');
@@ -154,6 +198,8 @@ process.on('SIGTERM', () => {
     logger.info('SIGTERM received, shutting down gracefully...', 'SYSTEM');
 
     eventStream.stop();
+    bidirectionalSync.stop();
+    loxoneClient.disconnect();
     loxoneUdp.close();
 
     process.exit(0);
@@ -163,6 +209,8 @@ process.on('SIGINT', () => {
     logger.info('SIGINT received, shutting down gracefully...', 'SYSTEM');
 
     eventStream.stop();
+    bidirectionalSync.stop();
+    loxoneClient.disconnect();
     loxoneUdp.close();
 
     process.exit(0);
