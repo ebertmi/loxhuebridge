@@ -114,7 +114,7 @@ class HueClient {
   private config: Config;
   private logger: Logger;
   private rateLimiter: RateLimiter;
-  private httpsAgent: https.Agent;
+  public httpsAgent: https.Agent;
   private serviceToDeviceMap: Record<string, ServiceToDeviceMapEntry>;
   private lightCapabilities: Record<string, LightCapabilities>;
   private commandState: Record<string, CommandState>;
