@@ -333,10 +333,14 @@ function createApiRoutes(dependencies) {
 
                     // Parse mood information
                     let activeMoodNames = [];
+                    let moodList = [];
+                    let activeMoodIds = [];
+
                     try {
+                        moodList = moodListRaw ? JSON.parse(moodListRaw) : [];
+
                         if (activeMoodsRaw && activeMoodsNum > 0) {
-                            const activeMoodIds = JSON.parse(activeMoodsRaw); // e.g., [778]
-                            const moodList = moodListRaw ? JSON.parse(moodListRaw) : [];
+                            activeMoodIds = JSON.parse(activeMoodsRaw); // e.g., [778]
 
                             activeMoodNames = activeMoodIds.map(id => {
                                 const mood = moodList.find(m => m.id === id);
@@ -349,7 +353,9 @@ function createApiRoutes(dependencies) {
 
                     moodInfo = {
                         activeMoodNames: activeMoodNames,
-                        activeMoodsNum: activeMoodsNum
+                        activeMoodsNum: activeMoodsNum,
+                        activeMoodIds: activeMoodIds,
+                        moodList: moodList
                     };
                 }
 

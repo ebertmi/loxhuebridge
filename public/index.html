@@ -1330,31 +1330,36 @@
                 </div>
             `;
         } else if (control.type === 'LightControllerV2') {
-            // LightController: Show current mood
-            let moodDisplay = 'Manuell';
-            let moodColor = 'var(--text-muted)';
-            let moodStyle = 'font-style: italic;';
+            // LightController: Show mood dropdown
+            let moodOptions = '';
+            let currentMoodId = null;
 
-            if (control.moodInfo && control.moodInfo.activeMoodNames && control.moodInfo.activeMoodNames.length > 0) {
-                // Join multiple mood names with comma
-                moodDisplay = control.moodInfo.activeMoodNames.join(', ');
+            if (control.moodInfo) {
+                const moodList = control.moodInfo.moodList || [];
+                const activeMoodIds = control.moodInfo.activeMoodIds || [];
+                currentMoodId = activeMoodIds.length > 0 ? activeMoodIds[0] : null;
 
-                // Special styling for "Aus"
-                if (moodDisplay === 'Aus') {
-                    moodColor = 'var(--text-muted)';
-                    moodStyle = 'font-weight: 600;';
+                // Add "Manuell" option (disabled, only shown when no mood is active)
+                if (!currentMoodId) {
+                    moodOptions += '<option value="" selected disabled>Manuell</option>';
                 } else {
-                    moodColor = 'var(--accent)';
-                    moodStyle = 'font-weight: 600;';
+                    moodOptions += '<option value="" disabled>Manuell</option>';
                 }
+
+                // Add all available moods from moodList
+                moodList.forEach(mood => {
+                    const selected = mood.id === currentMoodId ? 'selected' : '';
+                    moodOptions += `<option value="${mood.id}" ${selected}>${mood.name}</option>`;
+                });
             }
 
             content = `
                 <div style="text-align: right;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Stimmung</div>
-                    <div style="font-size: 0.9rem; color: ${moodColor}; ${moodStyle}">
-                        ${moodDisplay}
-                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Stimmung</div>
+                    <select onchange="setLoxoneMood('${control.uuid}', this.value, '${control.name}')"
+                            style="padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; min-width: 120px;">
+                        ${moodOptions}
+                    </select>
                 </div>
             `;
         }
@@ -1490,6 +1495,33 @@
         } catch (error) {
             console.error('Failed to send command:', error);
             alert(`❌ Fehler beim Senden: ${error.message}`);
+        }
+    }
+
+    async function setLoxoneMood(uuid, moodId, name) {
+        if (!moodId) {
+            console.log('No mood selected (Manuell)');
+            return;
+        }
+
+        try {
+            // Send changeTo command with mood ID to activate the mood
+            const response = await fetch('/api/loxone/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuid, command: `changeTo/${moodId}` })
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                alert(`❌ Fehler beim Setzen der Stimmung: ${result.error}`);
+            } else {
+                console.log(`✅ Mood set for ${name}: ID ${moodId}`);
+            }
+        } catch (error) {
+            console.error('Failed to set mood:', error);
+            alert(`❌ Fehler beim Setzen der Stimmung: ${error.message}`);
         }
     }
 
