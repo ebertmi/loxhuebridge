@@ -1000,8 +1000,18 @@ class LoxoneClient extends EventEmitter {
 
         const controlsToQuery = [];
 
-        // Collect all SubControls (Dimmer, ColorPickerV2, Switch)
+        // Collect all SubControls (Dimmer, ColorPickerV2, Switch) AND LightControllerV2 for moods
         for (const [controlUuid, control] of Object.entries(this.structure.controls)) {
+            // Query LightControllerV2 for mood states
+            if (control.type === 'LightControllerV2') {
+                controlsToQuery.push({
+                    uuid: control.uuidAction,
+                    name: control.name,
+                    type: control.type
+                });
+            }
+
+            // Query SubControls
             if (control.subControls) {
                 for (const [subUuid, subControl] of Object.entries(control.subControls)) {
                     // Query Dimmer, ColorPickerV2, and Switch subControls

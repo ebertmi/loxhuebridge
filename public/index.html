@@ -1326,16 +1326,32 @@
                 </div>
             `;
         } else if (control.type === 'LightControllerV2') {
-            // LightController: Show "Alle Ein/Aus" buttons
+            // LightController: Show current mood
+            let moodDisplay = 'Manuell';
+            let moodColor = 'var(--text-muted)';
+            let moodStyle = 'font-style: italic;';
+
+            if (control.moodInfo && control.moodInfo.activeMoodNames && control.moodInfo.activeMoodNames.length > 0) {
+                // Join multiple mood names with comma
+                moodDisplay = control.moodInfo.activeMoodNames.join(', ');
+
+                // Special styling for "Aus"
+                if (moodDisplay === 'Aus') {
+                    moodColor = 'var(--text-muted)';
+                    moodStyle = 'font-weight: 600;';
+                } else {
+                    moodColor = 'var(--accent)';
+                    moodStyle = 'font-weight: 600;';
+                }
+            }
+
             content = `
-                <button class="primary-btn btn-accent btn-compact"
-                        onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
-                    💡 Alle Ein
-                </button>
-                <button class="primary-btn btn-gray btn-compact"
-                        onclick="sendLoxoneCommand('${control.uuid}', 'Off', '${control.name}')">
-                    ⚫ Alle Aus
-                </button>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Stimmung</div>
+                    <div style="font-size: 0.9rem; color: ${moodColor}; ${moodStyle}">
+                        ${moodDisplay}
+                    </div>
+                </div>
             `;
         }
 

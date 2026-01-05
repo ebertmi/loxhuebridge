@@ -320,6 +320,39 @@ function createApiRoutes(dependencies) {
                     roomName = structure.rooms[control.room].name;
                 }
 
+                // Get mood information for LightControllerV2
+                let moodInfo = null;
+                if (control.type === 'LightControllerV2' && control.states) {
+                    const activeMoodsState = control.states.activeMoods;
+                    const moodListState = control.states.moodList;
+                    const activeMoodsNumState = control.states.activeMoodsNum;
+
+                    const activeMoodsRaw = activeMoodsState ? loxoneClient.getStateValue(activeMoodsState) : null;
+                    const moodListRaw = moodListState ? loxoneClient.getStateValue(moodListState) : null;
+                    const activeMoodsNum = activeMoodsNumState ? loxoneClient.getStateValue(activeMoodsNumState) : 0;
+
+                    // Parse mood information
+                    let activeMoodNames = [];
+                    try {
+                        if (activeMoodsRaw && activeMoodsNum > 0) {
+                            const activeMoodIds = JSON.parse(activeMoodsRaw); // e.g., [778]
+                            const moodList = moodListRaw ? JSON.parse(moodListRaw) : [];
+
+                            activeMoodNames = activeMoodIds.map(id => {
+                                const mood = moodList.find(m => m.id === id);
+                                return mood ? mood.name : `ID ${id}`;
+                            });
+                        }
+                    } catch (error) {
+                        logger.warn(`Failed to parse mood info for ${control.name}: ${error.message}`, 'API');
+                    }
+
+                    moodInfo = {
+                        activeMoodNames: activeMoodNames,
+                        activeMoodsNum: activeMoodsNum
+                    };
+                }
+
                 const controlData = {
                     uuid,
                     name: control.name,
@@ -328,6 +361,7 @@ function createApiRoutes(dependencies) {
                     states: control.states || {},
                     stateValues: stateValues,
                     details: control.details || {},
+                    moodInfo: moodInfo,
                     subControls: []
                 };
 
