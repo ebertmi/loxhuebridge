@@ -1,6 +1,12 @@
 /**
  * Hue Client Service
  * Manages communication with Philips Hue Bridge V2 API
+ * 
+ * Features:
+ * - HTTPS requests with optional certificate pinning for enhanced security
+ * - Exponential backoff and retry logic for robust error handling
+ * - Device and capability mapping for accurate event processing
+ * - Light control with command queueing to
  */
 
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';

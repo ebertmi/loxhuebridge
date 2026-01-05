@@ -1,6 +1,11 @@
 /**
  * Loxone UDP Service
  * Sends sensor and status updates to Loxone Miniserver via UDP
+ * 
+ * Features:
+ * - Configurable target IP and port
+ * - Robust error handling with retries
+ * - Connection health monitoring and logging
  */
 
 import dgram from 'dgram';

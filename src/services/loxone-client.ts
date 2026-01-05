@@ -2,6 +2,15 @@
  * Loxone Client Service
  * Manages WebSocket connection to Loxone Miniserver
  * Handles authentication, status updates, and control commands
+ * 
+ * Features:
+ * - Secure authentication with RSA and AES encryption
+ * - Automatic reconnection with exponential backoff
+ * - Structure file management with caching
+ * - Parsing of binary and text messages from Miniserver
+ * - Emission of enriched state updates with control information
+ * - Support for bidirectional synchronization of states
+ * 
  */
 
 import WebSocket from 'ws';

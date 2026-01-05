@@ -1,6 +1,12 @@
 /**
  * Scene Routes
- * Handles scene control commands from Loxone
+ * Handles scene control commands from Loxone via HTTP requests.
+ * 
+ * Currently supports:
+ * - Activating a scene
+ * - Deactivating a scene (turning off all lights in the scene)
+ * 
+ * Integrates with HueClient to send commands to Philips Hue scenes.
  */
 
 import express, { Router, Request, Response } from 'express';

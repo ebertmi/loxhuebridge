@@ -1,6 +1,9 @@
 /**
  * Loxone Binary Message Parsing
  * Handles parsing of binary WebSocket messages from Loxone Miniserver
+ * 
+ * See https://www.loxone.com/dede/kb/websockets-binary-protocol/ 
+ * and https://www.loxone.com/wp-content/uploads/datasheets/CommunicatingWithMiniserver.pdf for details
  */
 
 /**

@@ -1,6 +1,8 @@
 /**
  * Loxone Cryptography Helpers
  * Handles RSA and AES encryption/decryption for Loxone WebSocket communication
+ * 
+ * See https://www.loxone.com/wp-content/uploads/datasheets/CommunicatingWithMiniserver.pdf for details.
  */
 
 import crypto from 'crypto';

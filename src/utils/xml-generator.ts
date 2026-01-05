@@ -1,6 +1,11 @@
 /**
  * XML Generator Utility
  * Generates Loxone-compatible XML configuration files
+ * 
+ * Supports:
+ * - Virtual Outputs for light controls
+ * - Virtual Inputs for sensors and buttons
+ * - Virtual Outputs for scenes
  */
 
 import { DeviceMapping } from '../types';

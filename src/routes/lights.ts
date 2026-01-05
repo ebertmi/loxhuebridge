@@ -1,6 +1,17 @@
 /**
  * Lights Routes
- * Handles light control commands from Loxone
+ * Handles light control commands from Loxone via HTTP requests.
+ * 
+ * Currently supports:
+ * - Individual light control
+ * - Global "all" command to control all lights
+ * 
+ * Integrates with HueClient to send commands to Philips Hue lights.
+ * Utilizes StatusManager to update local status cache. The local status cache
+ * helps in reducing redundant API calls to Hue by keeping track of the last known
+ * state of each light.
+ * Supports bidirectional synchronization with Loxone if enabled. Bidirectional sync is using the Loxone websocket connection to listen for state changes
+ * originating from Loxone and reflect them in Hue, while preventing loops.
  */
 
 import express, { Router, Request, Response } from 'express';

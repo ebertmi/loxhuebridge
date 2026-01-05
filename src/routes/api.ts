@@ -1,6 +1,14 @@
 /**
  * API Routes
  * Handles main API endpoints for configuration, mapping, and diagnostics
+ * 
+ * Supports:
+ * - Retrieving and updating device mappings
+ * - Fetching detected unmapped items
+ * - Accessing status cache and logs
+ * - Downloading Loxone XML configuration files for outputs, inputs, and scenes
+ * - Interfacing with Loxone to get controls and send commands
+ * 
  */
 
 import express, { Router, Request, Response } from 'express';

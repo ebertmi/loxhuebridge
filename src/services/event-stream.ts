@@ -2,6 +2,13 @@
  * Event Stream Service
  * Handles Server-Sent Events (SSE) from Hue Bridge
  * Processes real-time device state changes
+ * 
+ * Features:
+ * - Robust connection management with exponential backoff
+ * - Comprehensive event parsing and processing
+ * - Initial state synchronization
+ * - Integration with Loxone UDP service for real-time updates
+ * - Support for bidirectional synchronization with Loxone
  */
 
 import axios, { AxiosResponse } from 'axios';
