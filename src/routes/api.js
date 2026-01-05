@@ -314,10 +314,17 @@ function createApiRoutes(dependencies) {
                     }
                 }
 
+                // Get room name from room UUID
+                let roomName = null;
+                if (control.room && structure.rooms && structure.rooms[control.room]) {
+                    roomName = structure.rooms[control.room].name;
+                }
+
                 const controlData = {
                     uuid,
                     name: control.name,
                     type: control.type,
+                    room: roomName,
                     states: control.states || {},
                     stateValues: stateValues,
                     details: control.details || {},

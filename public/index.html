@@ -1200,11 +1200,19 @@
                 ? `${control.type} (${control.details.pickerType})`
                 : control.type;
 
+            // Display room name with control name
+            let displayName = control.name;
+            if (control.room && control.type === 'LightControllerV2') {
+                displayName = `${control.room} ${control.name}`;
+            } else if (control.room) {
+                displayName = `${control.room} - ${control.name}`;
+            }
+
             const headerHtml = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent);">
-                            ${control.name}
+                            ${displayName}
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
                             ${controlTypeDisplay} • ${control.uuid}
