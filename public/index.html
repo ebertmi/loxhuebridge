@@ -1211,12 +1211,13 @@
             const headerHtml = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
-                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent);">
-                            ${displayName}
+                        <div>
+                            <span style="font-weight: 700; font-size: 1.1rem; color: var(--accent);">${displayName}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-left: 8px;">${control.uuid}</span>
+                            <button onclick="copyToClipboard('${control.uuid}')" class="btn-link" style="margin-left: 4px;" title="Kopieren">📋</button>
                         </div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
-                            ${controlTypeDisplay} • ${control.uuid}
-                            <button onclick="copyToClipboard('${control.uuid}')" class="btn-link" style="margin-left: 8px;">📋</button>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+                            ${controlTypeDisplay}
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px;">
@@ -1238,10 +1239,13 @@
                         <div style="margin-bottom: 12px; padding: 10px; background: var(--input-bg); border-radius: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-weight: 600;">${sub.name}</div>
-                                    <div style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">
-                                        ${subTypeDisplay} • ${sub.uuid}
-                                        <button onclick="copyToClipboard('${sub.uuid}')" class="btn-link" style="margin-left: 8px;">📋</button>
+                                    <div>
+                                        <span style="font-weight: 600;">${sub.name}</span>
+                                        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-left: 8px;">${sub.uuid}</span>
+                                        <button onclick="copyToClipboard('${sub.uuid}')" class="btn-link" style="margin-left: 4px;" title="Kopieren">📋</button>
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                                        ${subTypeDisplay}
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 8px;">
