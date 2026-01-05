@@ -1,17 +1,17 @@
 /**
  * PM2 Ecosystem Configuration
- * For development and production deployment
+ * For development and production deployment with TypeScript
  */
 
 module.exports = {
   apps: [
     {
       name: 'loxhuebridge',
-      script: './server.js',
+      script: './dist/server.js',
 
       // Development mode
       watch: false, // Enable with pm2 start --watch
-      ignore_watch: ['node_modules', 'data', 'docs', 'logs'],
+      ignore_watch: ['node_modules', 'data', 'docs', 'logs', 'dist', 'src'],
 
       // Environment variables
       env: {
