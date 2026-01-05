@@ -1,0 +1,2578 @@
+{
+  "lastModified": "2026-01-04 08:16:50",
+  "msInfo": {
+    "serialNr": "504F94A1DD43",
+    "msName": "LXEBERT",
+    "projectName": "Ebert",
+    "localUrl": "LXEBERT",
+    "remoteUrl": "dns.loxonecloud.com/504F94A1DD43",
+    "hostname": "LXEBERT",
+    "tempUnit": 0,
+    "currency": "€",
+    "squareMeasure": "m²",
+    "location": "Lautertal",
+    "latitude": 50.299,
+    "longitude": 10.989,
+    "altitude": 327,
+    "languageCode": "DEU",
+    "heatPeriodStart": "10-01",
+    "heatPeriodEnd": "04-30",
+    "coolPeriodStart": "05-01",
+    "coolPeriodEnd": "09-30",
+    "catTitle": "Kategorien",
+    "roomTitle": "Räume",
+    "miniserverType": 2,
+    "deviceMonitor": "15ea0aa4-0213-3a38-ffffed57184a04d2",
+    "currentUser": {
+      "name": "admin",
+      "uuid": "15ea0aa5-0112-3b9c-ffffed57184a04d2",
+      "isAdmin": true,
+      "changePassword": true,
+      "userRights": 4294967295
+    }
+  },
+  "globalStates": {
+    "operatingMode": "15ea0aa4-00a0-39e7-ffffed57184a04d2",
+    "sunrise": "15ea0aa4-00f7-39f9-ffffed57184a04d2",
+    "sunset": "15ea0aa4-0107-39fc-ffffed57184a04d2",
+    "pastTasks": "15ea0aa5-01a5-3cce-ffffb2c94f8ecfc0",
+    "plannedTasks": "15ea0aa5-01a5-3ccd-ffffb2c94f8ecfc0",
+    "notifications": "15ea0aa3-0371-39b5-ffffed57184a04d2",
+    "modifications": "15ea0aa3-0372-39b9-ffffed57184a04d2",
+    "favColorSequences": "15ea0aa3-0371-39b7-ffffed57184a04d2",
+    "favColors": "15ea0aa3-0371-39b8-ffffed57184a04d2",
+    "miniserverTime": "15ea0aa3-0371-39b6-ffffed57184a04d2",
+    "liveSearch": "1e7d1b85-029e-4708-ffffed57184a04d2",
+    "userSettings": "1e7d1b85-029e-4709-ffffed57184a04d2",
+    "userSettingsTs": "1e7d1b85-029e-470a-ffffed57184a04d2",
+    "cloudservice": "1e7d1b85-029e-470b-ffffed57184a04d2",
+    "trustVersion": "1e7d1b85-029e-470c-ffffed57184a04d2",
+    "propsVersion": "1e7d1b85-029e-470d-ffffed57184a04d2",
+    "hasInternet": "15ea0aa5-0148-3cb5-ffffb2c94f8ecfc0"
+  },
+  "operatingModes": {
+    "0": "Feiertag",
+    "1": "Urlaub",
+    "2": "Freier Tag/Schulferien",
+    "3": "Montag",
+    "4": "Dienstag",
+    "5": "Mittwoch",
+    "6": "Donnerstag",
+    "7": "Freitag",
+    "8": "Samstag",
+    "9": "Sonntag",
+    "10": "Heizperiode",
+    "11": "Kühlperiode",
+    "-1": "Alarm",
+    "-2": "Anwesenheitssimulation",
+    "-3": "Haus im Tiefschlaf",
+    "-4": "Erhöhter Wärmebedarf",
+    "-5": "Party",
+    "-6": "Abwesend"
+  },
+  "rooms": {
+    "15ea0aa5-0122-3bad-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0122-3bad-ffffed57184a04d2",
+      "name": "Nicht zugeordnet",
+      "image": "IconsFilled/location-pin.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "default": true,
+      "type": 2,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0127-3bc5-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0127-3bc5-ffffed57184a04d2",
+      "name": "Küche",
+      "image": "IconsFilled/chef-hat.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 2,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0129-3bd1-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0129-3bd1-ffffed57184a04d2",
+      "name": "OG Bad",
+      "image": "IconsFilled/shower-2.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 2,
+      "color": "#69C350"
+    },
+    "15ea0aa5-012a-3bd7-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-012a-3bd7-ffffed57184a04d2",
+      "name": "OG Schlafen",
+      "image": "IconsFilled/bed-double.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 1,
+      "color": "#69C350"
+    },
+    "15ea0aa5-012b-3bdd-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-012b-3bdd-ffffed57184a04d2",
+      "name": "OG Kind",
+      "image": "IconsFilled/baby-hanging-toy.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 1,
+      "color": "#69C350"
+    },
+    "15ea0aa5-012c-3be3-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-012c-3be3-ffffed57184a04d2",
+      "name": "EG WC",
+      "image": "IconsFilled/tissue.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 3,
+      "color": "#69C350"
+    },
+    "15ea0aa5-012e-3bef-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-012e-3bef-ffffed57184a04d2",
+      "name": "Garage",
+      "image": "IconsFilled/garage-closed-2.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 3,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0137-3c2d-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "name": "Garten",
+      "image": "IconsFilled/flower.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 5,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0138-3c33-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "name": "EG  Wohnen Essen",
+      "image": "IconsFilled/knife-fork.svg",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "type": 2,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0142-3c6f-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0142-3c6f-ffffed57184a04d2",
+      "name": "EG Diele",
+      "image": "IconsFilled/hallway.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 3,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0143-3c75-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "name": "Außenbereich",
+      "image": "IconsFilled/tree.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 5,
+      "color": "#69C350"
+    },
+    "15ea0aa5-0145-3c85-ffffed57184a04d2": {
+      "uuid": "15ea0aa5-0145-3c85-ffffed57184a04d2",
+      "name": "Zentral",
+      "image": "IconsFilled/central.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": 4,
+      "color": "#69C350"
+    },
+    "1e7d23f7-001c-050e-ffffed57184a04d2": {
+      "uuid": "1e7d23f7-001c-050e-ffffed57184a04d2",
+      "name": "OG Arbeiten",
+      "image": "IconsFilled/computer-imac-1.svg",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "type": 2,
+      "color": "#69C350"
+    },
+    "1fae557e-02a3-afcb-ffffed57184a04d2": {
+      "uuid": "1fae557e-02a3-afcb-ffffed57184a04d2",
+      "name": "Hobbykeller",
+      "image": "IconsFilled/dumbbell-2.svg",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "type": 2,
+      "color": "#69C350"
+    }
+  },
+  "cats": {
+    "15ea0aa4-0243-3a46-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0243-3a46-ffffed57184a04d2",
+      "name": "Nicht zugeordnet",
+      "image": "IconsFilled/binders.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "default": true,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0244-3a4a-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0244-3a4a-ffffed57184a04d2",
+      "name": "Beleuchtung",
+      "image": "IconsFilled/lightbulb-3.svg",
+      "defaultRating": 1,
+      "isFavorite": true,
+      "type": "lights",
+      "color": "#FEE502"
+    },
+    "15ea0aa4-0245-3a4e-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "name": "Beschattung",
+      "image": "IconsFilled/blinds-half-closed.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "shading",
+      "color": "#00C7E6"
+    },
+    "15ea0aa4-0245-3a52-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0245-3a52-ffffed57184a04d2",
+      "name": "Heizung",
+      "image": "IconsFilled/radiator.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0246-3a56-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0246-3a56-ffffed57184a04d2",
+      "name": "Klima",
+      "image": "IconsFilled/thermometer.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#F7B55C"
+    },
+    "15ea0aa4-0247-3a5a-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0247-3a5a-ffffed57184a04d2",
+      "name": "Audio",
+      "image": "IconsFilled/music-note.svg",
+      "defaultRating": 1,
+      "isFavorite": true,
+      "type": "multimedia",
+      "color": "#B64D9E"
+    },
+    "15ea0aa4-0248-3a5e-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0248-3a5e-ffffed57184a04d2",
+      "name": "Fühler",
+      "image": "IconsFilled/meter.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0249-3a62-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0249-3a62-ffffed57184a04d2",
+      "name": "Stellantrieb",
+      "image": "IconsFilled/valve-actuator-1.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-024a-3a66-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024a-3a66-ffffed57184a04d2",
+      "name": "Temperatur",
+      "image": "IconsFilled/thermometer.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "indoortemperature",
+      "color": "#69C350"
+    },
+    "15ea0aa4-024a-3a6a-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024a-3a6a-ffffed57184a04d2",
+      "name": "Präsenzerkennung",
+      "image": "IconsFilled/megaphone.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#ED5B98"
+    },
+    "15ea0aa4-024b-3a6e-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024b-3a6e-ffffed57184a04d2",
+      "name": "Lüftung",
+      "image": "IconsFilled/fan-1.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-024c-3a72-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024c-3a72-ffffed57184a04d2",
+      "name": "Fenster",
+      "image": "IconsFilled/window-1.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-024d-3a76-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024d-3a76-ffffed57184a04d2",
+      "name": "Sicherheit",
+      "image": "IconsFilled/cc-camera.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-024e-3a7a-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024e-3a7a-ffffed57184a04d2",
+      "name": "Kühlung",
+      "image": "IconsFilled/snowflake.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-024e-3a7e-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024e-3a7e-ffffed57184a04d2",
+      "name": "Alarm",
+      "image": "IconsFilled/alarm-1.svg",
+      "defaultRating": 1,
+      "isFavorite": true,
+      "type": "undefined",
+      "color": "#F94D5F"
+    },
+    "15ea0aa4-024f-3a82-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-024f-3a82-ffffed57184a04d2",
+      "name": "Tor",
+      "image": "IconsFilled/garage-closed-2.svg",
+      "defaultRating": 1,
+      "isFavorite": true,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0250-3a86-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0250-3a86-ffffed57184a04d2",
+      "name": "Wellness",
+      "image": "IconsFilled/rock.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0251-3a8a-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0251-3a8a-ffffed57184a04d2",
+      "name": "Technik",
+      "image": "IconsFilled/cog-double.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0258-3aa4-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0258-3aa4-ffffed57184a04d2",
+      "name": "EDV",
+      "image": "IconsFilled/computer.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-025a-3aaa-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-025a-3aaa-ffffed57184a04d2",
+      "name": "Zutritt",
+      "image": "IconsFilled/door-open.svg",
+      "defaultRating": 1,
+      "isFavorite": true,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-025b-3ab0-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-025b-3ab0-ffffed57184a04d2",
+      "name": "Verbraucher",
+      "image": "IconsFilled/electricity-outlet-4.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-025d-3ab6-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-025d-3ab6-ffffed57184a04d2",
+      "name": "Bewässerung",
+      "image": "IconsFilled/water-hose.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-025e-3abc-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-025e-3abc-ffffed57184a04d2",
+      "name": "Photovoltaik",
+      "image": "IconsFilled/solar-panel.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0260-3ac6-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0260-3ac6-ffffed57184a04d2",
+      "name": "Elektrofahrzeug",
+      "image": "IconsFilled/electric-car.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0262-3acc-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0262-3acc-ffffed57184a04d2",
+      "name": "Wecker",
+      "image": "IconsFilled/alarm-clock.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0263-3ad0-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0263-3ad0-ffffed57184a04d2",
+      "name": "Strom",
+      "image": "IconsFilled/flash-1.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0263-3ad4-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0263-3ad4-ffffed57184a04d2",
+      "name": "Info",
+      "image": "IconsFilled/information-circle.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0265-3adc-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "name": "Wetter",
+      "image": "IconsFilled/day-cloud.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0265-3ae0-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0265-3ae0-ffffed57184a04d2",
+      "name": "Feuchte",
+      "image": "IconsFilled/water-drops.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0266-3ae4-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0266-3ae4-ffffed57184a04d2",
+      "name": "Multimedia",
+      "image": "IconsFilled/video-clip.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-0267-3ae8-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0267-3ae8-ffffed57184a04d2",
+      "name": "Energie",
+      "image": "IconsFilled/flash-1.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#008FBB"
+    },
+    "15ea0aa4-0267-3aec-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-0267-3aec-ffffed57184a04d2",
+      "name": "Einstellungen",
+      "image": "IconsFilled/cog.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "15ea0aa4-026a-3af8-ffffed57184a04d2": {
+      "uuid": "15ea0aa4-026a-3af8-ffffed57184a04d2",
+      "name": "Bedienelemente",
+      "image": "IconsFilled/finger-tapping.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#69C350"
+    },
+    "1e891393-0139-4c92-ffffed57184a04d2": {
+      "uuid": "1e891393-0139-4c92-ffffed57184a04d2",
+      "name": "Sonne",
+      "image": "IconsFilled/sun.svg",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "type": "undefined",
+      "color": "#FFFF00"
+    }
+  },
+  "modes": {
+    "00000000-0000-0001-1500000000000000": {
+      "id": 0,
+      "name": "Feiertag"
+    },
+    "00000000-0000-0002-1500000000000000": {
+      "id": 1,
+      "name": "Urlaub"
+    },
+    "00000000-0000-0003-1500000000000000": {
+      "id": 2,
+      "name": "Freier Tag/Schulferien"
+    },
+    "00000000-0000-0004-1500000000000000": {
+      "id": 3,
+      "name": "Montag"
+    },
+    "00000000-0000-0005-1500000000000000": {
+      "id": 4,
+      "name": "Dienstag"
+    },
+    "00000000-0000-0006-1500000000000000": {
+      "id": 5,
+      "name": "Mittwoch"
+    },
+    "00000000-0000-0007-1500000000000000": {
+      "id": 6,
+      "name": "Donnerstag"
+    },
+    "00000000-0000-0008-1500000000000000": {
+      "id": 7,
+      "name": "Freitag"
+    },
+    "00000000-0000-0009-1500000000000000": {
+      "id": 8,
+      "name": "Samstag"
+    },
+    "00000000-0000-000a-1500000000000000": {
+      "id": 9,
+      "name": "Sonntag"
+    },
+    "00000000-0000-000b-1500000000000000": {
+      "id": 10,
+      "name": "Heizperiode"
+    },
+    "00000000-0000-000c-1500000000000000": {
+      "id": 11,
+      "name": "Kühlperiode"
+    },
+    "15ea0aa5-00a9-3b62-ffffed57184a04d2": {
+      "id": -1,
+      "name": "Alarm"
+    },
+    "15ea0aa5-00b3-3b66-ffffed57184a04d2": {
+      "id": -2,
+      "name": "Anwesenheitssimulation"
+    },
+    "15ea0aa5-00c0-3b6a-ffffed57184a04d2": {
+      "id": -3,
+      "name": "Haus im Tiefschlaf"
+    },
+    "15ea0aa5-00ce-3b6e-ffffed57184a04d2": {
+      "id": -4,
+      "name": "Erhöhter Wärmebedarf"
+    },
+    "15ea0aa5-00d7-3b72-ffffed57184a04d2": {
+      "id": -5,
+      "name": "Party"
+    },
+    "15ea0aa5-00e6-3b76-ffffed57184a04d2": {
+      "id": -6,
+      "name": "Abwesend"
+    }
+  },
+  "controls": {
+    "15ea0aa4-01f6-3a2f-ffffed57184a04d2": {
+      "name": "Impuls Abenddämmerung",
+      "type": "",
+      "uuidAction": "15ea0aa4-01f6-3a2f-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 17,
+      "states": {
+        "input": "15ea0aa4-01f6-3a2f-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa4-01ec-3a2c-ffffed57184a04d2": {
+      "name": "Impuls Morgendämmerung",
+      "type": "",
+      "uuidAction": "15ea0aa4-01ec-3a2c-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 17,
+      "states": {
+        "input": "15ea0aa4-01ec-3a2c-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa4-01d0-3a26-ffffed57184a04d2": {
+      "name": "Impuls Sonnenaufgang",
+      "type": "",
+      "uuidAction": "15ea0aa4-01d0-3a26-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 17,
+      "states": {
+        "input": "15ea0aa4-01d0-3a26-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa4-0093-39e4-ffffed57184a04d2": {
+      "name": "Wochentag",
+      "type": "",
+      "uuidAction": "15ea0aa4-0093-39e4-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 17,
+      "states": {
+        "input": "15ea0aa4-0093-39e4-ffffed57184a04d2"
+      }
+    },
+    "00000000-0000-0001-1500000000000000": {
+      "name": "Feiertag",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "00000000-0000-0001-1500000000000000",
+      "cat": "15ea0aa4-0243-3a46-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 17,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#E73246",
+          "on": "#69C350"
+        }
+      },
+      "states": {
+        "active": "00000000-0000-0001-1500000000000000"
+      }
+    },
+    "00000000-0000-0003-1500000000000000": {
+      "name": "Freier Tag/Schulferien",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "00000000-0000-0003-1500000000000000",
+      "cat": "15ea0aa4-0243-3a46-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 17,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#E73246",
+          "on": "#69C350"
+        }
+      },
+      "states": {
+        "active": "00000000-0000-0003-1500000000000000"
+      }
+    },
+    "15ea0aa7-024e-3e20-ffffed57184a04d2": {
+      "name": "Gefühlte Temperatur",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "15ea0aa7-024e-3e20-ffffed57184a04d2",
+      "room": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "hasControlNotes": true,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "15ea0aa7-024e-3e20-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa7-024e-3e1d-ffffed57184a04d2": {
+      "name": "Luftdruck",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "15ea0aa7-024e-3e1d-ffffed57184a04d2",
+      "room": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "hasControlNotes": true,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.0fhPa"
+      },
+      "states": {
+        "value": "15ea0aa7-024e-3e1d-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa7-024e-3e1a-ffffed57184a04d2": {
+      "name": "Niederschlag WS",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "15ea0aa7-024e-3e1a-ffffed57184a04d2",
+      "room": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "hasControlNotes": true,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1fmm"
+      },
+      "states": {
+        "value": "15ea0aa7-024e-3e1a-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa7-024c-3e0b-ffffed57184a04d2": {
+      "name": "Temperatur WS",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "15ea0aa7-024c-3e0b-ffffed57184a04d2",
+      "room": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "hasControlNotes": true,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "15ea0aa7-024c-3e0b-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa7-024d-3e11-ffffed57184a04d2": {
+      "name": "Windgeschwindigkeit WS",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "15ea0aa7-024d-3e11-ffffed57184a04d2",
+      "room": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "hasControlNotes": true,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.0fkm/h"
+      },
+      "states": {
+        "value": "15ea0aa7-024d-3e11-ffffed57184a04d2"
+      }
+    },
+    "15ea0aa7-024d-3e14-ffffed57184a04d2": {
+      "name": "Windrichtung",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "15ea0aa7-024d-3e14-ffffed57184a04d2",
+      "room": "15ea0aa5-0143-3c75-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "hasControlNotes": true,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "15ea0aa7-024d-3e14-ffffed57184a04d2"
+      }
+    },
+    "1f4b4509-02b0-c8aa-ffffed57184a04d2": {
+      "name": "Lichtsteuerung",
+      "type": "LightControllerV2",
+      "uuidAction": "1f4b4509-02b0-c8aa-ffffed57184a04d2",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0244-3a4a-ffffed57184a04d2",
+      "defaultRating": 10,
+      "isFavorite": true,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "movementScene": 2,
+        "masterValue": "1f4b4509-02b0-c8aa-ffffed57184a04d2/masterValue",
+        "masterColor": "1f4b4509-02b0-c8aa-ffffed57184a04d2/masterColor"
+      },
+      "states": {
+        "jLocked": "9f4b4509-02b0-c86a-07ffeaabea568bb3",
+        "activeMoods": "1f4b4509-02b0-c830-ffffeaabea568bb3",
+        "moodList": "1f4b4509-02b0-c831-ffffeaabea568bb3",
+        "activeMoodsNum": "1f4b4509-02b0-c838-ffffeaabea568bb3",
+        "favoriteMoods": "1f4b4509-02b0-c832-ffffeaabea568bb3",
+        "additionalMoods": "1f4b4509-02b0-c833-ffffeaabea568bb3",
+        "circuitNames": "1f4b4509-02b0-c837-ffffeaabea568bb3",
+        "daylightConfig": "1f4b4509-02b0-c839-ffffeaabea568bb3",
+        "presence": "1f4b4509-02b0-c83a-ffffeaabea568bb3"
+      },
+      "subControls": {
+        "1f4b4509-02b0-c8aa-ffffed57184a04d2/masterValue": {
+          "name": "Master-Helligkeit",
+          "type": "Dimmer",
+          "uuidAction": "1f4b4509-02b0-c8aa-ffffed57184a04d2/masterValue",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "position": "1f4b4509-02b0-c8a5-42ffeaabea568bb3",
+            "min": "1f4b4509-02b0-c835-ffffeaabea568bb3",
+            "max": "1f4b4509-02b0-c836-ffffeaabea568bb3",
+            "step": "1f4b4509-02b0-c87f-1cffeaabea568bb3"
+          }
+        },
+        "1f4b4509-02b0-c8aa-ffffed57184a04d2/masterColor": {
+          "name": "Master-Farbe",
+          "type": "ColorPickerV2",
+          "uuidAction": "1f4b4509-02b0-c8aa-ffffed57184a04d2/masterColor",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "details": {
+            "pickerType": "Rgb"
+          },
+          "states": {
+            "color": "1f4b4509-02b0-c8a4-41ffeaabea568bb3",
+            "sequence": "1f47420d-0073-3766-ffff3ce43fa9aec5",
+            "sequenceColorIdx": "1f47420d-0073-3767-ffff3ce43fa9aec5"
+          }
+        },
+        "1f4b4509-02b0-c8aa-ffffed57184a04d2/AI1": {
+          "name": "Essleuchte",
+          "type": "ColorPickerV2",
+          "uuidAction": "1f4b4509-02b0-c8aa-ffffed57184a04d2/AI1",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "details": {
+            "pickerType": "TunableWhite"
+          },
+          "states": {
+            "color": "1f4b4509-02b0-c892-2fffeaabea568bb3",
+            "sequence": "1f47420d-0073-3742-ffff3ce43fa9aec5",
+            "sequenceColorIdx": "1f47420d-0073-3743-ffff3ce43fa9aec5"
+          }
+        },
+        "1f4b4509-02b0-c8aa-ffffed57184a04d2/AI2": {
+          "name": "LED Strip Terrasse",
+          "type": "ColorPickerV2",
+          "uuidAction": "1f4b4509-02b0-c8aa-ffffed57184a04d2/AI2",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "details": {
+            "pickerType": "Rgb"
+          },
+          "states": {
+            "color": "1f4b4509-02b0-c893-30ffeaabea568bb3",
+            "sequence": "1f47420d-0073-3744-ffff3ce43fa9aec5",
+            "sequenceColorIdx": "1f47420d-0073-3745-ffff3ce43fa9aec5"
+          }
+        }
+      }
+    },
+    "1f24d151-0043-9d1c-ffffed57184a04d2": {
+      "name": "Warema",
+      "type": "Jalousie",
+      "uuidAction": "1f24d151-0043-9d1c-ffffed57184a04d2",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 6,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9f24d151-0043-9cf6-0bff2dba360aa5bd",
+        "infoText": "1f24d151-0043-9ce4-ffff2dba360aa5bd",
+        "up": "1f24d151-0043-9d12-27ff2dba360aa5bd",
+        "down": "1f24d151-0043-9d13-28ff2dba360aa5bd",
+        "position": "1f24d151-0043-9d14-29ff2dba360aa5bd",
+        "shadePosition": "1f24d151-0043-9d15-2aff2dba360aa5bd",
+        "safetyActive": "1f24d151-0043-9d17-2cff2dba360aa5bd",
+        "autoAllowed": "1f24d151-0043-9cf2-07ff2dba360aa5bd",
+        "autoActive": "1f24d151-0043-9d16-2bff2dba360aa5bd",
+        "locked": "1f24d151-0043-9d18-2dff2dba360aa5bd",
+        "autoInfoText": "1f24d151-0043-9ce5-ffff2dba360aa5bd",
+        "autoState": "1f24d151-0043-9ce6-ffff2dba360aa5bd",
+        "deviceState": "1f24d151-0043-9ce7-ffff2dba360aa5bd",
+        "targetPosition": "1f24d151-0043-9ce8-ffff2dba360aa5bd",
+        "targetPositionLamelle": "1f24d151-0043-9ce9-ffff2dba360aa5bd",
+        "adjustingEndPos": "1f24d151-0043-9cea-ffff2dba360aa5bd"
+      }
+    },
+    "1fad0cf8-025e-eb4b-ffffb297084afaf4": {
+      "name": "Verhindert das Ausschalten der Esszimmerleuchte",
+      "type": "TextState",
+      "uuidAction": "1fad0cf8-025e-eb4b-ffffb297084afaf4",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "states": {
+        "textAndIcon": "1fad0cf8-025e-eb4b-ffffb297084afaf4",
+        "iconAndColor": "1fad0cf8-025e-eb4c-ffffb297084afaf4"
+      }
+    },
+    "1e7d2530-019f-3516-ffff20f8dd132f52": {
+      "name": "Süd Links",
+      "type": "Jalousie",
+      "uuidAction": "1e7d2530-019f-3516-ffff20f8dd132f52",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 0,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d2530-019f-3522-ffff20f8dd132f52",
+        "infoText": "1e7d2530-019f-3548-ffff20f8dd132f52",
+        "up": "1e7d2530-019f-353e-ffff20f8dd132f52",
+        "down": "1e7d2530-019f-353f-ffff20f8dd132f52",
+        "position": "1e7d2530-019f-3540-ffff20f8dd132f52",
+        "shadePosition": "1e7d2530-019f-3541-ffff20f8dd132f52",
+        "safetyActive": "1e7d2530-019f-3543-ffff20f8dd132f52",
+        "autoAllowed": "1e7d2530-019f-351e-ffff20f8dd132f52",
+        "autoActive": "1e7d2530-019f-3542-ffff20f8dd132f52",
+        "locked": "1e7d2530-019f-3544-ffff20f8dd132f52",
+        "autoInfoText": "1e7d2530-019f-3549-ffff20f8dd132f52",
+        "autoState": "1e7d2530-019f-354a-ffff20f8dd132f52",
+        "deviceState": "1e7d2530-019f-354b-ffff20f8dd132f52",
+        "targetPosition": "1e7d2530-019f-354c-ffff20f8dd132f52",
+        "targetPositionLamelle": "1e7d2530-019f-354d-ffff20f8dd132f52",
+        "adjustingEndPos": "1e7d2530-019f-354e-ffff20f8dd132f52"
+      }
+    },
+    "1e7d2526-028c-2930-ffff752829463f57": {
+      "name": "Süd Mitte",
+      "type": "Jalousie",
+      "uuidAction": "1e7d2526-028c-2930-ffff752829463f57",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 0,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d2526-028c-293c-ffff752829463f57",
+        "infoText": "1e7d2526-028c-2962-ffff752829463f57",
+        "up": "1e7d2526-028c-2958-ffff752829463f57",
+        "down": "1e7d2526-028c-2959-ffff752829463f57",
+        "position": "1e7d2526-028c-295a-ffff752829463f57",
+        "shadePosition": "1e7d2526-028c-295b-ffff752829463f57",
+        "safetyActive": "1e7d2526-028c-295d-ffff752829463f57",
+        "autoAllowed": "1e7d2526-028c-2938-ffff752829463f57",
+        "autoActive": "1e7d2526-028c-295c-ffff752829463f57",
+        "locked": "1e7d2526-028c-295e-ffff752829463f57",
+        "autoInfoText": "1e7d2526-028c-2963-ffff752829463f57",
+        "autoState": "1e7d2526-028c-2964-ffff752829463f57",
+        "deviceState": "1e7d2526-028c-2965-ffff752829463f57",
+        "targetPosition": "1e7d2526-028c-2966-ffff752829463f57",
+        "targetPositionLamelle": "1e7d2526-028c-2967-ffff752829463f57",
+        "adjustingEndPos": "1e7d2526-028c-2968-ffff752829463f57"
+      }
+    },
+    "1e7d2497-0097-1a4f-ffffed57184a04d2": {
+      "name": "Süd Rechts",
+      "type": "Jalousie",
+      "uuidAction": "1e7d2497-0097-1a4f-ffffed57184a04d2",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 0,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d2497-0097-1a29-0bff17219536495e",
+        "infoText": "1e7d2497-0097-1a17-ffff17219536495e",
+        "up": "1e7d2497-0097-1a45-27ff17219536495e",
+        "down": "1e7d2497-0097-1a46-28ff17219536495e",
+        "position": "1e7d2497-0097-1a47-29ff17219536495e",
+        "shadePosition": "1e7d2497-0097-1a48-2aff17219536495e",
+        "safetyActive": "1e7d2497-0097-1a4a-2cff17219536495e",
+        "autoAllowed": "1e7d2497-0097-1a25-07ff17219536495e",
+        "autoActive": "1e7d2497-0097-1a49-2bff17219536495e",
+        "locked": "1e7d2497-0097-1a4b-2dff17219536495e",
+        "autoInfoText": "1e7d2497-0097-1a18-ffff17219536495e",
+        "autoState": "1e7d2497-0097-1a19-ffff17219536495e",
+        "deviceState": "1e7d2497-0097-1a1a-ffff17219536495e",
+        "targetPosition": "1e7d2497-0097-1a1b-ffff17219536495e",
+        "targetPositionLamelle": "1e7d2497-0097-1a1c-ffff17219536495e",
+        "adjustingEndPos": "1e7d2497-0097-1a1d-ffff17219536495e"
+      }
+    },
+    "1e828df7-02be-5089-ffff1d2d0845505e": {
+      "name": "West",
+      "type": "Jalousie",
+      "uuidAction": "1e828df7-02be-5089-ffff1d2d0845505e",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e828df7-02be-5095-ffff1d2d0845505e",
+        "infoText": "1e828df7-02be-50bb-ffff1d2d0845505e",
+        "up": "1e828df7-02be-50b1-ffff1d2d0845505e",
+        "down": "1e828df7-02be-50b2-ffff1d2d0845505e",
+        "position": "1e828df7-02be-50b3-ffff1d2d0845505e",
+        "shadePosition": "1e828df7-02be-50b4-ffff1d2d0845505e",
+        "safetyActive": "1e828df7-02be-50b6-ffff1d2d0845505e",
+        "autoAllowed": "1e828df7-02be-5091-ffff1d2d0845505e",
+        "autoActive": "1e828df7-02be-50b5-ffff1d2d0845505e",
+        "locked": "1e828df7-02be-50b7-ffff1d2d0845505e",
+        "autoInfoText": "1e828df7-02be-50bc-ffff1d2d0845505e",
+        "autoState": "1e828df7-02be-50bd-ffff1d2d0845505e",
+        "deviceState": "1e828df7-02be-50be-ffff1d2d0845505e",
+        "targetPosition": "1e828df7-02be-50bf-ffff1d2d0845505e",
+        "targetPositionLamelle": "1e828df7-02be-50c0-ffff1d2d0845505e",
+        "adjustingEndPos": "1e828df7-02be-50c1-ffff1d2d0845505e"
+      }
+    },
+    "1ea9dc48-001a-c831-ffff504f94a1dd43": {
+      "name": "Wohnzimmer mit Ausblick",
+      "type": "Pushbutton",
+      "uuidAction": "1ea9dc48-001a-c831-ffff504f94a1dd43",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": "IconsFilled/blinds-half-closed.svg",
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlReferences": [
+          {
+            "uuidAction": "15ea0aa4-0206-3a35-ffffed57184a04d2"
+          }
+        ],
+        "type": 511
+      },
+      "states": {
+        "jLocked": "9ea9dc48-001a-c82e-01ff504f94a1dd43",
+        "active": "1ea9dc48-001a-c831-ffff504f94a1dd43"
+      }
+    },
+    "1eb8eaa6-010b-f84b-ffffed57184a04d2": {
+      "name": "Fenster - und Türüberwachung",
+      "type": "WindowMonitor",
+      "uuidAction": "1eb8eaa6-010b-f84b-ffffed57184a04d2",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-024c-3a72-ffffed57184a04d2",
+      "defaultRating": 1,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "windows": [
+          {
+            "name": "Sensor Hebeschiebetür",
+            "installPlace": "",
+            "uuid": "1eb8da47-0120-479e-ffffed57184a04d2",
+            "room": "15ea0aa5-0138-3c33-ffffed57184a04d2"
+          }
+        ]
+      },
+      "states": {
+        "numOpen": "1eb8eaa6-010b-f842-08ff19f089907876",
+        "numClosed": "1eb8eaa6-010b-f844-0aff19f089907876",
+        "numTilted": "1eb8eaa6-010b-f843-09ff19f089907876",
+        "numOffline": "1eb8eaa6-010b-f845-0bff19f089907876",
+        "numLocked": "1eb8eaa6-010b-f846-0cff19f089907876",
+        "numUnlocked": "1eb8eaa6-010b-f847-0dff19f089907876",
+        "windowStates": "1eb8eaa6-010b-f838-ffff19f089907876"
+      }
+    },
+    "1e8908b0-011e-40e8-ffff024c2f744b80": {
+      "name": "Luftfeuchte",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e8908b0-011e-40e8-ffff024c2f744b80",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3ae0-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f %%"
+      },
+      "states": {
+        "value": "1e8908b0-011e-40e8-ffff024c2f744b80"
+      }
+    },
+    "1e890b8b-00b6-4e29-ffff744b0020350c": {
+      "name": "Temperatur",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e890b8b-00b6-4e29-ffff744b0020350c",
+      "room": "15ea0aa5-0138-3c33-ffffed57184a04d2",
+      "cat": "15ea0aa4-024a-3a66-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1e890b8b-00b6-4e29-ffff744b0020350c"
+      }
+    },
+    "1e8289a1-0041-95b0-ffff661024a034cf": {
+      "name": "West",
+      "type": "Jalousie",
+      "uuidAction": "1e8289a1-0041-95b0-ffff661024a034cf",
+      "room": "15ea0aa5-0142-3c6f-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e8289a1-0041-95bc-ffff661024a034cf",
+        "infoText": "1e8289a1-0041-95e2-ffff661024a034cf",
+        "up": "1e8289a1-0041-95d8-ffff661024a034cf",
+        "down": "1e8289a1-0041-95d9-ffff661024a034cf",
+        "position": "1e8289a1-0041-95da-ffff661024a034cf",
+        "shadePosition": "1e8289a1-0041-95db-ffff661024a034cf",
+        "safetyActive": "1e8289a1-0041-95dd-ffff661024a034cf",
+        "autoAllowed": "1e8289a1-0041-95b8-ffff661024a034cf",
+        "autoActive": "1e8289a1-0041-95dc-ffff661024a034cf",
+        "locked": "1e8289a1-0041-95de-ffff661024a034cf",
+        "autoInfoText": "1e8289a1-0041-95e3-ffff661024a034cf",
+        "autoState": "1e8289a1-0041-95e4-ffff661024a034cf",
+        "deviceState": "1e8289a1-0041-95e5-ffff661024a034cf",
+        "targetPosition": "1e8289a1-0041-95e6-ffff661024a034cf",
+        "targetPositionLamelle": "1e8289a1-0041-95e7-ffff661024a034cf",
+        "adjustingEndPos": "1e8289a1-0041-95e8-ffff661024a034cf"
+      }
+    },
+    "1f533b0a-0206-1791-ffffed57184a04d2": {
+      "name": "Helligkeit",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1f533b0a-0206-1791-ffffed57184a04d2",
+      "room": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.0fLx"
+      },
+      "states": {
+        "value": "1f533b0a-0206-1791-ffffed57184a04d2",
+        "error": "1f533b0a-0206-1790-01ffd6477712acce"
+      }
+    },
+    "1f533b0a-0206-179d-ffffed57184a04d2": {
+      "name": "Regen Wetterstation",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "1f533b0a-0206-179d-ffffed57184a04d2",
+      "room": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#E73246",
+          "on": "#69C350"
+        }
+      },
+      "states": {
+        "active": "1f533b0a-0206-179d-ffffed57184a04d2"
+      }
+    },
+    "1f533b0a-0206-17a5-ffffed57184a04d2": {
+      "name": "Sonnenschein Südseite",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "1f533b0a-0206-17a5-ffffed57184a04d2",
+      "room": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#E73246",
+          "on": "#69C350"
+        }
+      },
+      "states": {
+        "active": "1f533b0a-0206-17a5-ffffed57184a04d2"
+      }
+    },
+    "1f533b0a-0206-1799-ffffed57184a04d2": {
+      "name": "Temperatur Südseite",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1f533b0a-0206-1799-ffffed57184a04d2",
+      "room": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1f533b0a-0206-1799-ffffed57184a04d2",
+        "error": "1f533b0a-0206-1798-01ffd6477712acce"
+      }
+    },
+    "1f533b0a-0206-1795-ffffed57184a04d2": {
+      "name": "Windgeschwindigkeit",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1f533b0a-0206-1795-ffffed57184a04d2",
+      "room": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1fkm/h"
+      },
+      "states": {
+        "value": "1f533b0a-0206-1795-ffffed57184a04d2",
+        "error": "1f533b0a-0206-1794-01ffd6477712acce"
+      }
+    },
+    "1f533b0a-0206-17a1-ffffed57184a04d2": {
+      "name": "Windwarnung Wetterstation",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "1f533b0a-0206-17a1-ffffed57184a04d2",
+      "room": "15ea0aa5-0137-3c2d-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3adc-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": true,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#E73246",
+          "on": "#69C350"
+        }
+      },
+      "states": {
+        "active": "1f533b0a-0206-17a1-ffffed57184a04d2"
+      }
+    },
+    "1fae583e-031a-2d82-ffffed57184a04d2": {
+      "name": "Lichtsteuerung",
+      "type": "LightControllerV2",
+      "uuidAction": "1fae583e-031a-2d82-ffffed57184a04d2",
+      "room": "1fae557e-02a3-afcb-ffffed57184a04d2",
+      "cat": "15ea0aa4-0244-3a4a-ffffed57184a04d2",
+      "defaultRating": 1,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "movementScene": 1,
+        "masterValue": "1fae583e-031a-2d82-ffffed57184a04d2/masterValue"
+      },
+      "states": {
+        "jLocked": "9fae583e-0312-2d42-07ff8d9b818a712c",
+        "activeMoods": "1fae583e-031a-2d08-ffff8d9b818a712c",
+        "moodList": "1fae583e-031a-2d09-ffff8d9b818a712c",
+        "activeMoodsNum": "1fae583e-031a-2d10-ffff8d9b818a712c",
+        "favoriteMoods": "1fae583e-031a-2d0a-ffff8d9b818a712c",
+        "additionalMoods": "1fae583e-031a-2d0b-ffff8d9b818a712c",
+        "circuitNames": "1fae583e-031a-2d0f-ffff8d9b818a712c",
+        "daylightConfig": "1fae583e-031a-2d11-ffff8d9b818a712c",
+        "presence": "1fae583e-031a-2d12-ffff8d9b818a712c"
+      },
+      "subControls": {
+        "1fae583e-031a-2d82-ffffed57184a04d2/masterValue": {
+          "name": "Master-Helligkeit",
+          "type": "Dimmer",
+          "uuidAction": "1fae583e-031a-2d82-ffffed57184a04d2/masterValue",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "position": "1fae583e-0312-2d7d-42ff8d9b818a712c",
+            "min": "1fae583e-031a-2d0d-ffff8d9b818a712c",
+            "max": "1fae583e-031a-2d0e-ffff8d9b818a712c",
+            "step": "1fae583e-0312-2d57-1cff8d9b818a712c"
+          }
+        },
+        "1fae583e-031a-2d82-ffffed57184a04d2/AI1": {
+          "name": "Turns WIZ Kellerraum on or off",
+          "type": "Switch",
+          "uuidAction": "1fae583e-031a-2d82-ffffed57184a04d2/AI1",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "active": "1fae583e-0312-2d6a-2fff8d9b818a712c"
+          }
+        },
+        "1fae583e-031a-2d82-ffffed57184a04d2/AI2": {
+          "name": "Hobbyraum",
+          "type": "Dimmer",
+          "uuidAction": "1fae583e-031a-2d82-ffffed57184a04d2/AI2",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "position": "1fae583e-0312-2d6b-30ff8d9b818a712c",
+            "min": "1fae583e-0312-2d59-1eff8d9b818a712c",
+            "max": "1fae583e-0312-2d5a-1fff8d9b818a712c",
+            "step": "1fae583e-0312-2d57-1cff8d9b818a712c"
+          }
+        }
+      }
+    },
+    "1fb0ee23-02c2-92f3-ffffed57184a04d2": {
+      "name": "Lichtsteuerung",
+      "type": "LightControllerV2",
+      "uuidAction": "1fb0ee23-02c2-92f3-ffffed57184a04d2",
+      "room": "15ea0aa5-0127-3bc5-ffffed57184a04d2",
+      "cat": "15ea0aa4-0244-3a4a-ffffed57184a04d2",
+      "defaultRating": 1,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "movementScene": 1,
+        "masterValue": "1fb0ee23-02c2-92f3-ffffed57184a04d2/masterValue"
+      },
+      "states": {
+        "jLocked": "9fb0ee23-02c0-92b3-07ff16cc3e5b1950",
+        "activeMoods": "1fb0ee23-02c2-9279-ffff16cc3e5b1950",
+        "moodList": "1fb0ee23-02c2-927a-ffff16cc3e5b1950",
+        "activeMoodsNum": "1fb0ee23-02c2-9281-ffff16cc3e5b1950",
+        "favoriteMoods": "1fb0ee23-02c2-927b-ffff16cc3e5b1950",
+        "additionalMoods": "1fb0ee23-02c2-927c-ffff16cc3e5b1950",
+        "circuitNames": "1fb0ee23-02c2-9280-ffff16cc3e5b1950",
+        "daylightConfig": "1fb0ee23-02c2-9282-ffff16cc3e5b1950",
+        "presence": "1fb0ee23-02c2-9283-ffff16cc3e5b1950"
+      },
+      "subControls": {
+        "1fb0ee23-02c2-92f3-ffffed57184a04d2/masterValue": {
+          "name": "Master-Helligkeit",
+          "type": "Dimmer",
+          "uuidAction": "1fb0ee23-02c2-92f3-ffffed57184a04d2/masterValue",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "position": "1fb0ee23-02c0-92ee-42ff16cc3e5b1950",
+            "min": "1fb0ee23-02c2-927e-ffff16cc3e5b1950",
+            "max": "1fb0ee23-02c2-927f-ffff16cc3e5b1950",
+            "step": "1fb0ee23-02c0-92c8-1cff16cc3e5b1950"
+          }
+        },
+        "1fb0ee23-02c2-92f3-ffffed57184a04d2/AI1": {
+          "name": "Küche Spot links",
+          "type": "Dimmer",
+          "uuidAction": "1fb0ee23-02c2-92f3-ffffed57184a04d2/AI1",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "position": "1fb0ee23-02c0-92db-2fff16cc3e5b1950",
+            "min": "1fb0ee23-02c0-92ca-1eff16cc3e5b1950",
+            "max": "1fb0ee23-02c0-92cb-1fff16cc3e5b1950",
+            "step": "1fb0ee23-02c0-92c8-1cff16cc3e5b1950"
+          }
+        },
+        "1fb0ee23-02c2-92f3-ffffed57184a04d2/AI2": {
+          "name": "Küche Spot rechts",
+          "type": "Dimmer",
+          "uuidAction": "1fb0ee23-02c2-92f3-ffffed57184a04d2/AI2",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "states": {
+            "position": "1fb0ee23-02c0-92dc-30ff16cc3e5b1950",
+            "min": "1fb0ee23-02c0-92ca-1eff16cc3e5b1950",
+            "max": "1fb0ee23-02c0-92cb-1fff16cc3e5b1950",
+            "step": "1fb0ee23-02c0-92c8-1cff16cc3e5b1950"
+          }
+        }
+      }
+    },
+    "1e8286df-03a2-9748-ffff48c127f53957": {
+      "name": "Nord",
+      "type": "Jalousie",
+      "uuidAction": "1e8286df-03a2-9748-ffff48c127f53957",
+      "room": "15ea0aa5-0127-3bc5-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e8286df-03a2-9754-ffff48c127f53957",
+        "infoText": "1e8286df-03a2-977a-ffff48c127f53957",
+        "up": "1e8286df-03a2-9770-ffff48c127f53957",
+        "down": "1e8286df-03a2-9771-ffff48c127f53957",
+        "position": "1e8286df-03a2-9772-ffff48c127f53957",
+        "shadePosition": "1e8286df-03a2-9773-ffff48c127f53957",
+        "safetyActive": "1e8286df-03a2-9775-ffff48c127f53957",
+        "autoAllowed": "1e8286df-03a2-9750-ffff48c127f53957",
+        "autoActive": "1e8286df-03a2-9774-ffff48c127f53957",
+        "locked": "1e8286df-03a2-9776-ffff48c127f53957",
+        "autoInfoText": "1e8286df-03a2-977b-ffff48c127f53957",
+        "autoState": "1e8286df-03a2-977c-ffff48c127f53957",
+        "deviceState": "1e8286df-03a2-977d-ffff48c127f53957",
+        "targetPosition": "1e8286df-03a2-977e-ffff48c127f53957",
+        "targetPositionLamelle": "1e8286df-03a2-977f-ffff48c127f53957",
+        "adjustingEndPos": "1e8286df-03a2-9780-ffff48c127f53957"
+      }
+    },
+    "1e8502e8-02cd-818f-ffff90b26a9be69f": {
+      "name": "Nord",
+      "type": "Jalousie",
+      "uuidAction": "1e8502e8-02cd-818f-ffff90b26a9be69f",
+      "room": "1e7d23f7-001c-050e-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e8502e8-02cd-819b-ffff90b26a9be69f",
+        "infoText": "1e8502e8-02cd-81c1-ffff90b26a9be69f",
+        "up": "1e8502e8-02cd-81b7-ffff90b26a9be69f",
+        "down": "1e8502e8-02cd-81b8-ffff90b26a9be69f",
+        "position": "1e8502e8-02cd-81b9-ffff90b26a9be69f",
+        "shadePosition": "1e8502e8-02cd-81ba-ffff90b26a9be69f",
+        "safetyActive": "1e8502e8-02cd-81bc-ffff90b26a9be69f",
+        "autoAllowed": "1e8502e8-02cd-8197-ffff90b26a9be69f",
+        "autoActive": "1e8502e8-02cd-81bb-ffff90b26a9be69f",
+        "locked": "1e8502e8-02cd-81bd-ffff90b26a9be69f",
+        "autoInfoText": "1e8502e8-02cd-81c2-ffff90b26a9be69f",
+        "autoState": "1e8502e8-02cd-81c3-ffff90b26a9be69f",
+        "deviceState": "1e8502e8-02cd-81c4-ffff90b26a9be69f",
+        "targetPosition": "1e8502e8-02cd-81c5-ffff90b26a9be69f",
+        "targetPositionLamelle": "1e8502e8-02cd-81c6-ffff90b26a9be69f",
+        "adjustingEndPos": "1e8502e8-02cd-81c7-ffff90b26a9be69f"
+      }
+    },
+    "1e7d29b8-026e-4ca5-ffffc7a910eb9b76": {
+      "name": "Süd",
+      "type": "Jalousie",
+      "uuidAction": "1e7d29b8-026e-4ca5-ffffc7a910eb9b76",
+      "room": "1e7d23f7-001c-050e-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d29b8-026e-4cb1-ffffc7a910eb9b76",
+        "infoText": "1e7d29b8-026e-4cd7-ffffc7a910eb9b76",
+        "up": "1e7d29b8-026e-4ccd-ffffc7a910eb9b76",
+        "down": "1e7d29b8-026e-4cce-ffffc7a910eb9b76",
+        "position": "1e7d29b8-026e-4ccf-ffffc7a910eb9b76",
+        "shadePosition": "1e7d29b8-026e-4cd0-ffffc7a910eb9b76",
+        "safetyActive": "1e7d29b8-026e-4cd2-ffffc7a910eb9b76",
+        "autoAllowed": "1e7d29b8-026e-4cad-ffffc7a910eb9b76",
+        "autoActive": "1e7d29b8-026e-4cd1-ffffc7a910eb9b76",
+        "locked": "1e7d29b8-026e-4cd3-ffffc7a910eb9b76",
+        "autoInfoText": "1e7d29b8-026e-4cd8-ffffc7a910eb9b76",
+        "autoState": "1e7d29b8-026e-4cd9-ffffc7a910eb9b76",
+        "deviceState": "1e7d29b8-026e-4cda-ffffc7a910eb9b76",
+        "targetPosition": "1e7d29b8-026e-4cdb-ffffc7a910eb9b76",
+        "targetPositionLamelle": "1e7d29b8-026e-4cdc-ffffc7a910eb9b76",
+        "adjustingEndPos": "1e7d29b8-026e-4cdd-ffffc7a910eb9b76"
+      }
+    },
+    "1e7d29dc-0213-5d0f-ffffd79605a82005": {
+      "name": "Fenster Westseite",
+      "type": "Jalousie",
+      "uuidAction": "1e7d29dc-0213-5d0f-ffffd79605a82005",
+      "room": "1e7d23f7-001c-050e-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d29dc-0213-5d1b-ffffd79605a82005",
+        "infoText": "1e7d29dc-0213-5d41-ffffd79605a82005",
+        "up": "1e7d29dc-0213-5d37-ffffd79605a82005",
+        "down": "1e7d29dc-0213-5d38-ffffd79605a82005",
+        "position": "1e7d29dc-0213-5d39-ffffd79605a82005",
+        "shadePosition": "1e7d29dc-0213-5d3a-ffffd79605a82005",
+        "safetyActive": "1e7d29dc-0213-5d3c-ffffd79605a82005",
+        "autoAllowed": "1e7d29dc-0213-5d17-ffffd79605a82005",
+        "autoActive": "1e7d29dc-0213-5d3b-ffffd79605a82005",
+        "locked": "1e7d29dc-0213-5d3d-ffffd79605a82005",
+        "autoInfoText": "1e7d29dc-0213-5d42-ffffd79605a82005",
+        "autoState": "1e7d29dc-0213-5d43-ffffd79605a82005",
+        "deviceState": "1e7d29dc-0213-5d44-ffffd79605a82005",
+        "targetPosition": "1e7d29dc-0213-5d45-ffffd79605a82005",
+        "targetPositionLamelle": "1e7d29dc-0213-5d46-ffffd79605a82005",
+        "adjustingEndPos": "1e7d29dc-0213-5d47-ffffd79605a82005"
+      }
+    },
+    "1e9366a9-01e4-2094-ffffd8ea04b5d068": {
+      "name": "Luftfeuchte",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e9366a9-01e4-2094-ffffd8ea04b5d068",
+      "room": "1e7d23f7-001c-050e-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3ae0-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f %%"
+      },
+      "states": {
+        "value": "1e9366a9-01e4-2094-ffffd8ea04b5d068"
+      }
+    },
+    "1e9366a9-01e4-2098-ffffd8ea04b5d068": {
+      "name": "Temperatur",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e9366a9-01e4-2098-ffffd8ea04b5d068",
+      "room": "1e7d23f7-001c-050e-ffffed57184a04d2",
+      "cat": "15ea0aa4-024a-3a66-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1e9366a9-01e4-2098-ffffd8ea04b5d068"
+      }
+    },
+    "1eae8ee1-00cd-7887-ffffed57184a04d2": {
+      "name": "Schranklicht",
+      "type": "LightControllerV2",
+      "uuidAction": "1eae8ee1-00cd-7887-ffffed57184a04d2",
+      "room": "15ea0aa5-012b-3bdd-ffffed57184a04d2",
+      "cat": "15ea0aa4-0244-3a4a-ffffed57184a04d2",
+      "defaultRating": 1,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "movementScene": 1
+      },
+      "states": {
+        "jLocked": "9eae8ee1-00cb-7847-07ffa8882f92d577",
+        "activeMoods": "1eae8ee1-00cb-780d-ffffa8882f92d577",
+        "moodList": "1eae8ee1-00cb-780e-ffffa8882f92d577",
+        "activeMoodsNum": "1eae8ee1-00cb-7815-ffffa8882f92d577",
+        "favoriteMoods": "1eae8ee1-00cb-780f-ffffa8882f92d577",
+        "additionalMoods": "1eae8ee1-00cb-7810-ffffa8882f92d577",
+        "circuitNames": "1eae8ee1-00cb-7814-ffffa8882f92d577",
+        "daylightConfig": "1eae8ee1-00cb-7816-ffffa8882f92d577",
+        "presence": "1eae8ee1-00cb-7817-ffffa8882f92d577"
+      },
+      "subControls": {
+        "1eae8ee1-00cd-7887-ffffed57184a04d2/AI1": {
+          "name": "Schranklicht Paul",
+          "type": "ColorPickerV2",
+          "uuidAction": "1eae8ee1-00cd-7887-ffffed57184a04d2/AI1",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "restrictions": 0,
+          "details": {
+            "pickerType": "Lumitech"
+          },
+          "states": {
+            "color": "1eae8ee1-00cb-786f-2fffa8882f92d577",
+            "sequence": "1ea9f8a2-039b-32c6-ffff3ce43fa9aec5",
+            "sequenceColorIdx": "1ea9f8a2-039b-32c7-ffff3ce43fa9aec5"
+          }
+        }
+      }
+    },
+    "1ffcf591-00d6-16e4-ffffed57184a04d2": {
+      "name": "Status",
+      "type": "TextState",
+      "uuidAction": "1ffcf591-00d6-16e4-ffffed57184a04d2",
+      "room": "15ea0aa5-012b-3bdd-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "states": {
+        "textAndIcon": "1ffcf591-00d6-16e4-ffffed57184a04d2",
+        "iconAndColor": "1ffcf591-00d6-16dd-00ffc8bc328c3933"
+      }
+    },
+    "1e7d27b5-011f-b26a-ffff17b037628e31": {
+      "name": "Süd",
+      "type": "Jalousie",
+      "uuidAction": "1e7d27b5-011f-b26a-ffff17b037628e31",
+      "room": "15ea0aa5-012b-3bdd-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d27b5-011f-b276-ffff17b037628e31",
+        "infoText": "1e7d27b5-011f-b29c-ffff17b037628e31",
+        "up": "1e7d27b5-011f-b292-ffff17b037628e31",
+        "down": "1e7d27b5-011f-b293-ffff17b037628e31",
+        "position": "1e7d27b5-011f-b294-ffff17b037628e31",
+        "shadePosition": "1e7d27b5-011f-b295-ffff17b037628e31",
+        "safetyActive": "1e7d27b5-011f-b297-ffff17b037628e31",
+        "autoAllowed": "1e7d27b5-011f-b272-ffff17b037628e31",
+        "autoActive": "1e7d27b5-011f-b296-ffff17b037628e31",
+        "locked": "1e7d27b5-011f-b298-ffff17b037628e31",
+        "autoInfoText": "1e7d27b5-011f-b29d-ffff17b037628e31",
+        "autoState": "1e7d27b5-011f-b29e-ffff17b037628e31",
+        "deviceState": "1e7d27b5-011f-b29f-ffff17b037628e31",
+        "targetPosition": "1e7d27b5-011f-b2a0-ffff17b037628e31",
+        "targetPositionLamelle": "1e7d27b5-011f-b2a1-ffff17b037628e31",
+        "adjustingEndPos": "1e7d27b5-011f-b2a2-ffff17b037628e31"
+      }
+    },
+    "1e890911-0228-a372-ffffdacfa6b0d3d2": {
+      "name": "Luftfeuchte",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e890911-0228-a372-ffffdacfa6b0d3d2",
+      "room": "15ea0aa5-012b-3bdd-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3ae0-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f %%"
+      },
+      "states": {
+        "value": "1e890911-0228-a372-ffffdacfa6b0d3d2"
+      }
+    },
+    "1e890b3e-0231-03d7-ffff10dd878607bb": {
+      "name": "Temperatur",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e890b3e-0231-03d7-ffff10dd878607bb",
+      "room": "15ea0aa5-012b-3bdd-ffffed57184a04d2",
+      "cat": "15ea0aa4-024a-3a66-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1e890b3e-0231-03d7-ffff10dd878607bb"
+      }
+    },
+    "1e7d2856-00c1-d3aa-ffffa3f6cc0a7e4e": {
+      "name": "Süd",
+      "type": "Jalousie",
+      "uuidAction": "1e7d2856-00c1-d3aa-ffffa3f6cc0a7e4e",
+      "room": "15ea0aa5-012a-3bd7-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d2856-00c1-d3b6-ffffa3f6cc0a7e4e",
+        "infoText": "1e7d2856-00c2-d3dc-ffffa3f6cc0a7e4e",
+        "up": "1e7d2856-00c2-d3d2-ffffa3f6cc0a7e4e",
+        "down": "1e7d2856-00c2-d3d3-ffffa3f6cc0a7e4e",
+        "position": "1e7d2856-00c2-d3d4-ffffa3f6cc0a7e4e",
+        "shadePosition": "1e7d2856-00c2-d3d5-ffffa3f6cc0a7e4e",
+        "safetyActive": "1e7d2856-00c2-d3d7-ffffa3f6cc0a7e4e",
+        "autoAllowed": "1e7d2856-00c1-d3b2-ffffa3f6cc0a7e4e",
+        "autoActive": "1e7d2856-00c2-d3d6-ffffa3f6cc0a7e4e",
+        "locked": "1e7d2856-00c2-d3d8-ffffa3f6cc0a7e4e",
+        "autoInfoText": "1e7d2856-00c2-d3dd-ffffa3f6cc0a7e4e",
+        "autoState": "1e7d2856-00c2-d3de-ffffa3f6cc0a7e4e",
+        "deviceState": "1e7d2856-00c2-d3df-ffffa3f6cc0a7e4e",
+        "targetPosition": "1e7d2856-00c2-d3e0-ffffa3f6cc0a7e4e",
+        "targetPositionLamelle": "1e7d2856-00c2-d3e1-ffffa3f6cc0a7e4e",
+        "adjustingEndPos": "1e7d2856-00c2-d3e2-ffffa3f6cc0a7e4e"
+      }
+    },
+    "1e7d2884-01b1-e5d3-ffff75e43416e936": {
+      "name": "West",
+      "type": "Jalousie",
+      "uuidAction": "1e7d2884-01b1-e5d3-ffff75e43416e936",
+      "room": "15ea0aa5-012a-3bd7-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controlHistory": true,
+        "hasHistory": 20,
+        "isAutomatic": true,
+        "animation": 1,
+        "type": 348
+      },
+      "states": {
+        "jLocked": "9e7d2884-01b1-e5df-ffff75e43416e936",
+        "infoText": "1e7d2884-01b1-e605-ffff75e43416e936",
+        "up": "1e7d2884-01b1-e5fb-ffff75e43416e936",
+        "down": "1e7d2884-01b1-e5fc-ffff75e43416e936",
+        "position": "1e7d2884-01b1-e5fd-ffff75e43416e936",
+        "shadePosition": "1e7d2884-01b1-e5fe-ffff75e43416e936",
+        "safetyActive": "1e7d2884-01b1-e600-ffff75e43416e936",
+        "autoAllowed": "1e7d2884-01b1-e5db-ffff75e43416e936",
+        "autoActive": "1e7d2884-01b1-e5ff-ffff75e43416e936",
+        "locked": "1e7d2884-01b1-e601-ffff75e43416e936",
+        "autoInfoText": "1e7d2884-01b2-e606-ffff75e43416e936",
+        "autoState": "1e7d2884-01b2-e607-ffff75e43416e936",
+        "deviceState": "1e7d2884-01b2-e608-ffff75e43416e936",
+        "targetPosition": "1e7d2884-01b2-e609-ffff75e43416e936",
+        "targetPositionLamelle": "1e7d2884-01b2-e60a-ffff75e43416e936",
+        "adjustingEndPos": "1e7d2884-01b2-e60b-ffff75e43416e936"
+      }
+    },
+    "1e890942-00ba-ec64-ffff1b3fb7574e13": {
+      "name": "Luftfeuchte",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e890942-00ba-ec64-ffff1b3fb7574e13",
+      "room": "15ea0aa5-012a-3bd7-ffffed57184a04d2",
+      "cat": "15ea0aa4-0265-3ae0-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f %%"
+      },
+      "states": {
+        "value": "1e890942-00ba-ec64-ffff1b3fb7574e13"
+      }
+    },
+    "1e89099d-02d7-2d24-ffffe22a58ef3bd0": {
+      "name": "Temperatur",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e89099d-02d7-2d24-ffffe22a58ef3bd0",
+      "room": "15ea0aa5-012a-3bd7-ffffed57184a04d2",
+      "cat": "15ea0aa4-024a-3a66-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1e89099d-02d7-2d24-ffffe22a58ef3bd0"
+      }
+    },
+    "1e7d2a57-01c1-9178-ffffed57184a04d2": {
+      "name": "Automatikbeschattung Zentral",
+      "type": "CentralJalousie",
+      "uuidAction": "1e7d2a57-01c1-9178-ffffed57184a04d2",
+      "room": "15ea0aa5-0145-3c85-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 2,
+      "isFavorite": true,
+      "isSecured": false,
+      "restrictions": 0,
+      "details": {
+        "jLockable": true,
+        "controls": [
+          {
+            "id": 0,
+            "uuid": "1e7d2497-0097-1a4f-ffffed57184a04d2"
+          },
+          {
+            "id": 1,
+            "uuid": "1e7d2526-028c-2930-ffff752829463f57"
+          },
+          {
+            "id": 2,
+            "uuid": "1e7d2530-019f-3516-ffff20f8dd132f52"
+          },
+          {
+            "id": 3,
+            "uuid": "1e7d29b8-026e-4ca5-ffffc7a910eb9b76"
+          },
+          {
+            "id": 4,
+            "uuid": "1e7d29dc-0213-5d0f-ffffd79605a82005"
+          },
+          {
+            "id": 5,
+            "uuid": "1e7d27b5-011f-b26a-ffff17b037628e31"
+          },
+          {
+            "id": 6,
+            "uuid": "1e7d2856-00c1-d3aa-ffffa3f6cc0a7e4e"
+          },
+          {
+            "id": 7,
+            "uuid": "1e7d2884-01b1-e5d3-ffff75e43416e936"
+          },
+          {
+            "id": 8,
+            "uuid": "1e8286df-03a2-9748-ffff48c127f53957"
+          },
+          {
+            "id": 9,
+            "uuid": "1e8289a1-0041-95b0-ffff661024a034cf"
+          },
+          {
+            "id": 10,
+            "uuid": "1e828df7-02be-5089-ffff1d2d0845505e"
+          },
+          {
+            "id": 11,
+            "uuid": "1e8502e8-02cd-818f-ffff90b26a9be69f"
+          }
+        ],
+        "parameterConnections": 0
+      },
+      "states": {
+        "jLocked": "9e7d2a57-01c1-9172-0aff24fb35355beb",
+        "events": "1e7d2a57-01c1-9167-ffff24fb35355beb"
+      }
+    },
+    "1e88ff8e-0371-ef3f-ffffed57184a04d2": {
+      "name": "Beschattungstemperatur",
+      "type": "Slider",
+      "uuidAction": "1e88ff8e-0371-ef3f-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": ">=  %.1f Grad",
+        "min": 10,
+        "max": 40,
+        "step": 0.1
+      },
+      "states": {
+        "value": "1e88ff8e-0371-ef3f-ffffed57184a04d2",
+        "error": "1e88ff8e-0371-ef3e-01ff7d7c4d62ba5d"
+      }
+    },
+    "1aebc347-033d-41d3-ffffed57184a04d2": {
+      "name": "Windalarm",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "1aebc347-033d-41d3-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": "IconsFilled/windbag.svg",
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#69C350",
+          "on": "#E73246"
+        }
+      },
+      "states": {
+        "active": "1aebc347-033d-41d3-ffffed57184a04d2"
+      }
+    },
+    "1f601694-0292-a547-ffffe55c48ff160e": {
+      "name": "Windalarm Markise",
+      "type": "InfoOnlyDigital",
+      "uuidAction": "1f601694-0292-a547-ffffe55c48ff160e",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": "IconsFilled/windbag.svg",
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "text": {
+          "off": "Aus",
+          "on": "Ein"
+        },
+        "color": {
+          "off": "#69C350",
+          "on": "#E73246"
+        }
+      },
+      "states": {
+        "active": "1f601694-0292-a547-ffffe55c48ff160e"
+      }
+    },
+    "1f6016de-0171-d8e5-ffffed57184a04d2": {
+      "name": "Windschwelle Markise",
+      "type": "Slider",
+      "uuidAction": "1f6016de-0171-d8e5-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1fkm/h",
+        "min": 10,
+        "max": 100,
+        "step": 1
+      },
+      "states": {
+        "value": "1f6016de-0171-d8e5-ffffed57184a04d2",
+        "error": "1f6016de-0171-d8e7-01ffed57184a04d2"
+      }
+    },
+    "1e7d70a0-013d-23a6-ffffed57184a04d2": {
+      "name": "Windschwelle Rollo",
+      "type": "Slider",
+      "uuidAction": "1e7d70a0-013d-23a6-ffffed57184a04d2",
+      "cat": "15ea0aa4-0245-3a4e-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1fkm/h",
+        "min": 10,
+        "max": 100,
+        "step": 1
+      },
+      "states": {
+        "value": "1e7d70a0-013d-23a6-ffffed57184a04d2",
+        "error": "1e7d70a0-013d-23a5-01ff7753666b0cca"
+      }
+    },
+    "1e8910be-030e-f093-ffff95e1297afd3f": {
+      "name": "Sonne Richtung",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e8910be-030e-f093-ffff95e1297afd3f",
+      "cat": "1e891393-0139-4c92-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1e8910be-030e-f093-ffff95e1297afd3f"
+      }
+    },
+    "1e891458-0037-a90d-ffff827385cded58": {
+      "name": "Sonne Höhe",
+      "type": "InfoOnlyAnalog",
+      "uuidAction": "1e891458-0037-a90d-ffff827385cded58",
+      "cat": "1e891393-0139-4c92-ffffed57184a04d2",
+      "defaultRating": 0,
+      "isFavorite": false,
+      "isSecured": false,
+      "defaultIcon": null,
+      "restrictions": 0,
+      "details": {
+        "jLockable": false,
+        "format": "%.1f°"
+      },
+      "states": {
+        "value": "1e891458-0037-a90d-ffff827385cded58"
+      }
+    }
+  },
+  "weatherServer": {
+    "states": {
+      "actual": "15ea0aa7-024c-3e05-ffffed57184a04d2",
+      "forecast": "15ea0aa7-024c-3e04-ffffb2c94f8ecfc0"
+    },
+    "format": {
+      "relativeHumidity": "%.0f%%",
+      "temperature": "%.1f°",
+      "windSpeed": "%.0fkm/h",
+      "precipitation": "%.1fmm",
+      "barometricPressure": "%.0fhPa"
+    },
+    "weatherTypeTexts": {
+      "1": "wolkenlos",
+      "2": "heiter",
+      "3": "wolkig",
+      "4": "stark bewölkt",
+      "5": "bedeckt",
+      "6": "Nebel",
+      "7": "Hochnebel",
+      "8": "nicht verwendet",
+      "9": "nicht verwendet",
+      "10": "leichter Regen",
+      "11": "Regen",
+      "12": "starker Regen",
+      "13": "Nieseln",
+      "14": "leichter gefrierender Regen",
+      "15": "starker gefrierender Regen",
+      "16": "leichter Regenschauer",
+      "17": "kräftiger Regenschauer",
+      "18": "Gewitter",
+      "19": "kräftiges Gewitter",
+      "20": "leichter Schneefall",
+      "21": "Schneefall",
+      "22": "starker Schneefall",
+      "23": "leichter Schneeschauer",
+      "24": "starker Schneeschauer",
+      "25": "leichter Schneeregen",
+      "26": "Schneeregen",
+      "27": "starker Schneeregen",
+      "28": "leichter Schneeregenschauer",
+      "29": "kräftiger Schneeregenschauer"
+    },
+    "weatherFieldTypes": {
+      "1": {
+        "id": 1,
+        "name": "Temperatur",
+        "analog": true,
+        "unit": "°C",
+        "format": "%.1f"
+      },
+      "2": {
+        "id": 2,
+        "name": "Taupunkt",
+        "analog": true,
+        "unit": "°C",
+        "format": "%.1f"
+      },
+      "3": {
+        "id": 3,
+        "name": "Relative Luftfeuchte",
+        "analog": true,
+        "format": "%.0f%%"
+      },
+      "4": {
+        "id": 4,
+        "name": "Windgeschwindigkeit",
+        "analog": true,
+        "unit": "km/h",
+        "format": "%.0f"
+      },
+      "5": {
+        "id": 5,
+        "name": "Windrichtung",
+        "analog": true
+      },
+      "6": {
+        "id": 6,
+        "name": "Böen",
+        "analog": true
+      },
+      "7": {
+        "id": 7,
+        "name": "Absolute Bestrahlungsstärke",
+        "analog": true
+      },
+      "8": {
+        "id": 8,
+        "name": "Relative Bestrahlungsstärke",
+        "analog": true
+      },
+      "9": {
+        "id": 9,
+        "name": "Niederschlag",
+        "analog": true,
+        "unit": "mm",
+        "format": "%.1f"
+      },
+      "10": {
+        "id": 10,
+        "name": "Wettertyp",
+        "analog": true
+      },
+      "11": {
+        "id": 11,
+        "name": "Luftdruck",
+        "analog": true,
+        "unit": "hPa",
+        "format": "%.0f"
+      },
+      "26": {
+        "id": 26,
+        "name": "Gefühlte Temperatur",
+        "analog": true,
+        "unit": "°C",
+        "format": "%.1f"
+      },
+      "27": {
+        "id": 27,
+        "name": "Solare Bestrahlungsstärke",
+        "analog": true
+      },
+      "28": {
+        "id": 28,
+        "name": "Niederschlagswahrscheinlichkeit",
+        "analog": true
+      },
+      "29": {
+        "id": 29,
+        "name": "Schneeanteil",
+        "analog": true
+      },
+      "30": {
+        "id": 30,
+        "name": "CAPE",
+        "analog": true
+      },
+      "31": {
+        "id": 31,
+        "name": "Niedrige Bewölkung",
+        "analog": true
+      },
+      "32": {
+        "id": 32,
+        "name": "Mittlere Bewölkung",
+        "analog": true
+      },
+      "33": {
+        "id": 33,
+        "name": "Hohe Bewölkung",
+        "analog": true
+      },
+      "34": {
+        "id": 34,
+        "name": "Sonnenschein",
+        "analog": false
+      },
+      "35": {
+        "id": 35,
+        "name": "Feinstaubbelastung",
+        "analog": true
+      },
+      "36": {
+        "id": 36,
+        "name": "Gefahrenwarnung",
+        "analog": false
+      }
+    }
+  },
+  "times": {
+    "233": {
+      "id": 233,
+      "name": "Unix Timestamp",
+      "analog": true
+    },
+    "238": {
+      "id": 238,
+      "name": "Nacht",
+      "analog": false
+    },
+    "261": {
+      "id": 261,
+      "name": "Woche",
+      "analog": true
+    },
+    "266": {
+      "id": 266,
+      "name": "Tage seit 2009",
+      "analog": true
+    },
+    "267": {
+      "id": 267,
+      "name": "Jahr",
+      "analog": true
+    },
+    "268": {
+      "id": 268,
+      "name": "Monat",
+      "analog": true
+    },
+    "269": {
+      "id": 269,
+      "name": "Tag",
+      "analog": true
+    },
+    "270": {
+      "id": 270,
+      "name": "Wochentag",
+      "analog": true
+    },
+    "271": {
+      "id": 271,
+      "name": "Aktive Betriebszeit",
+      "analog": true
+    },
+    "272": {
+      "id": 272,
+      "name": "Minuten seit Mitternacht",
+      "analog": true
+    },
+    "273": {
+      "id": 273,
+      "name": "Stunde",
+      "analog": true
+    },
+    "274": {
+      "id": 274,
+      "name": "Minuten",
+      "analog": true
+    },
+    "275": {
+      "id": 275,
+      "name": "Sekunden",
+      "analog": true
+    },
+    "276": {
+      "id": 276,
+      "name": "Sekunden seit Boot",
+      "analog": true
+    },
+    "277": {
+      "id": 277,
+      "name": "Zeit des Sonnenaufgangs",
+      "analog": true
+    },
+    "278": {
+      "id": 278,
+      "name": "Zeit des Sonnenuntergangs",
+      "analog": true
+    },
+    "281": {
+      "id": 281,
+      "name": "Tageslicht",
+      "analog": false
+    },
+    "282": {
+      "id": 282,
+      "name": "Tageslicht 30Min",
+      "analog": false
+    },
+    "283": {
+      "id": 283,
+      "name": "Zeit der Morgendämmerung",
+      "analog": true
+    },
+    "284": {
+      "id": 284,
+      "name": "Zeit der Abenddämmerung",
+      "analog": true
+    },
+    "285": {
+      "id": 285,
+      "name": "Sonne Höhe",
+      "analog": true
+    },
+    "286": {
+      "id": 286,
+      "name": "Sonne Richtung",
+      "analog": true
+    },
+    "287": {
+      "id": 287,
+      "name": "Startimpuls",
+      "analog": false
+    },
+    "288": {
+      "id": 288,
+      "name": "Jahresimpuls",
+      "analog": false
+    },
+    "289": {
+      "id": 289,
+      "name": "Monatsimpuls",
+      "analog": false
+    },
+    "290": {
+      "id": 290,
+      "name": "Tagesimpuls",
+      "analog": false
+    },
+    "291": {
+      "id": 291,
+      "name": "Stundenimpuls",
+      "analog": false
+    },
+    "292": {
+      "id": 292,
+      "name": "Minutenimpuls",
+      "analog": false
+    },
+    "293": {
+      "id": 293,
+      "name": "Sekundenimpuls",
+      "analog": false
+    },
+    "294": {
+      "id": 294,
+      "name": "Impuls Sonnenaufgang",
+      "analog": false
+    },
+    "295": {
+      "id": 295,
+      "name": "Impuls Sonnenuntergang",
+      "analog": false
+    },
+    "298": {
+      "id": 298,
+      "name": "Impuls Morgendämmerung",
+      "analog": false
+    },
+    "299": {
+      "id": 299,
+      "name": "Impuls Abenddämmerung",
+      "analog": false
+    }
+  },
+  "caller": {
+    "15ea0aa5-020a-3cdf-ffffed57184a04d2": {
+      "id": "15ea0aa5-020a-3cdf-ffffed57184a04d2",
+      "name": "Feuerwehr",
+      "phoneNumber": ""
+    },
+    "15ea0aa5-02a4-3cff-ffffed57184a04d2": {
+      "id": "15ea0aa5-02a4-3cff-ffffed57184a04d2",
+      "name": "Polizei",
+      "phoneNumber": ""
+    },
+    "15ea0aa5-0393-3d1f-ffffed57184a04d2": {
+      "id": "15ea0aa5-0393-3d1f-ffffed57184a04d2",
+      "name": "Rettungsdienst",
+      "phoneNumber": ""
+    },
+    "15ea0aa6-0079-3d3f-ffffed57184a04d2": {
+      "id": "15ea0aa6-0079-3d3f-ffffed57184a04d2",
+      "name": "Notfall-Kontakt 1",
+      "phoneNumber": ""
+    },
+    "15ea0aa6-0169-3d5f-ffffed57184a04d2": {
+      "id": "15ea0aa6-0169-3d5f-ffffed57184a04d2",
+      "name": "Notfall-Kontakt 2",
+      "phoneNumber": ""
+    },
+    "15ea0aa6-02ab-3d7f-ffffed57184a04d2": {
+      "id": "15ea0aa6-02ab-3d7f-ffffed57184a04d2",
+      "name": "Notfall-Kontakt 3",
+      "phoneNumber": ""
+    },
+    "15ea0aa6-03b5-3d9f-ffffed57184a04d2": {
+      "id": "15ea0aa6-03b5-3d9f-ffffed57184a04d2",
+      "name": "Notfall-Kontakt 4",
+      "phoneNumber": ""
+    }
+  },
+  "mailer": {
+    "15ea0aa5-01f9-3cdd-ffffed57184a04d2": {
+      "id": "15ea0aa5-01f9-3cdd-ffffed57184a04d2",
+      "name": "Loxone Cloud Mailer",
+      "eMailAddress": "michael.ebert@gmail.com; bernd.kasper@ventunet.de"
+    }
+  },
+  "autopilot": {
+    "15ea0aa4-0206-3a35-ffffed57184a04d2": {
+      "name": "Automatik-Regeln",
+      "uuidAction": "15ea0aa4-0206-3a35-ffffed57184a04d2",
+      "states": {
+        "changed": "15ea0aa4-0206-3a31-ffffed57184a04d2",
+        "history": "15ea0aa4-0206-3a32-ffffed57184a04d2"
+      }
+    }
+  },
+  "messageCenter": {
+    "15ea0aa4-0221-3a3b-ffffed57184a04d2": {
+      "name": "Systemstatus",
+      "uuidAction": "15ea0aa4-0221-3a3b-ffffed57184a04d2",
+      "states": {
+        "changed": "15ea0aa4-0221-3a3a-ffffed57184a04d2"
+      }
+    }
+  }
+}
