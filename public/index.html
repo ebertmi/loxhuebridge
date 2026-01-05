@@ -1300,7 +1300,7 @@
                 </div>
             `;
         } else if (control.type === 'ColorPickerV2') {
-            // ColorPickerV2: Show color and type
+            // ColorPickerV2: Show color, brightness, and type
             const pickerType = control.details?.pickerType || 'RGB';
             const colorValue = control.stateValues?.color;
             let colorDisplay = '';
@@ -1308,8 +1308,15 @@
             if (colorValue && colorValue !== '') {
                 // Parse Loxone color format and display
                 const color = parseLoxoneColor(colorValue);
+                const brightness = extractBrightness(colorValue);
+
                 colorDisplay = `
-                    <div style="width: 40px; height: 20px; background-color: ${color}; border: 1px solid var(--border); border-radius: 4px; margin-top: 4px;"></div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">
+                            ${brightness}%
+                        </div>
+                        <div style="width: 40px; height: 20px; background-color: ${color}; border: 1px solid var(--border); border-radius: 4px;"></div>
+                    </div>
                 `;
             } else {
                 colorDisplay = `
@@ -1356,6 +1363,35 @@
         }
 
         return content;
+    }
+
+    function extractBrightness(colorValue) {
+        // Extract brightness from Loxone color format
+        if (!colorValue || colorValue === '') {
+            return 0;
+        }
+
+        if (typeof colorValue === 'string') {
+            // Parse hsv(h,s,v) format - v is brightness
+            const hsvMatch = colorValue.match(/hsv\((\d+),(\d+),(\d+)\)/);
+            if (hsvMatch) {
+                return parseInt(hsvMatch[3]); // v value is brightness
+            }
+
+            // Parse temp(brightness,kelvin) format
+            const tempMatch = colorValue.match(/temp\((\d+),(\d+)\)/);
+            if (tempMatch) {
+                return parseInt(tempMatch[1]); // First value is brightness
+            }
+
+            // Parse daylight(brightness,mode) format
+            const daylightMatch = colorValue.match(/daylight\((\d+),(\d+)\)/);
+            if (daylightMatch) {
+                return parseInt(daylightMatch[1]); // First value is brightness
+            }
+        }
+
+        return 0;
     }
 
     function parseLoxoneColor(colorValue) {
