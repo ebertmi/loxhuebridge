@@ -1268,26 +1268,19 @@
         let content = '';
 
         if (control.type === 'Switch') {
-            // Switch: Show On/Off buttons and current state
+            // Switch: Show single toggle button with current state
             const isActive = control.stateValues?.active === 1;
-            const statusDisplay = isActive
-                ? '<span style="color: var(--success); font-weight: 600;">● AN</span>'
-                : '<span style="color: var(--text-muted);">○ AUS</span>';
+            const toggleCommand = isActive ? 'Off' : 'On';
+            const buttonClass = isActive ? 'primary-btn btn-accent btn-compact' : 'primary-btn btn-gray btn-compact';
+            const buttonText = isActive ? '● AN' : '○ AUS';
+            const buttonIcon = isActive ? '💡' : '⚫';
 
             content = `
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="font-size: 0.9rem;">
-                        ${statusDisplay}
-                    </div>
-                    <button class="primary-btn btn-accent btn-compact"
-                            onclick="sendLoxoneCommand('${control.uuid}', 'On', '${control.name}')">
-                        💡 Ein
-                    </button>
-                    <button class="primary-btn btn-gray btn-compact"
-                            onclick="sendLoxoneCommand('${control.uuid}', 'Off', '${control.name}')">
-                        ⚫ Aus
-                    </button>
-                </div>
+                <button class="${buttonClass}"
+                        onclick="sendLoxoneCommand('${control.uuid}', '${toggleCommand}', '${control.name}')"
+                        style="min-width: 100px;">
+                    ${buttonIcon} ${buttonText}
+                </button>
             `;
         } else if (control.type === 'Dimmer') {
             // Dimmer: Show brightness value
