@@ -114,7 +114,7 @@ Um die Bridge lokal auf dem Mac/PC zu testen:
 
 Anstatt Befehle manuell einzutippen, kannst du deine konfigurierte loxHueBridge direkt in Loxone importieren.
 
-![Loxone Import Workflow](lox_import.gif)
+![Loxone Import Workflow](screenshots/lox_import.gif)
 
 ### Schritt 1: Vorlagen exportieren
 1.  Öffne das **loxHueBridge Dashboard** (`http://<IP>:8555`).
@@ -319,7 +319,7 @@ To run the bridge locally on your Mac/PC:
 
 Instead of typing commands manually, you can directly import your configured loxHueBridge into Loxone.
 
-![Loxone Import Workflow](lox_import.gif)
+![Loxone Import Workflow](screenshots/lox_import.gif)
 
 ### Step 1: Export Templates
 1.  Open the **loxHueBridge Dashboard** (`http://<IP>:8555`).
