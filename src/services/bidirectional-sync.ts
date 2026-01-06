@@ -409,28 +409,42 @@ class BidirectionalSyncManager {
         return;
       }
 
-      // Determine what changed and send appropriate command to Loxone
-      if (data.on !== undefined) {
-        // On/Off state changed
-        const value = data.on.on ? 'On' : 'Off';
-        await this.loxoneClient.sendCommand(mapping.loxone_control_uuid, value);
-        this.logger.debug(`Sent to Loxone: ${mapping.loxone_control_uuid} = ${value}`, 'SYNC');
-      }
+      // Import color utilities
+      const { xyToLoxoneHsv, mirekToLoxoneTemp, hueBrightnessToLoxoneDimmer } =
+        require('../utils/color');
 
-      if (data.dimming !== undefined) {
+      // For ColorPickerV2 controls, we need to handle state changes differently
+      let commandValue: string | number | undefined;
+
+      // Priority: Color > Color Temperature > Brightness > On/Off
+      if (data.color !== undefined && data.color.xy) {
+        // Color changed - send HSV format
+        const brightness = data.dimming?.brightness ?? 100;
+        this.logger.debug(`XY color event: x=${data.color.xy.x.toFixed(4)}, y=${data.color.xy.y.toFixed(4)}, brightness=${brightness} (dimming=${data.dimming?.brightness ?? 'undefined'})`, 'SYNC');
+        commandValue = xyToLoxoneHsv(data.color.xy.x, data.color.xy.y, brightness);
+        this.logger.debug(`Color change: ${commandValue}`, 'SYNC');
+      } else if (data.color_temperature !== undefined && data.color_temperature.mirek) {
+        // Color temperature changed - send temp format
+        const brightness = data.dimming?.brightness ?? 100;
+        this.logger.debug(`Color temp event: mirek=${data.color_temperature.mirek}, brightness=${brightness} (dimming=${data.dimming?.brightness ?? 'undefined'})`, 'SYNC');
+        commandValue = mirekToLoxoneTemp(data.color_temperature.mirek, brightness);
+        this.logger.debug(`Temperature change: ${commandValue}`, 'SYNC');
+      } else if (data.dimming !== undefined) {
         // Brightness changed
-        const brightness = Math.round(data.dimming.brightness);
-        await this.loxoneClient.sendCommand(mapping.loxone_control_uuid, brightness);
-        this.logger.debug(`Sent to Loxone: ${mapping.loxone_control_uuid} = ${brightness}`, 'SYNC');
+        const brightness = hueBrightnessToLoxoneDimmer(data.dimming.brightness);
+        commandValue = brightness;
+        this.logger.debug(`Brightness change: ${brightness}`, 'SYNC');
+      } else if (data.on !== undefined) {
+        // On/Off state changed - for ColorPickerV2, send 0 for off, 100 for on
+        commandValue = data.on.on ? 100 : 0;
+        this.logger.debug(`On/Off change: ${commandValue}`, 'SYNC');
       }
 
-      if (data.color_temperature !== undefined || data.color !== undefined) {
-        // Color/temperature changed
-        // TODO: Convert Hue color to Loxone format
-        this.logger.warn('Color conversion to Loxone not yet implemented', 'SYNC');
+      if (commandValue !== undefined) {
+        await this.loxoneClient.sendCommand(mapping.loxone_control_uuid, commandValue);
+        this.logger.debug(`Sent to Loxone: ${mapping.loxone_control_uuid} = ${commandValue}`, 'SYNC');
+        this.logger.success(`Synced ${mapping.hue_name} → Loxone`, 'SYNC');
       }
-
-      this.logger.success(`Synced ${mapping.hue_name} → Loxone`, 'SYNC');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to update Loxone from Hue: ${message}`);

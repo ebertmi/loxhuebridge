@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Base Rules
 * Never commit changes w/o explicit approval
 * Never add created markdown files for anlysis or summaries w/o explicit approval
+* If you find test issues, always analyze why the test failed and never change existing test cases without explicit approval
 
 ## Project Overview
 

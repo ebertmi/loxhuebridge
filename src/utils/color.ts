@@ -228,6 +228,9 @@ export function xyToLoxoneHsv(x: number, y: number, brightness: number): string 
   // Use provided brightness instead of calculated V
   const v = Math.round(Math.max(0, Math.min(100, brightness)));
 
+  // Debug logging
+  console.log(`[COLOR DEBUG] XY(${x.toFixed(4)}, ${y.toFixed(4)}) → RGB(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}) → HSV(${hsv.h}, ${hsv.s}, ${v})`);
+
   return `hsv(${hsv.h},${hsv.s},${v})`;
 }
 
@@ -235,13 +238,13 @@ export function xyToLoxoneHsv(x: number, y: number, brightness: number): string 
  * Converts Hue Mirek to Loxone temperature string format
  * Used for sending color temperature commands to Loxone TunableWhite controls
  *
- * @returns Loxone temp format "temp(kelvin,val)" where kelvin: 2000-6500, val: 0-100
+ * @returns Loxone temp format "temp(val,kelvin)" where val: 0-100, kelvin: 2000-6500
  */
 export function mirekToLoxoneTemp(mirek: number, brightness: number): string {
   const kelvin = Math.round(1000000 / mirek);
   const val = Math.round(Math.max(0, Math.min(100, brightness)));
 
-  return `temp(${kelvin},${val})`;
+  return `temp(${val},${kelvin})`;
 }
 
 /**

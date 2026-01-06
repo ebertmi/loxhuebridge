@@ -317,7 +317,8 @@ class EventStream {
     if (this.bidirectionalSync && (entry.hue_type === 'light' || entry.hue_type === 'group')) {
       // Only notify for relevant light changes (not sensors/buttons)
       if (data.on || data.dimming || data.color || data.color_temperature) {
-        this.bidirectionalSync.onHueChange(data.id, data);
+        // Use entry.hue_uuid (device UUID) instead of data.id (service UUID)
+        this.bidirectionalSync.onHueChange(entry.hue_uuid, data);
       }
     }
   }

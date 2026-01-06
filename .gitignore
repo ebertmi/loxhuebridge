@@ -27,6 +27,7 @@ config.json
 *.crt
 *.key
 mapping.json
+loxone-structure.json
 setup_hue.js
 HueSettings
 docker-compose_dev.yml
@@ -50,4 +51,4 @@ http_lox_server_VO.xml
 udp_lox_server_VI.xml
 
 # --- Documentation (development notes) ---
-docs/data/loxone-structure.json
+docs/

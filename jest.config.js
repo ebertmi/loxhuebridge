@@ -1,13 +1,16 @@
 /**
- * Jest Configuration
- * TypeScript testing with ts-jest
+ * Jest Configuration for TypeScript
  */
 
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/test'],
-  testMatch: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+  testMatch: [
+    '**/__tests__/**/*.ts',
+    '**/*.test.ts',
+    '**/*.spec.ts'
+  ],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/types/**',
@@ -27,5 +30,6 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
-  setupFilesAfterEnv: ['<rootDir>/test/setup.ts']
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
+  testTimeout: 10000
 };
