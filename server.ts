@@ -6,9 +6,10 @@
  * Legacy monolithic version is available at: server.legacy.js
  *
  * Usage:
- *   npm start          (or: node server.js)
+ *   npm start          (production: node dist/server.js)
+ *   npm run dev        (development: ts-node-dev src/server.ts)
  *   npm test           (run tests)
  *   npm run legacy     (run legacy version)
  */
 
-require('./src/server');
+import './src/server';
