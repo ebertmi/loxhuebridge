@@ -1,15 +1,52 @@
-node_modules
-.git
-.gitignore
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output (will be built in Docker)
+dist/
+
+# Development files
+.vscode/
+.idea/
+
+# Documentation
+*.md
+docs/
+screenshots/
+
+# Tests
+test/
+coverage/
+jest.config.js
+__tests__/
+
+# Data and logs (mounted at runtime)
+data/
+logs/
 *.log
-.env
-Dockerfile
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+.dockerignore
 docker-compose.yml
-config.json
-.env.bak
-iniprompt.md
-config.json
-http_lox_server_VO.xml
-udp_lox_server_VI.xml
-HueSettings
-docker-compose_dev.yml
+
+# CI/CD
+.github/
+
+# Environment
+.env
+.env.*
+
+# Misc
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Legacy
+server.legacy.js
