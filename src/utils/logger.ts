@@ -129,6 +129,23 @@ class Logger {
     // Determine log level
     const level = this.debugEnabled ? 'debug' : 'info';
 
+    // Detect if colors should be enabled
+    // Only enable colors if explicitly requested via FORCE_COLOR
+    // This prevents ANSI codes from appearing as whitespace in terminals that don't render them
+    const shouldUseColors = process.env.FORCE_COLOR === '1' || process.env.FORCE_COLOR === 'true';
+
+    // Build console format with optional colorization
+    const consoleFormatChain = shouldUseColors
+      ? winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.colorize(),
+          consoleFormat
+        )
+      : winston.format.combine(
+          winston.format.timestamp(),
+          consoleFormat
+        );
+
     // Create Winston logger with custom levels
     this.winston = winston.createLogger({
       levels: customLevels.levels,
@@ -139,13 +156,9 @@ class Logger {
         winston.format.json()
       ),
       transports: [
-        // Console output with standard colors
+        // Console output with conditional colors
         new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.colorize(),
-            consoleFormat
-          )
+          format: consoleFormatChain
         }),
         // Error log file (JSON format)
         new winston.transports.File({

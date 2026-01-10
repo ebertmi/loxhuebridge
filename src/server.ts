@@ -119,8 +119,13 @@ app.use(express.urlencoded({ extended: true }));
 // Redirect middleware
 app.use(redirectIfNotConfigured(config));
 
-// Static files
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files - resolve public directory for both dev and production
+// Dev: ts-node-dev runs src/server.ts, __dirname = src -> ../public
+// Prod: node runs dist/src/server.js, __dirname = dist/src -> ../../public
+const isDist = __dirname.includes(path.sep + 'dist' + path.sep);
+const publicDir = path.resolve(__dirname, isDist ? '../../public' : '../public');
+logger.debug(`Serving static files from: ${publicDir}`, 'SYSTEM');
+app.use(express.static(publicDir));
 
 // --- ROUTES ---
 

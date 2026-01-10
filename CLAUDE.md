@@ -23,9 +23,30 @@ npm run dev
 # Run tests
 npm test
 
+# Run specific test file
+npm test -- filename.test.ts
+
 # Run legacy monolithic version
 npm run legacy
 ```
+
+## Testing Guidelines
+
+**Framework:** Jest (uses global `describe`, `it`, `expect` - don't import them)
+
+**Workflow:**
+1. Write tests first or alongside implementation
+2. Run tests frequently during development: `npm test`
+3. All tests must pass before proceeding to next phase
+4. Never change existing test expectations without approval - fix the implementation instead
+
+**Validated Format Specifications:**
+- **Smart Actuator**: `20` + brightness (2-3 digits) + kelvin (5 digits with leading zero)
+  - Example: `201002700` = 20 + 10% + 02700K
+  - Example: `2010002700` = 20 + 100% + 02700K
+- **RGB Numeric**: `R + G*1000 + B*1000000`
+  - Example: `255255255` = R:255, G:255, B:255
+  - Example: `100050025` = R:25, G:50, B:100
 
 ## Architecture
 

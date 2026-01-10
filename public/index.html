@@ -1330,36 +1330,67 @@
                 </div>
             `;
         } else if (control.type === 'LightControllerV2') {
-            // LightController: Show mood dropdown
-            let moodOptions = '';
-            let currentMoodId = null;
+            // LightController: Show mood chips (supports multiple active moods)
+            let activeMoodChips = '';
+            let inactiveMoodChips = '';
 
             if (control.moodInfo) {
                 const moodList = control.moodInfo.moodList || [];
                 const activeMoodIds = control.moodInfo.activeMoodIds || [];
-                currentMoodId = activeMoodIds.length > 0 ? activeMoodIds[0] : null;
 
-                // Add "Manuell" option (disabled, only shown when no mood is active)
-                if (!currentMoodId) {
-                    moodOptions += '<option value="" selected disabled>Manuell</option>';
+                if (activeMoodIds.length === 0) {
+                    // Show "Manuell" chip when no moods are active
+                    activeMoodChips = `
+                        <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; background: var(--border); color: var(--text-muted); font-size: 0.75rem; margin: 2px;">
+                            Manuell
+                        </span>
+                    `;
                 } else {
-                    moodOptions += '<option value="" disabled>Manuell</option>';
+                    // Show active moods as chips with remove (×) button
+                    activeMoodIds.forEach(moodId => {
+                        const mood = moodList.find(m => m.id === moodId);
+                        if (mood) {
+                            activeMoodChips += `
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; background: var(--accent); color: white; font-size: 0.75rem; margin: 2px; cursor: pointer;"
+                                      onclick="removeLoxoneMood('${control.uuid}', '${mood.id}', '${control.name}')">
+                                    ${mood.name} <span style="margin-left: 4px; font-weight: bold;">×</span>
+                                </span>
+                            `;
+                        }
+                    });
                 }
 
-                // Add all available moods from moodList
+                // Show inactive moods as clickable chips with appropriate icon
                 moodList.forEach(mood => {
-                    const selected = mood.id === currentMoodId ? 'selected' : '';
-                    moodOptions += `<option value="${mood.id}" ${selected}>${mood.name}</option>`;
+                    if (!activeMoodIds.includes(mood.id)) {
+                        // Check if mood is static (non-mixable) or dynamic (mixable)
+                        const isStatic = mood.static === true;
+                        const icon = isStatic ? '→' : '+';  // → for changeTo, + for addMood
+                        const title = isStatic ? 'Klicken zum Aktivieren (ersetzt aktive Stimmungen)' : 'Klicken zum Hinzufügen (kann gemischt werden)';
+
+                        inactiveMoodChips += `
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-size: 0.75rem; margin: 2px; cursor: pointer; opacity: 0.7;"
+                                  onclick="activateLoxoneMood('${control.uuid}', '${mood.id}', ${isStatic}, '${control.name}')"
+                                  onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'"
+                                  title="${title}">
+                                <span style="margin-right: 4px; font-weight: bold;">${icon}</span>${mood.name}
+                            </span>
+                        `;
+                    }
                 });
             }
 
             content = `
                 <div style="text-align: right;">
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Stimmung</div>
-                    <select onchange="setLoxoneMood('${control.uuid}', this.value, '${control.name}')"
-                            style="padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; min-width: 120px;">
-                        ${moodOptions}
-                    </select>
+                    <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px;">
+                        ${activeMoodChips}
+                    </div>
+                    ${inactiveMoodChips ? `
+                        <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+                            ${inactiveMoodChips}
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }
@@ -1522,6 +1553,68 @@
         } catch (error) {
             console.error('Failed to set mood:', error);
             alert(`❌ Fehler beim Setzen der Stimmung: ${error.message}`);
+        }
+    }
+
+    async function activateLoxoneMood(uuid, moodId, isStatic, name) {
+        if (!moodId) {
+            console.log('No mood ID provided');
+            return;
+        }
+
+        try {
+            // Use changeTo for static (non-mixable) moods, addMood for mixable moods
+            const command = isStatic ? `changeTo/${moodId}` : `addMood/${moodId}`;
+
+            const response = await fetch('/api/loxone/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuid, command })
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                alert(`❌ Fehler beim Aktivieren der Stimmung: ${result.error}`);
+            } else {
+                const action = isStatic ? 'activated' : 'added';
+                console.log(`✅ Mood ${action} for ${name}: ID ${moodId}`);
+            }
+        } catch (error) {
+            console.error('Failed to activate mood:', error);
+            alert(`❌ Fehler beim Aktivieren der Stimmung: ${error.message}`);
+        }
+    }
+
+    async function addLoxoneMood(uuid, moodId, name) {
+        // Legacy function - now uses activateLoxoneMood
+        await activateLoxoneMood(uuid, moodId, false, name);
+    }
+
+    async function removeLoxoneMood(uuid, moodId, name) {
+        if (!moodId) {
+            console.log('No mood ID provided');
+            return;
+        }
+
+        try {
+            // Send removeMood command to remove this mood from active moods
+            const response = await fetch('/api/loxone/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuid, command: `removeMood/${moodId}` })
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                alert(`❌ Fehler beim Entfernen der Stimmung: ${result.error}`);
+            } else {
+                console.log(`✅ Mood removed for ${name}: ID ${moodId}`);
+            }
+        } catch (error) {
+            console.error('Failed to remove mood:', error);
+            alert(`❌ Fehler beim Entfernen der Stimmung: ${error.message}`);
         }
     }
 

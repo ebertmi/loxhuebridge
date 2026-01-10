@@ -189,6 +189,51 @@ export function rgbToHsv(r: number, g: number, b: number): HSVColor {
 }
 
 /**
+ * Converts HSV color space to RGB
+ * Used for converting Loxone HSV format to RGB for Hue XY conversion
+ *
+ * @param h Hue (0-360)
+ * @param s Saturation (0-100)
+ * @param v Value/Brightness (0-100)
+ * @returns RGB color (0-255 for each component)
+ */
+export function hsvToRgb(h: number, s: number, v: number): RGBColor {
+  // Normalize hue to 0-360 range (360 = 0)
+  const hNormalized = h % 360;
+
+  // Normalize inputs
+  const hNorm = hNormalized / 60;
+  const sNorm = s / 100;
+  const vNorm = v / 100;
+
+  const c = vNorm * sNorm;
+  const x = c * (1 - Math.abs((hNorm % 2) - 1));
+  const m = vNorm - c;
+
+  let r = 0, g = 0, b = 0;
+
+  if (hNorm >= 0 && hNorm < 1) {
+    r = c; g = x; b = 0;
+  } else if (hNorm >= 1 && hNorm < 2) {
+    r = x; g = c; b = 0;
+  } else if (hNorm >= 2 && hNorm < 3) {
+    r = 0; g = c; b = x;
+  } else if (hNorm >= 3 && hNorm < 4) {
+    r = 0; g = x; b = c;
+  } else if (hNorm >= 4 && hNorm < 5) {
+    r = x; g = 0; b = c;
+  } else if (hNorm >= 5 && hNorm < 6) {
+    r = c; g = 0; b = x;
+  }
+
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
+}
+
+/**
  * Converts XY color to RGB (reverse of xyToHex without hex conversion)
  */
 export function xyToRgb(x: number, y: number, bri: number = 1.0): RGBColor {

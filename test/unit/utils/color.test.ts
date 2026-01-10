@@ -15,6 +15,7 @@ import {
   rgbToMirekFallback,
   hueLightToLux,
   rgbToHsv,
+  hsvToRgb,
   xyToRgb,
   xyToLoxoneHsv,
   mirekToLoxoneTemp,
@@ -345,6 +346,107 @@ describe('Color Utility Functions', () => {
     });
   });
 
+  describe('hsvToRgb', () => {
+    it('should convert HSV to RGB', () => {
+      const red = hsvToRgb(0, 100, 100);
+      expect(red.r).toBe(255);
+      expect(red.g).toBe(0);
+      expect(red.b).toBe(0);
+    });
+
+    it('should convert common colors', () => {
+      const green = hsvToRgb(120, 100, 100);
+      expect(green.r).toBe(0);
+      expect(green.g).toBe(255);
+      expect(green.b).toBe(0);
+
+      const blue = hsvToRgb(240, 100, 100);
+      expect(blue.r).toBe(0);
+      expect(blue.g).toBe(0);
+      expect(blue.b).toBe(255);
+    });
+
+    it('should handle white (0 saturation)', () => {
+      const white = hsvToRgb(0, 0, 100);
+      expect(white.r).toBe(255);
+      expect(white.g).toBe(255);
+      expect(white.b).toBe(255);
+    });
+
+    it('should handle black (0 value)', () => {
+      const black = hsvToRgb(0, 0, 0);
+      expect(black.r).toBe(0);
+      expect(black.g).toBe(0);
+      expect(black.b).toBe(0);
+    });
+
+    it('should handle gray (0 saturation, 50 value)', () => {
+      const gray = hsvToRgb(0, 0, 50);
+      expect(gray.r).toBeCloseTo(128, 0);
+      expect(gray.g).toBeCloseTo(128, 0);
+      expect(gray.b).toBeCloseTo(128, 0);
+    });
+
+    it('should handle cyan', () => {
+      const cyan = hsvToRgb(180, 100, 100);
+      expect(cyan.r).toBe(0);
+      expect(cyan.g).toBe(255);
+      expect(cyan.b).toBe(255);
+    });
+
+    it('should handle yellow', () => {
+      const yellow = hsvToRgb(60, 100, 100);
+      expect(yellow.r).toBe(255);
+      expect(yellow.g).toBe(255);
+      expect(yellow.b).toBe(0);
+    });
+
+    it('should handle magenta', () => {
+      const magenta = hsvToRgb(300, 100, 100);
+      expect(magenta.r).toBe(255);
+      expect(magenta.g).toBe(0);
+      expect(magenta.b).toBe(255);
+    });
+
+    it('should return integers', () => {
+      const color = hsvToRgb(180, 50, 75);
+      expect(Number.isInteger(color.r)).toBe(true);
+      expect(Number.isInteger(color.g)).toBe(true);
+      expect(Number.isInteger(color.b)).toBe(true);
+    });
+
+    it('should be inverse of rgbToHsv for pure colors', () => {
+      // Test round-trip conversion for red
+      const red = hsvToRgb(0, 100, 100);
+      const redHsv = rgbToHsv(red.r, red.g, red.b);
+      expect(redHsv.h).toBe(0);
+      expect(redHsv.s).toBe(100);
+      expect(redHsv.v).toBe(100);
+
+      // Test round-trip conversion for green
+      const green = hsvToRgb(120, 100, 100);
+      const greenHsv = rgbToHsv(green.r, green.g, green.b);
+      expect(greenHsv.h).toBe(120);
+      expect(greenHsv.s).toBe(100);
+      expect(greenHsv.v).toBe(100);
+
+      // Test round-trip conversion for blue
+      const blue = hsvToRgb(240, 100, 100);
+      const blueHsv = rgbToHsv(blue.r, blue.g, blue.b);
+      expect(blueHsv.h).toBe(240);
+      expect(blueHsv.s).toBe(100);
+      expect(blueHsv.v).toBe(100);
+    });
+
+    it('should handle edge case with hue 360', () => {
+      const color = hsvToRgb(360, 100, 100);
+      // Hue 360 should be same as hue 0 (red)
+      expect(color.r).toBe(255);
+      expect(color.g).toBeCloseTo(0, 0);
+      expect(color.b).toBeCloseTo(0, 0);
+    });
+  });
+
   describe('xyToLoxoneHsv', () => {
     it('should return Loxone HSV format string', () => {
       const result = xyToLoxoneHsv(0.6484, 0.3309, 75);
@@ -390,21 +492,22 @@ describe('Color Utility Functions', () => {
     });
 
     it('should convert mirek to kelvin correctly', () => {
+      // Format is temp(val,kelvin) where val is brightness
       const result = mirekToLoxoneTemp(250, 75);
-      expect(result).toContain('temp(4000,75)');
+      expect(result).toBe('temp(75,4000)');
     });
 
     it('should clamp brightness to 0-100 range', () => {
       const over = mirekToLoxoneTemp(250, 150);
-      expect(over).toContain(',100)');
+      expect(over).toBe('temp(100,4000)');
 
       const under = mirekToLoxoneTemp(250, -10);
-      expect(under).toContain(',0)');
+      expect(under).toBe('temp(0,4000)');
     });
 
     it('should handle common color temperatures', () => {
-      expect(mirekToLoxoneTemp(153, 100)).toMatch(/temp\(653\d,100\)/);
-      expect(mirekToLoxoneTemp(370, 50)).toMatch(/temp\(270\d,50\)/);
+      expect(mirekToLoxoneTemp(153, 100)).toMatch(/temp\(100,653\d\)/);
+      expect(mirekToLoxoneTemp(370, 50)).toMatch(/temp\(50,270\d\)/);
     });
   });
 

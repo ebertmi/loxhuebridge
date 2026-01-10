@@ -636,6 +636,23 @@ class HueClient {
   }
 
   /**
+   * Get current state of a single light or grouped_light
+   * @param uuid - Light UUID
+   * @param resourceType - 'light' or 'grouped_light'
+   * @returns Light state or null if not found
+   */
+  async getLight(uuid: string, resourceType: 'light' | 'grouped_light' = 'light'): Promise<any | null> {
+    try {
+      const response = await this._request('GET', `/${resourceType}/${uuid}`);
+      return response.data?.[0] || null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`Failed to get ${resourceType} ${uuid}: ${message}`, 'HUE');
+      return null;
+    }
+  }
+
+  /**
    * Get all scenes from Hue Bridge with enriched data
    * @returns Array of scenes with resolved light names and group info
    */

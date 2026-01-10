@@ -50,6 +50,7 @@ interface ControlInfo {
   parentControlName?: string;
   stateName: string;
   isSubControl: boolean;
+  details?: Record<string, any>;  // Control details (e.g., pickerType for ColorPickerV2)
 }
 
 /**
@@ -755,9 +756,30 @@ class LoxoneClient extends EventEmitter {
         this.logger.warn('Miniserver is out of service', 'LOXONE');
         break;
 
-      default:
-        this.logger.debug(`Unknown message type: ${message.type}`, 'LOXONE');
+      case 'unknown':
+        // Loxone sends message types we don't parse (BINARY_FILE, DAYTIMER_STATES, WEATHER_STATES)
+        // This is expected behavior and can be safely ignored
+        const messageTypeName = this._getMessageTypeName(message.identifier);
+        this.logger.debug(`Ignoring unsupported message type: ${messageTypeName} (ID: ${message.identifier})`, 'LOXONE');
+        break;
     }
+  }
+
+  /**
+   * Get human-readable message type name from identifier
+   */
+  private _getMessageTypeName(identifier: number): string {
+    const messageTypes: Record<number, string> = {
+      0: 'TEXT',
+      1: 'BINARY_FILE',
+      2: 'VALUE_STATES',
+      3: 'TEXT_STATES',
+      4: 'DAYTIMER_STATES',
+      5: 'OUT_OF_SERVICE',
+      6: 'KEEPALIVE',
+      7: 'WEATHER_STATES'
+    };
+    return messageTypes[identifier] || `UNKNOWN_${identifier}`;
   }
 
   /**
@@ -1013,6 +1035,14 @@ class LoxoneClient extends EventEmitter {
   }
 
   /**
+   * Get the current structure file
+   * @returns Structure file or null if not loaded
+   */
+  getStructure(): LoxoneStructureFile | null {
+    return this.structure;
+  }
+
+  /**
    * Build reverse index: stateUuid → control info
    */
   private _buildStateUuidIndex(): void {
@@ -1032,7 +1062,8 @@ class LoxoneClient extends EventEmitter {
             controlName: control.name,
             controlType: control.type,
             stateName,
-            isSubControl: false
+            isSubControl: false,
+            details: control.details  // Include control details (e.g., pickerType)
           });
         }
       }
@@ -1049,7 +1080,8 @@ class LoxoneClient extends EventEmitter {
                 parentControlUuid: controlUuid,
                 parentControlName: control.name,
                 stateName,
-                isSubControl: true
+                isSubControl: true,
+                details: subControl.details  // Include subControl details (e.g., pickerType)
               });
             }
           }
