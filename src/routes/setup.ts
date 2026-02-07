@@ -102,17 +102,27 @@ function createSetupRoutes(config: Config, eventStream: EventStream): Router {
   /**
    * Configure Loxone settings
    * POST /api/setup/loxone
-   * Body: { loxoneIp, loxonePort, debug, transitionTime }
+   * Body: { loxoneIp, loxonePort, debug, transitionTime, loxoneUser?, loxonePassword?, loxoneHttpPort? }
    */
   router.post('/loxone', validateLoxoneConfig, asyncHandler(async (req: Request, res: Response) => {
-    const { loxoneIp, loxonePort, debug, transitionTime } = req.body;
+    const { loxoneIp, loxonePort, debug, transitionTime, loxoneUser, loxonePassword, loxoneHttpPort } = req.body;
 
-    config.update({
+    const updates: Record<string, any> = {
       loxoneIp,
       loxonePort: parseInt(loxonePort),
       debug: !!debug,
       transitionTime: transitionTime !== undefined ? parseInt(transitionTime) : config.get('transitionTime')
-    });
+    };
+
+    // Include bidirectional sync credentials if provided
+    if (loxoneUser && loxonePassword) {
+      updates.loxoneUser = loxoneUser;
+      updates.loxonePassword = loxonePassword;
+      updates.loxoneHttpPort = loxoneHttpPort ? parseInt(loxoneHttpPort) : 80;
+      updates.bidirectionalSync = true;
+    }
+
+    config.update(updates);
 
     // Start event stream now that configuration is complete
     eventStream.start();
