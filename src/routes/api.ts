@@ -114,7 +114,11 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
    * GET /api/mapping
    */
   router.get('/mapping', (_req: Request, res: Response) => {
-    res.json(config.getMapping());
+    const mappings = config.getMapping().map(m => ({
+      ...m,
+      sync_mode: m.bidirectional ? 'bidirectional' : 'http'
+    }));
+    res.json(mappings);
   });
 
   /**
@@ -123,7 +127,17 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
    * Body: Array of mapping entries
    */
   router.post('/mapping', validateMapping, asyncHandler(async (req: Request, res: Response) => {
-    const mapping: DeviceMapping[] = req.body;
+    const rawMapping: any[] = req.body;
+
+    // Translate sync_mode to bidirectional for storage
+    const mapping: DeviceMapping[] = rawMapping.map(m => {
+      const { sync_mode, ...rest } = m;
+      return {
+        ...rest,
+        bidirectional: sync_mode !== undefined ? sync_mode === 'bidirectional' : (rest.bidirectional || false)
+      };
+    });
+
     config.updateMapping(mapping);
 
     // Cleanup detected items

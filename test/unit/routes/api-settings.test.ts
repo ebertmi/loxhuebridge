@@ -263,6 +263,112 @@ describe('API Settings Route', () => {
     });
   });
 
+  describe('GET /api/mapping', () => {
+    it('should return mappings with sync_mode field', async () => {
+      mockConfig.getMapping.mockReturnValue([
+        {
+          loxone_name: 'test-light',
+          hue_uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          hue_name: 'Test Light',
+          hue_type: 'light',
+          bidirectional: true
+        },
+        {
+          loxone_name: 'test-light-2',
+          hue_uuid: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+          hue_name: 'Test Light 2',
+          hue_type: 'light',
+          bidirectional: false
+        }
+      ]);
+
+      const res = await request(app).get('/api/mapping');
+
+      expect(res.status).toBe(200);
+      expect(res.body[0].sync_mode).toBe('bidirectional');
+      expect(res.body[1].sync_mode).toBe('http');
+    });
+
+    it('should default sync_mode to http when bidirectional is undefined', async () => {
+      mockConfig.getMapping.mockReturnValue([
+        {
+          loxone_name: 'test-light',
+          hue_uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          hue_name: 'Test Light',
+          hue_type: 'light'
+        }
+      ]);
+
+      const res = await request(app).get('/api/mapping');
+
+      expect(res.status).toBe(200);
+      expect(res.body[0].sync_mode).toBe('http');
+    });
+  });
+
+  describe('POST /api/mapping', () => {
+    beforeEach(() => {
+      mockHueClient.getServiceToDeviceMap = jest.fn().mockReturnValue({});
+      mockStatusManager.cleanup = jest.fn();
+    });
+
+    it('should translate sync_mode to bidirectional when saving', async () => {
+      const res = await request(app)
+        .post('/api/mapping')
+        .send([
+          {
+            loxone_name: 'test-light',
+            hue_uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            hue_name: 'Test Light',
+            hue_type: 'light',
+            sync_mode: 'bidirectional'
+          }
+        ]);
+
+      expect(res.status).toBe(200);
+      expect(mockConfig.updateMapping).toHaveBeenCalledTimes(1);
+      const savedMapping = mockConfig.updateMapping.mock.calls[0][0];
+      expect(savedMapping[0].bidirectional).toBe(true);
+      expect((savedMapping[0] as any).sync_mode).toBeUndefined();
+    });
+
+    it('should translate sync_mode http to bidirectional false', async () => {
+      const res = await request(app)
+        .post('/api/mapping')
+        .send([
+          {
+            loxone_name: 'test-light',
+            hue_uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            hue_name: 'Test Light',
+            hue_type: 'light',
+            sync_mode: 'http'
+          }
+        ]);
+
+      expect(res.status).toBe(200);
+      const savedMapping = mockConfig.updateMapping.mock.calls[0][0];
+      expect(savedMapping[0].bidirectional).toBe(false);
+    });
+
+    it('should preserve bidirectional when sync_mode is not provided', async () => {
+      const res = await request(app)
+        .post('/api/mapping')
+        .send([
+          {
+            loxone_name: 'test-light',
+            hue_uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            hue_name: 'Test Light',
+            hue_type: 'light',
+            bidirectional: true
+          }
+        ]);
+
+      expect(res.status).toBe(200);
+      const savedMapping = mockConfig.updateMapping.mock.calls[0][0];
+      expect(savedMapping[0].bidirectional).toBe(true);
+    });
+  });
+
   describe('PUT /api/settings', () => {
     it('should update bidirectional sync settings', async () => {
       const response = await request(app)
