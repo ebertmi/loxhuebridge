@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/lights/components/mapping-list/mapping-list.component.ts"],
+  "sourcesContent": ["\n    .mapping-list {\n      display: flex;\n      flex-direction: column;\n      gap: 8px;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,kBAAA;AACA,OAAA;;",
+  "names": []
+}

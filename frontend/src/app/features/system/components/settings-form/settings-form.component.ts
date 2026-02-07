@@ -328,14 +328,14 @@ export class SettingsFormComponent {
     const settings: Record<string, unknown> = {};
 
     // Only send changed/relevant fields
-    if (formValue.loxone_ip) settings.loxone_ip = formValue.loxone_ip;
-    if (formValue.loxone_port) settings.loxone_port = formValue.loxone_port;
-    if (formValue.debug !== undefined) settings.debug = formValue.debug;
-    if (formValue.transitionTime) settings.transitionTime = formValue.transitionTime;
-    settings.bidirectional_sync = formValue.bidirectional_sync;
-    if (formValue.loxone_user) settings.loxone_user = formValue.loxone_user;
-    if (formValue.loxone_password) settings.loxone_password = formValue.loxone_password;
-    if (formValue.loxone_http_port) settings.loxone_http_port = formValue.loxone_http_port;
+    if (formValue.loxone_ip) settings['loxone_ip'] = formValue.loxone_ip;
+    if (formValue.loxone_port) settings['loxone_port'] = formValue.loxone_port;
+    if (formValue.debug !== undefined) settings['debug'] = formValue.debug;
+    if (formValue.transitionTime) settings['transitionTime'] = formValue.transitionTime;
+    settings['bidirectional_sync'] = formValue.bidirectional_sync;
+    if (formValue.loxone_user) settings['loxone_user'] = formValue.loxone_user;
+    if (formValue.loxone_password) settings['loxone_password'] = formValue.loxone_password;
+    if (formValue.loxone_http_port) settings['loxone_http_port'] = formValue.loxone_http_port;
 
     this.systemState.updateSettings(settings);
   }

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/components/color-dot/color-dot.component.ts"],
+  "sourcesContent": ["\n    .color-dot {\n      display: inline-block;\n      border-radius: 50%;\n      border: 1px solid rgba(0, 0, 0, 0.12);\n    }\n\n    :host-context(html.dark) .color-dot {\n      border-color: rgba(255, 255, 255, 0.12);\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,iBAAA;AACA,UAAA,IAAA,MAAA,KAAA,CAAA,EAAA,CAAA,EAAA,CAAA,EAAA;;AAGF,cAAA,IAAA,CAAA,MAAA,CANA;AAOE,gBAAA,KAAA,GAAA,EAAA,GAAA,EAAA,GAAA,EAAA;;",
+  "names": []
+}

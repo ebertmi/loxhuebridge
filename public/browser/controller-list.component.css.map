@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/light-controllers/components/controller-list/controller-list.component.ts"],
+  "sourcesContent": ["\n    .controller-list {\n      display: flex;\n      flex-direction: column;\n      gap: 8px;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,kBAAA;AACA,OAAA;;",
+  "names": []
+}

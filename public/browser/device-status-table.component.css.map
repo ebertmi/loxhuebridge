@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/diagnostics/components/device-status-table/device-status-table.component.ts"],
+  "sourcesContent": ["\n    .table-container {\n      overflow-x: auto;\n    }\n\n    table {\n      width: 100%;\n    }\n\n    .na {\n      opacity: 0.4;\n    }\n\n    .unreachable {\n      opacity: 0.6;\n      background: rgba(244, 67, 54, 0.05);\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,cAAA;;AAGF;AACE,SAAA;;AAGF,CAAA;AACE,WAAA;;AAGF,CAAA;AACE,WAAA;AACA,cAAA,KAAA,GAAA,EAAA,EAAA,EAAA,EAAA,EAAA;;",
+  "names": []
+}

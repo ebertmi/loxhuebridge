@@ -1,0 +1,123 @@
+@use '@angular/material' as mat;
+
+// Light theme
+html {
+  color-scheme: light dark;
+
+  @include mat.theme((
+    color: (
+      theme-type: light,
+      primary: mat.$green-palette,
+      tertiary: mat.$orange-palette,
+    ),
+    typography: Inter,
+    density: 0,
+  ));
+}
+
+// Dark theme
+html.dark {
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: mat.$green-palette,
+      tertiary: mat.$orange-palette,
+    ),
+    typography: Inter,
+    density: 0,
+  ));
+}
+
+// Global styles
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+}
+
+// CSS variables for consistent theming
+:root {
+  --primary-color: #85c440;
+  --primary-light: #b5f170;
+  --primary-dark: #559410;
+  --tertiary-color: #ff9500;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  --info-color: #2196f3;
+}
+
+// Status badge colors
+.status-on {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-off {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+.status-unreachable {
+  background-color: #f44336;
+  color: white;
+}
+
+// Utility classes
+.flex-spacer {
+  flex: 1;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  opacity: 0.7;
+}
+
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }
+.mb-3 { margin-bottom: 24px; }
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mt-3 { margin-top: 24px; }
+
+// Card styling
+.card {
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+// Form styling
+.form-field-full-width {
+  width: 100%;
+}
+
+// Table styling
+.table-container {
+  overflow-x: auto;
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}

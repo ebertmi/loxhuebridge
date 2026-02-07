@@ -120,12 +120,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(redirectIfNotConfigured(config));
 
 // Static files - resolve public directory for both dev and production
-// Dev: ts-node-dev runs src/server.ts, __dirname = src -> ../public
-// Prod: node runs dist/src/server.js, __dirname = dist/src -> ../../public
+// Angular builds to public/browser
+// Dev: ts-node-dev runs src/server.ts, __dirname = src -> ../public/browser
+// Prod: node runs dist/src/server.js, __dirname = dist/src -> ../../public/browser
 const isDist = __dirname.includes(path.sep + 'dist' + path.sep);
-const publicDir = path.resolve(__dirname, isDist ? '../../public' : '../public');
+const publicDir = path.resolve(__dirname, isDist ? '../../public/browser' : '../public/browser');
 logger.debug(`Serving static files from: ${publicDir}`, 'SYSTEM');
 app.use(express.static(publicDir));
+
+// Fallback to index.html for Angular SPA routes (hash routing handles most, but just in case)
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'index.html'));
+});
 
 // --- ROUTES ---
 

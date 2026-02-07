@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/sensors/components/sensors-page/sensors-page.component.ts"],
+  "sourcesContent": ["\n    .sensors-page {\n      display: flex;\n      flex-direction: column;\n      gap: 16px;\n    }\n\n    .loading-container {\n      display: flex;\n      justify-content: center;\n      padding: 48px;\n    }\n\n    .form-card, .list-card {\n      mat-card-header {\n        display: flex;\n        align-items: center;\n        margin-bottom: 16px;\n      }\n    }\n\n    .error-banner {\n      background-color: #f44336;\n      color: white;\n      padding: 12px 16px;\n      border-radius: 4px;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,kBAAA;AACA,OAAA;;AAGF,CAAA;AACE,WAAA;AACA,mBAAA;AACA,WAAA;;AAIA,CAAA,UAAA;AAAA,CAAA,UAAA;AACE,WAAA;AACA,eAAA;AACA,iBAAA;;AAIJ,CAAA;AACE,oBAAA;AACA,SAAA;AACA,WAAA,KAAA;AACA,iBAAA;;",
+  "names": []
+}

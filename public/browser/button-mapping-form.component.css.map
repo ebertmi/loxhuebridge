@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/buttons/components/button-mapping-form/button-mapping-form.component.ts"],
+  "sourcesContent": ["\n    .mapping-form {\n      display: flex;\n      flex-wrap: wrap;\n      gap: 16px;\n      align-items: flex-start;\n    }\n\n    .target-field {\n      flex: 1;\n      min-width: 200px;\n    }\n\n    .name-field {\n      flex: 1;\n      min-width: 200px;\n    }\n\n    .target-option {\n      display: flex;\n      justify-content: space-between;\n      width: 100%;\n    }\n\n    .target-type {\n      opacity: 0.6;\n      font-size: 0.875em;\n    }\n\n    button {\n      height: 56px;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,aAAA;AACA,OAAA;AACA,eAAA;;AAGF,CAAA;AACE,QAAA;AACA,aAAA;;AAGF,CAAA;AACE,QAAA;AACA,aAAA;;AAGF,CAAA;AACE,WAAA;AACA,mBAAA;AACA,SAAA;;AAGF,CAAA;AACE,WAAA;AACA,aAAA;;AAGF;AACE,UAAA;;",
+  "names": []
+}

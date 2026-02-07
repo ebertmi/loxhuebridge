@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/scenes/components/scene-list/scene-list.component.ts"],
+  "sourcesContent": ["\n    .scene-list {\n      display: grid;\n      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));\n      gap: 12px;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,yBAAA,OAAA,SAAA,EAAA,OAAA,KAAA,EAAA;AACA,OAAA;;",
+  "names": []
+}

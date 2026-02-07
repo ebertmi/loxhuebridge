@@ -95,9 +95,9 @@ export class SetupStateService {
 
     const config: Record<string, any> = { loxoneIp, loxonePort };
     if (loxoneUser && loxonePassword) {
-      config.loxoneUser = loxoneUser;
-      config.loxonePassword = loxonePassword;
-      config.loxoneHttpPort = loxoneHttpPort || 80;
+      config['loxoneUser'] = loxoneUser;
+      config['loxonePassword'] = loxonePassword;
+      config['loxoneHttpPort'] = loxoneHttpPort || 80;
     }
 
     this.api.saveLoxoneConfig(config as any).subscribe({
