@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/features/diagnostics/components/bridge-status-card/bridge-status-card.component.ts"],
-  "sourcesContent": ["\n    .bridge-info {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));\n      gap: 16px;\n    }\n\n    .info-item {\n      display: flex;\n      flex-direction: column;\n      gap: 4px;\n    }\n\n    .label {\n      font-size: 0.75rem;\n      opacity: 0.6;\n      text-transform: uppercase;\n    }\n\n    .value {\n      font-weight: 500;\n    }\n  "],
-  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,yBAAA,OAAA,QAAA,EAAA,OAAA,KAAA,EAAA;AACA,OAAA;;AAGF,CAAA;AACE,WAAA;AACA,kBAAA;AACA,OAAA;;AAGF,CAAA;AACE,aAAA;AACA,WAAA;AACA,kBAAA;;AAGF,CAAA;AACE,eAAA;;",
-  "names": []
-}

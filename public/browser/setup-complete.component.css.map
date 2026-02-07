@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/features/setup/components/setup-complete/setup-complete.component.ts"],
-  "sourcesContent": ["\n    .complete-step {\n      padding: 32px 16px;\n      text-align: center;\n    }\n\n    .success-icon mat-icon {\n      font-size: 80px;\n      width: 80px;\n      height: 80px;\n      color: #4caf50;\n    }\n\n    h2 {\n      margin: 16px 0 8px 0;\n    }\n\n    p {\n      margin: 0 0 24px 0;\n      opacity: 0.7;\n    }\n  "],
-  "mappings": ";AACI,CAAA;AACE,WAAA,KAAA;AACA,cAAA;;AAGF,CAAA,aAAA;AACE,aAAA;AACA,SAAA;AACA,UAAA;AACA,SAAA;;AAGF;AACE,UAAA,KAAA,EAAA,IAAA;;AAGF;AACE,UAAA,EAAA,EAAA,KAAA;AACA,WAAA;;",
-  "names": []
-}

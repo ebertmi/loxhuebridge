@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/features/lights/components/detected-commands/detected-commands.component.ts"],
-  "sourcesContent": ["\n    .detected-card {\n      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);\n      margin-bottom: 16px;\n    }\n\n    :host-context(html.dark) .detected-card {\n      background: linear-gradient(135deg, #3e2723 0%, #4e342e 100%);\n    }\n\n    mat-card-header {\n      margin-bottom: 8px;\n    }\n\n    mat-chip {\n      cursor: pointer;\n    }\n\n    .value {\n      opacity: 0.6;\n      margin-left: 4px;\n    }\n  "],
-  "mappings": ";AACI,CAAA;AACE;IAAA;MAAA,MAAA;MAAA,QAAA,EAAA;MAAA,QAAA;AACA,iBAAA;;AAGF,cAAA,IAAA,CAAA,MAAA,CALA;AAME;IAAA;MAAA,MAAA;MAAA,QAAA,EAAA;MAAA,QAAA;;AAGF;AACE,iBAAA;;AAGF;AACE,UAAA;;AAGF,CAAA;AACE,WAAA;AACA,eAAA;;",
-  "names": []
-}

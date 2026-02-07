@@ -43,6 +43,14 @@ function createSetupRoutes(config: Config, eventStream: EventStream): Router {
   const router = express.Router();
 
   /**
+   * Check if bridge is configured
+   * GET /api/setup/status
+   */
+  router.get('/status', (_req: Request, res: Response) => {
+    res.json({ configured: config.isReady() });
+  });
+
+  /**
    * Discover Hue Bridge on local network
    * GET /api/setup/discover
    */

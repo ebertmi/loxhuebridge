@@ -20,7 +20,7 @@ class Config {
 
   constructor(logger: Logger, dataDir: string | null = null) {
     this.logger = logger;
-    this.dataDir = dataDir || path.join(__dirname, '../../', CONSTANTS.PATHS.DATA_DIR);
+    this.dataDir = dataDir || path.join(process.cwd(), CONSTANTS.PATHS.DATA_DIR);
     this.configFile = path.join(this.dataDir, CONSTANTS.PATHS.CONFIG_FILE);
     this.mappingFile = path.join(this.dataDir, CONSTANTS.PATHS.MAPPING_FILE);
 

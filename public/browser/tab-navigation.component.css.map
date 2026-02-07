@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/layout/tab-navigation/tab-navigation.component.ts"],
-  "sourcesContent": ["\n    .tab-nav {\n      background: var(--mat-tab-header-background-color);\n      border-bottom: 1px solid var(--mat-divider-color);\n    }\n\n    .tab-icon {\n      margin-right: 8px;\n      font-size: 20px;\n      width: 20px;\n      height: 20px;\n    }\n\n    .tab-label {\n      white-space: nowrap;\n    }\n\n    @media (max-width: 900px) {\n      .tab-label {\n        display: none;\n      }\n\n      .tab-icon {\n        margin-right: 0;\n      }\n    }\n  "],
-  "mappings": ";AACI,CAAA;AACE,cAAA,IAAA;AACA,iBAAA,IAAA,MAAA,IAAA;;AAGF,CAAA;AACE,gBAAA;AACA,aAAA;AACA,SAAA;AACA,UAAA;;AAGF,CAAA;AACE,eAAA;;AAGF,OAAA,CAAA,SAAA,EAAA;AACE,GALF;AAMI,aAAA;;AAGF,GAhBF;AAiBI,kBAAA;;;",
-  "names": []
-}

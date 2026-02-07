@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './layout/shell/shell.component';
+import { setupGuard } from './core/guards/setup.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
+    canActivate: [setupGuard],
     children: [
       {
         path: '',
