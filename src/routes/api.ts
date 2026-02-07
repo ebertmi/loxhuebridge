@@ -184,6 +184,10 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
    * GET /api/settings
    */
   router.get('/settings', (_req: Request, res: Response) => {
+    const loxoneUser = config.get('loxoneUser');
+    const loxonePassword = config.get('loxonePassword');
+    const loxoneHttpPort = config.get('loxoneHttpPort');
+
     res.json({
       bridge_ip: config.get('bridgeIp'),
       loxone_ip: config.get('loxoneIp'),
@@ -192,7 +196,11 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
       debug: config.get('debug'),
       key_configured: config.isReady(),
       transitionTime: config.get('transitionTime'),
-      version: version
+      version: version,
+      bidirectional_sync: config.get('bidirectionalSync'),
+      loxone_user: loxoneUser,
+      loxone_http_port: loxoneHttpPort,
+      loxone_connection_configured: !!(loxoneUser && loxonePassword && loxoneHttpPort)
     });
   });
 
@@ -218,7 +226,49 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
     }
 
     const diagnostics = await hueClient.getDiagnostics();
-    res.json(diagnostics);
+    
+    // Transform flat diagnostics array into structured format
+    const lights: any[] = [];
+    const sensors: any[] = [];
+    const buttons: any[] = [];
+    let bridge: any = null;
+
+    diagnostics.forEach((d: any) => {
+      const baseDevice = {
+        id: d.name,
+        name: d.name,
+        type: d.type,
+        reachable: d.status === 'connected' || d.status === 'available',
+        firmware: d.model,
+        last_seen: d.last_seen
+      };
+
+      if (d.type === 'Bridge') {
+        bridge = {
+          ip: config.get('bridgeIp'),
+          connected: true,
+          api_version: 'v2',
+          software_version: d.model
+        };
+      } else if (d.type === 'Licht') {
+        lights.push(baseDevice);
+      } else if (d.type === 'Sensor') {
+        sensors.push({ ...baseDevice, battery: d.battery });
+      } else if (d.type === 'Taster') {
+        buttons.push({ ...baseDevice, battery: d.battery });
+      }
+    });
+
+    res.json({
+      lights,
+      sensors,
+      buttons,
+      bridge: bridge || {
+        ip: config.get('bridgeIp'),
+        connected: false,
+        api_version: 'v2'
+      }
+    });
   }));
 
   /**
