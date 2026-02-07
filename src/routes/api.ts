@@ -205,6 +205,49 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
   });
 
   /**
+   * Update application settings
+   * PUT /api/settings
+   * Body: Partial settings in snake_case
+   */
+  router.put('/settings', (req: Request, res: Response) => {
+    const updates: Partial<import('../types').BridgeConfig> = {};
+
+    if (req.body.loxone_ip !== undefined) updates.loxoneIp = req.body.loxone_ip;
+    if (req.body.loxone_port !== undefined) updates.loxonePort = parseInt(req.body.loxone_port);
+    if (req.body.debug !== undefined) {
+      updates.debug = !!req.body.debug;
+      logger.setDebugMode(!!req.body.debug);
+    }
+    if (req.body.transitionTime !== undefined) updates.transitionTime = parseInt(req.body.transitionTime);
+    if (req.body.bidirectional_sync !== undefined) updates.bidirectionalSync = !!req.body.bidirectional_sync;
+    if (req.body.loxone_user !== undefined) updates.loxoneUser = req.body.loxone_user;
+    if (req.body.loxone_password !== undefined) updates.loxonePassword = req.body.loxone_password;
+    if (req.body.loxone_http_port !== undefined) updates.loxoneHttpPort = parseInt(req.body.loxone_http_port);
+
+    config.update(updates);
+
+    // Return updated settings (same shape as GET)
+    const loxoneUser = config.get('loxoneUser');
+    const loxonePassword = config.get('loxonePassword');
+    const loxoneHttpPort = config.get('loxoneHttpPort');
+
+    res.json({
+      bridge_ip: config.get('bridgeIp'),
+      loxone_ip: config.get('loxoneIp'),
+      loxone_port: config.get('loxonePort'),
+      http_port: httpPort,
+      debug: config.get('debug'),
+      key_configured: config.isReady(),
+      transitionTime: config.get('transitionTime'),
+      version: version,
+      bidirectional_sync: config.get('bidirectionalSync'),
+      loxone_user: loxoneUser,
+      loxone_http_port: loxoneHttpPort,
+      loxone_connection_configured: !!(loxoneUser && loxonePassword && loxoneHttpPort)
+    });
+  });
+
+  /**
    * Update debug mode
    * POST /api/settings/debug
    * Body: { active: boolean }

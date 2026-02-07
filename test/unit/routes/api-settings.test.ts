@@ -51,7 +51,8 @@ describe('API Settings Route', () => {
       info: jest.fn(),
       success: jest.fn(),
       warn: jest.fn(),
-      error: jest.fn()
+      error: jest.fn(),
+      setDebugMode: jest.fn()
     } as unknown as jest.Mocked<Logger>;
 
     mockHueClient = {} as unknown as jest.Mocked<HueClient>;
@@ -259,6 +260,94 @@ describe('API Settings Route', () => {
         .expect(200);
 
       expect(response.body.loxone_connection_configured).toBe(false);
+    });
+  });
+
+  describe('PUT /api/settings', () => {
+    it('should update bidirectional sync settings', async () => {
+      const response = await request(app)
+        .put('/api/settings')
+        .send({
+          bidirectional_sync: true,
+          loxone_user: 'admin',
+          loxone_password: 'secret123',
+          loxone_http_port: '8080'
+        })
+        .expect(200);
+
+      // Verify config.update was called with correct camelCase keys
+      expect(mockConfig.update).toHaveBeenCalledTimes(1);
+      const updateArg = mockConfig.update.mock.calls[0][0];
+      expect(updateArg.bidirectionalSync).toBe(true);
+      expect(updateArg.loxoneUser).toBe('admin');
+      expect(updateArg.loxonePassword).toBe('secret123');
+      expect(updateArg.loxoneHttpPort).toBe(8080);
+
+      // Verify response shape matches GET /api/settings
+      expect(response.body.bridge_ip).toBe('192.168.1.100');
+      expect(response.body.loxone_ip).toBe('192.168.1.200');
+      expect(response.body.loxone_port).toBe(5555);
+      expect(response.body.http_port).toBe(3000);
+      expect(response.body.debug).toBe(false);
+      expect(response.body.key_configured).toBe(true);
+      expect(response.body.transitionTime).toBe(400);
+      expect(response.body.version).toBe('2.0.0');
+      expect(response.body.bidirectional_sync).toBe(true);
+      expect(response.body.loxone_user).toBe('admin');
+      expect(response.body.loxone_http_port).toBe(8080);
+      expect(response.body.loxone_connection_configured).toBe(true);
+
+      // Must NOT include password in response
+      expect(response.body.loxone_password).toBeUndefined();
+      expect(response.body.loxonePassword).toBeUndefined();
+      const bodyString = JSON.stringify(response.body);
+      expect(bodyString).not.toContain('secret123');
+    });
+
+    it('should not overwrite password when not provided', async () => {
+      await request(app)
+        .put('/api/settings')
+        .send({
+          bidirectional_sync: false
+        })
+        .expect(200);
+
+      // Verify config.update was called
+      expect(mockConfig.update).toHaveBeenCalledTimes(1);
+      const updateArg = mockConfig.update.mock.calls[0][0];
+
+      // bidirectional_sync should be in the update
+      expect(updateArg.bidirectionalSync).toBe(false);
+
+      // loxonePassword should NOT be in the update object
+      expect(updateArg).not.toHaveProperty('loxonePassword');
+    });
+
+    it('should update basic settings like loxone_ip and debug', async () => {
+      const response = await request(app)
+        .put('/api/settings')
+        .send({
+          loxone_ip: '10.0.0.50',
+          debug: true
+        })
+        .expect(200);
+
+      // Verify config.update was called with correct values
+      expect(mockConfig.update).toHaveBeenCalledTimes(1);
+      const updateArg = mockConfig.update.mock.calls[0][0];
+      expect(updateArg.loxoneIp).toBe('10.0.0.50');
+      expect(updateArg.debug).toBe(true);
+
+      // Verify logger.setDebugMode was called
+      expect(mockLogger.setDebugMode).toHaveBeenCalledWith(true);
+
+      // Verify response includes all expected fields
+      expect(response.body).toHaveProperty('bridge_ip');
+      expect(response.body).toHaveProperty('loxone_ip');
+      expect(response.body).toHaveProperty('bidirectional_sync');
+      expect(response.body).toHaveProperty('loxone_connection_configured');
+      expect(response.body).not.toHaveProperty('loxone_password');
+      expect(response.body).not.toHaveProperty('loxonePassword');
     });
   });
 });
