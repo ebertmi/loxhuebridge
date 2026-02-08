@@ -6,7 +6,7 @@ html {
 
   @include mat.theme((
     color: (
-      primary: mat.$green-palette,
+      primary: mat.$chartreuse-palette,
       tertiary: mat.$orange-palette,
     ),
     typography: Inter,
@@ -77,7 +77,15 @@ body {
 .mt-2 { margin-top: 16px; }
 .mt-3 { margin-top: 24px; }
 
-// Card styling
+// Card styling - use outlined appearance globally
+.mat-mdc-card {
+  --mdc-outlined-card-outline-color: var(--mat-divider-color);
+  --mdc-outlined-card-container-elevation: none;
+  border: 1px solid var(--mat-divider-color);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .card {
   border-radius: 8px;
   padding: 16px;
