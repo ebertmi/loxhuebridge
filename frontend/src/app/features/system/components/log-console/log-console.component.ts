@@ -3,7 +3,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SystemStateService } from '../../services/logs-state.service';
 import { LogCategory } from '../../../../core/models';
 
@@ -15,7 +14,6 @@ import { LogCategory } from '../../../../core/models';
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
-    ScrollingModule
   ],
   template: `
     <mat-card class="log-card">
@@ -36,24 +34,22 @@ import { LogCategory } from '../../../../core/models';
         </button>
       </mat-card-header>
       <mat-card-content>
-        <cdk-virtual-scroll-viewport itemSize="28" class="log-viewport">
-          <div *cdkVirtualFor="let log of state.filteredLogs()" class="log-entry" [class]="'log-' + log.level.toLowerCase()">
-            <span class="log-time">{{ log.time }}</span>
-            <span class="log-level" [class]="'level-' + log.level.toLowerCase()">{{ log.level }}</span>
-            <span class="log-cat">[{{ log.cat }}]</span>
-            <span class="log-message">{{ log.msg }}</span>
-          </div>
-        </cdk-virtual-scroll-viewport>
+        <div class="log-viewport">
+          @for (log of state.filteredLogs(); track log.time + log.msg) {
+            <div class="log-entry" [class]="'log-' + log.level.toLowerCase()">
+              <span class="log-time">{{ log.time }}</span>
+              <span class="log-level" [class]="'level-' + log.level.toLowerCase()">{{ log.level }}</span>
+              <span class="log-cat">[{{ log.cat }}]</span>
+              <span class="log-message">{{ log.msg }}</span>
+            </div>
+          }
+        </div>
       </mat-card-content>
     </mat-card>
   `,
   styles: [`
     :host {
       display: block;
-    }
-
-    .log-card {
-      height: 500px;
     }
 
     mat-card-header {
@@ -67,8 +63,12 @@ import { LogCategory } from '../../../../core/models';
       padding: 0 16px 16px !important;
     }
 
+    /* 64px header + 49px tab-nav + 16px main-padding + 48px mat-tab-header
+       + 16px tab-content-padding + 56px card-header + 16px card-content-bottom-padding
+       + 16px main-padding-bottom = ~281px, rounded up for safety */
     .log-viewport {
-      height: 380px;
+      height: calc(100vh - 290px);
+      overflow-y: auto;
       font-family: 'Monaco', 'Consolas', monospace;
       font-size: 12px;
       background: rgba(0, 0, 0, 0.03);

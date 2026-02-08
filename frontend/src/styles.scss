@@ -1,12 +1,11 @@
 @use '@angular/material' as mat;
 
-// Light theme
+// Light theme (default)
 html {
-  color-scheme: light dark;
+  color-scheme: light;
 
   @include mat.theme((
     color: (
-      theme-type: light,
       primary: mat.$green-palette,
       tertiary: mat.$orange-palette,
     ),
@@ -15,17 +14,9 @@ html {
   ));
 }
 
-// Dark theme
+// Dark theme - color-scheme: dark makes light-dark() resolve to dark values
 html.dark {
-  @include mat.theme((
-    color: (
-      theme-type: dark,
-      primary: mat.$green-palette,
-      tertiary: mat.$orange-palette,
-    ),
-    typography: Inter,
-    density: 0,
-  ));
+  color-scheme: dark;
 }
 
 // Global styles
