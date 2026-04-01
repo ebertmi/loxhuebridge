@@ -210,13 +210,26 @@ export function hashPassword(password: string, salt: string, algorithm: string =
 }
 
 /**
+ * Create HMAC-SHA1 hash
+ *
+ * @param data - Data to hash
+ * @param key - HMAC key
+ * @returns Hex-encoded HMAC
+ */
+export function hmacSha1(data: string, key: string | Buffer): string {
+  const hmac = crypto.createHmac('sha1', key);
+  hmac.update(data);
+  return hmac.digest('hex');
+}
+
+/**
  * Create HMAC-SHA256 hash
  *
  * @param data - Data to hash
  * @param key - HMAC key
  * @returns Hex-encoded HMAC (NOT uppercased per spec)
  */
-export function hmacSha256(data: string, key: string): string {
+export function hmacSha256(data: string, key: string | Buffer): string {
   const hmac = crypto.createHmac('sha256', key);
   hmac.update(data);
   return hmac.digest('hex');

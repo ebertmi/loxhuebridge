@@ -1,11 +1,11 @@
 {
   "/api": {
-    "target": "http://localhost:3000",
+    "target": "http://localhost:8555",
     "secure": false,
     "changeOrigin": true
   },
   "/scene": {
-    "target": "http://localhost:3000",
+    "target": "http://localhost:8555",
     "secure": false,
     "changeOrigin": true
   }

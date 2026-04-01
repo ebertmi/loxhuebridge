@@ -27,6 +27,7 @@ import {
   rsaEncrypt,
   aesEncrypt,
   hashPassword,
+  hmacSha1,
   hmacSha256
 } from '../utils/loxone-crypto';
 import {
@@ -312,8 +313,10 @@ class LoxoneClient extends EventEmitter {
     // Update current salt for next command
     this.currentSalt = nextSalt;
 
-    // Encrypt
-    const encrypted = aesEncrypt(payload, this.sessionKey, this.sessionIv);
+    // Miniserver requires a null terminator at the end of the command string (undocumented)
+    const nullTerminated = payload + '\x00';
+
+    const encrypted = aesEncrypt(nullTerminated, this.sessionKey, this.sessionIv);
 
     // URL encode
     const encoded = encodeURIComponent(encrypted);
@@ -327,9 +330,11 @@ class LoxoneClient extends EventEmitter {
   private async _performKeyExchange(): Promise<void> {
     try {
       // Generate session key and IV
+      // currentSalt stays null until the first encrypted command, so _encryptCommand
+      // uses the correct 'salt/{s}/{cmd}' format for the first command (not 'nextSalt/...')
       this.sessionKey = generateAesKey();
       this.sessionIv = generateAesIv();
-      this.currentSalt = generateSalt();
+      this.currentSalt = null;
 
       this.logger.debug('Generated session key and IV', 'LOXONE');
 
@@ -411,10 +416,13 @@ class LoxoneClient extends EventEmitter {
       }
 
       const serverKeyHex = keyData.LL.value.key;
-      const serverKey = Buffer.from(serverKeyHex, 'hex').toString('utf8');
+      const hashAlg = keyData.LL.value.hashAlg || 'SHA256';
+      const serverKeyBytes = Buffer.from(serverKeyHex, 'hex');  // single decode → 40 bytes
 
-      // Hash JWT token with server key
-      this.tokenHash = hmacSha256(this.jwtToken!, serverKey);
+      // Hash JWT token using same algorithm as hashAlg
+      this.tokenHash = hashAlg.toUpperCase() === 'SHA1'
+        ? hmacSha1(this.jwtToken!, serverKeyBytes)
+        : hmacSha256(this.jwtToken!, serverKeyBytes);
 
       // Authenticate WebSocket session with token hash
       const authCommand = `authwithtoken/${this.tokenHash}/${user}`;
@@ -450,19 +458,24 @@ class LoxoneClient extends EventEmitter {
       }
 
       const serverKeyHex = keyData.LL.value.key;
-      const userSalt = keyData.LL.value.salt;
+      const userSaltHex = keyData.LL.value.salt;
       const hashAlg = keyData.LL.value.hashAlg || 'SHA256';
 
-      // Decode server key from hex
-      const serverKey = Buffer.from(serverKeyHex, 'hex').toString('utf8');
+      // Key and salt are hex-encoded in the response.
+      // Salt: use the raw hex string as-is for password hashing (do NOT decode to UTF-8).
+      // Key: decode once from hex to get the 40-byte ASCII key material for HMAC.
+      const serverKeyBytes = Buffer.from(serverKeyHex, 'hex');  // 40 bytes
+      const userSalt = userSaltHex;                              // raw hex string, used as-is
 
-      this.logger.debug(`Got server key (hex: ${serverKeyHex.substring(0, 20)}...), salt, and hash algorithm (${hashAlg})`, 'LOXONE');
+      this.logger.debug(`Got server key, salt, and hash algorithm (${hashAlg})`, 'LOXONE');
 
-      // Step 2: Hash password with user salt
+      // Step 2: Hash password with raw hex salt using the algorithm the server specified
       const pwHash = hashPassword(password, userSalt, hashAlg);
 
-      // Step 3: Create HMAC with credentials
-      const credentialsHash = hmacSha256(`${user}:${pwHash}`, serverKey);
+      // Step 3: HMAC with SAME algorithm as hashAlg, keyed with single-decoded key bytes
+      const credentialsHash = hashAlg.toUpperCase() === 'SHA1'
+        ? hmacSha1(`${user}:${pwHash}`, serverKeyBytes)
+        : hmacSha256(`${user}:${pwHash}`, serverKeyBytes);
 
       // Step 4: Request JWT token (must be encrypted)
       const uuid = this._generateClientUuid();
@@ -472,7 +485,7 @@ class LoxoneClient extends EventEmitter {
       const tokenCommand = `jdev/sys/getjwt/${credentialsHash}/${user}/${permission}/${uuid}/${info}`;
 
       this.logger.debug('Requesting JWT token...', 'LOXONE');
-      const tokenResponse = await this._sendCommand(tokenCommand, true); // MUST be encrypted!
+      const tokenResponse = await this._sendCommand(tokenCommand, false); // getjwt works unencrypted
       const tokenData: LoxoneResponse = JSON.parse(tokenResponse);
 
       if (!tokenData || !tokenData.LL || (tokenData.LL.code !== '200' && tokenData.LL.Code !== '200')) {
