@@ -77,7 +77,7 @@ const rateLimiter = new RateLimiter(logger);
 const loxoneUdp = new LoxoneUDP(config, logger);
 
 // Status Manager
-const statusManager = new StatusManager(loxoneUdp, logger);
+const statusManager = new StatusManager(loxoneUdp, logger, config);
 
 // Hue Client
 const hueClient = new HueClient(config, logger, rateLimiter);
@@ -175,7 +175,7 @@ app.use(errorHandler);
 
 // --- START SERVER ---
 app.listen(HTTP_PORT, async () => {
-  console.log(`🚀 loxHueBridge v${version} running on port ${HTTP_PORT}`);
+  logger.info(`🚀 loxHueBridge v${version} running on port ${HTTP_PORT}`);
 
   // Start event stream if already configured
   if (config.isReady()) {

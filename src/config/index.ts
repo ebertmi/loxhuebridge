@@ -37,6 +37,7 @@ class Config {
       loxoneTokenExpiry: null,
       bidirectionalSync: false,
       bidirectionalDebounceMs: 2000,
+      syncEnabled: true,
       debug: process.env.DEBUG === 'true',
       transitionTime: 400,
       certPinningEnabled: process.env.HUE_CERT_PINNING_ENABLED === 'true',
@@ -180,6 +181,9 @@ class Config {
         }
         if (this.config.bidirectionalDebounceMs === undefined) {
           this.config.bidirectionalDebounceMs = 2000;
+        }
+        if (this.config.syncEnabled === undefined) {
+          this.config.syncEnabled = true;
         }
 
         this.logger.success('Configuration loaded', 'SYSTEM');

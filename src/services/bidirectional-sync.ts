@@ -262,6 +262,10 @@ class BidirectionalSyncManager {
    * Handle Loxone value state updates
    */
   private async _handleLoxoneUpdates(updates: LoxoneUpdate[]): Promise<void> {
+    if (!this.config.get('syncEnabled')) {
+      return;
+    }
+
     for (const update of updates) {
       try {
         await this._processLoxoneUpdate(update);
@@ -276,6 +280,10 @@ class BidirectionalSyncManager {
    * Handle Loxone text state updates (for mood detection and ColorPickerV2 color states)
    */
   private async _handleTextStates(updates: any[]): Promise<void> {
+    if (!this.config.get('syncEnabled')) {
+      return;
+    }
+
     for (const update of updates) {
       try {
         const { uuid, text } = update;

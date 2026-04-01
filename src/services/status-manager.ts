@@ -4,6 +4,7 @@
  */
 
 import LoxoneUDP from './loxone-udp';
+import Config from '../config';
 import Logger from '../utils/logger';
 import { DeviceMapping } from '../types';
 
@@ -24,11 +25,13 @@ interface CacheStats {
 
 class StatusManager {
   private loxoneUdp: LoxoneUDP;
+  private config: Config;
   private logger: Logger;
   private statusCache: Map<string, DeviceStatus>;
 
-  constructor(loxoneUdp: LoxoneUDP, logger: Logger) {
+  constructor(loxoneUdp: LoxoneUDP, logger: Logger, config: Config) {
     this.loxoneUdp = loxoneUdp;
+    this.config = config;
     this.logger = logger;
     this.statusCache = new Map();
   }
@@ -57,6 +60,11 @@ class StatusManager {
 
     // Update cache
     deviceStatus[key] = value;
+
+    // Do not propagate to Loxone when sync is disabled
+    if (!this.config.get('syncEnabled')) {
+      return;
+    }
 
     // Determine if we should send to Loxone
     let shouldSend = false;

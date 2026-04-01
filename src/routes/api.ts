@@ -186,6 +186,14 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
   });
 
   /**
+   * Get sync state
+   * GET /api/sync
+   */
+  router.get('/sync', (_req: Request, res: Response) => {
+    res.json({ enabled: config.get('syncEnabled') });
+  });
+
+  /**
    * Get server logs
    * GET /api/logs
    */
@@ -234,6 +242,7 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
     }
     if (req.body.transitionTime !== undefined) updates.transitionTime = parseInt(req.body.transitionTime);
     if (req.body.bidirectional_sync !== undefined) updates.bidirectionalSync = !!req.body.bidirectional_sync;
+    if (req.body.sync_enabled !== undefined) updates.syncEnabled = !!req.body.sync_enabled;
     if (req.body.loxone_user !== undefined) updates.loxoneUser = req.body.loxone_user;
     if (req.body.loxone_password !== undefined) updates.loxonePassword = req.body.loxone_password;
     if (req.body.loxone_http_port !== undefined) updates.loxoneHttpPort = parseInt(req.body.loxone_http_port);

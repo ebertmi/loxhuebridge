@@ -1,9 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ThemeService } from '../../core/services/theme.service';
+import { SyncService } from '../../core/services/sync.service';
 
 @Component({
   selector: 'app-header',
@@ -18,6 +19,15 @@ import { ThemeService } from '../../core/services/theme.service';
         <span class="title">Loxone-Hue-Bridge</span>
       </div>
       <span class="spacer"></span>
+      <button mat-stroked-button
+              class="sync-toggle"
+              [class.sync-on]="syncService.syncEnabled()"
+              [class.sync-off]="!syncService.syncEnabled()"
+              (click)="syncService.toggleSync()"
+              [matTooltip]="syncService.syncEnabled() ? 'Disable sync' : 'Enable sync'">
+        <mat-icon>{{ syncService.syncEnabled() ? 'sync' : 'sync_disabled' }}</mat-icon>
+        {{ syncService.syncEnabled() ? 'Sync ON' : 'Sync OFF' }}
+      </button>
       <button mat-icon-button
               (click)="toggleTheme()"
               [matTooltip]="themeService.resolvedTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
@@ -54,11 +64,45 @@ import { ThemeService } from '../../core/services/theme.service';
     .spacer {
       flex: 1;
     }
+
+    .sync-toggle {
+      font-size: 0.8rem;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 8px;
+      line-height: 1;
+    }
+
+    .sync-toggle mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+
+    .sync-on {
+      color: #85c440;
+      border-color: #85c440;
+    }
+
+    .sync-off {
+      color: var(--mat-divider-color);
+      border-color: var(--mat-divider-color);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   readonly themeService = inject(ThemeService);
+  readonly syncService = inject(SyncService);
+
+  ngOnInit(): void {
+    this.syncService.loadSyncState();
+  }
 
   toggleTheme(): void {
     this.themeService.toggleTheme();

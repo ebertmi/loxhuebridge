@@ -17,6 +17,7 @@ export interface BridgeConfig {
   loxoneTokenExpiry: number | null;
   bidirectionalSync: boolean;
   bidirectionalDebounceMs: number;
+  syncEnabled: boolean;
   debug: boolean;
   transitionTime: number;
   certPinningEnabled: boolean;
