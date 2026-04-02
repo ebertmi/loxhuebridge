@@ -39,9 +39,14 @@ import createSceneRoutes from './routes/scenes';
 // --- VERSION INFO ---
 let version = 'unknown';
 try {
-  // In production (dist/src/server.js), package.json is at ../../package.json
-  // In development (src/server.ts), package.json is at ../package.json
-  const packageJson = require('../../package.json');
+  // Try production path first (dist/src/server.js → ../../package.json),
+  // fall back to dev path (src/server.ts → ../package.json)
+  let packageJson: { version: string };
+  try {
+    packageJson = require('../../package.json');
+  } catch {
+    packageJson = require('../package.json');
+  }
   version = packageJson.version;
 } catch (error) {
   const message = error instanceof Error ? error.message : 'Unknown error';
