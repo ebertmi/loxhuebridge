@@ -1,6 +1,4 @@
-# loxHueBridge 🇦🇹
-
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/bausi2k)
+# Loxone-Hue-Bridge (loxhueBridge)
 
 **loxHueBridge** ist eine bidirektionale Schnittstelle zwischen dem **Loxone Miniserver** und der **Philips Hue Bridge (V2 / API)**.
 
@@ -9,19 +7,24 @@ Sie ermöglicht eine extrem schnelle, lokale Steuerung ohne Cloud-Verzögerung u
 ## 🚀 Features
 
 * **Smart Setup:** Automatische Suche der Hue Bridge und Pairing per Web-Interface.
+* **Angular Frontend:** Modernes Web-Dashboard auf Basis von Angular 19 mit Material Design.
 * **Live Dashboard:** Zeigt alle verbundenen Lichter und Sensoren (Temperatur, Lux, Bewegung, Batterie) in Echtzeit.
 * **Smart Mapping:** Einfache Zuordnung per "Klick & Wähl".
+* **Bidirektionaler Sync:** Statusänderungen von Hue (z.B. via Alexa) werden direkt an Loxone zurückgemeldet.
 * **Loxone Integration:**
     * **Steuern:** Schalten, Dimmen, Warmweiß & RGB (via Virtueller Ausgang).
     * **Empfangen:** Bewegung, Taster, Helligkeit, Temperatur, Batterie (via UDP Eingang).
+    * **WebSocket:** Verbindung zum Loxone Miniserver via WebSocket mit JWT-Authentifizierung (v17+).
+* **Szenen-Unterstützung:** Hue-Szenen können über die Bridge aktiviert werden.
 * **Docker Ready:** Fertiges Image auf GitHub Container Registry (GHCR).
+* **TypeScript:** Vollständig in TypeScript geschrieben für bessere Wartbarkeit und Typsicherheit.
 
 ---
 
 ## 📋 Voraussetzungen
 
-* Philips Hue Bridge (V2, eckiges Modell)
-* Loxone Miniserver
+* Philips Hue Bridge (V2, eckiges Modell) oder neue Hue Bridge Pro
+* Loxone Miniserver Gen2
 * Ein Server für Docker (z.B. Raspberry Pi, Synology, Unraid)
 
 ---
@@ -216,12 +219,17 @@ It enables extremely fast, local control without cloud delays and uses the moder
 ## 🚀 Features
 
 * **Smart Setup:** Automatic discovery of the Hue Bridge and pairing via web interface.
+* **Angular Frontend:** Modern web dashboard built on Angular 19 with Material Design.
 * **Live Dashboard:** Shows all connected lights and sensors (temperature, lux, motion, battery) in real-time.
 * **Smart Mapping:** Easy assignment via "Click & Select".
+* **Bidirectional Sync:** Status changes from Hue (e.g. via Alexa) are reported back to Loxone in real-time.
 * **Loxone Integration:**
     * **Control:** Switching, Dimming, Warm White & RGB (via Virtual Output).
     * **Receive:** Motion, Switches, Brightness, Temperature, Battery (via UDP Input).
+    * **WebSocket:** Connection to Loxone Miniserver via WebSocket with JWT authentication (v17+).
+* **Scene Support:** Hue scenes can be activated through the bridge.
 * **Docker Ready:** Pre-built images on GHCR.
+* **TypeScript:** Fully written in TypeScript for better maintainability and type safety.
 
 ---
 
@@ -410,7 +418,4 @@ Port: 7000
 
 **#kiassisted** 🤖
 This project was created with the assistance of AI.
-Code architecture, logic, and documentation support provided by Gemini.
-
----
-<a href="https://www.buymeacoffee.com/bausi2k" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+Code architecture, logic, and documentation support provided by Claude (Anthropic).
