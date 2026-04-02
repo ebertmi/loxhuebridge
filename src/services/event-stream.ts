@@ -294,9 +294,7 @@ class EventStream {
 
       if (rotaryData && rotaryData.rotation) {
         const direction = rotaryData.rotation.direction === 'clock_wise' ? 'cw' : 'ccw';
-
-        // Send directly via UDP (bypass cache for events)
-        this.loxoneUdp.send(loxName, 'rotary', direction, category);
+        this.statusManager.update(loxName, 'rotary', direction, entry);
         this.logger.debug(`Event: ${loxName} Dial=${direction}`, category);
       }
     }

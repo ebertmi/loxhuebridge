@@ -8,12 +8,30 @@ import Config from '../config';
 import Logger from '../utils/logger';
 import { DeviceMapping } from '../types';
 
-/**
- * Device status structure
- */
 interface DeviceStatus {
   [key: string]: unknown;
 }
+
+/**
+ * Per-type routing policy.
+ *
+ * - `category`              Log/UDP category string
+ * - `requiresBidirectional` Only forward if the mapping has `bidirectional: true`
+ * - `deduplicate`           Skip forwarding when the value is unchanged (false for events)
+ */
+interface RoutingPolicy {
+  category: string;
+  requiresBidirectional: boolean;
+  deduplicate: boolean;
+}
+
+const ROUTING: Readonly<Record<string, RoutingPolicy>> = {
+  sensor: { category: 'SENSOR', requiresBidirectional: false, deduplicate: true  },
+  button: { category: 'BUTTON', requiresBidirectional: false, deduplicate: false },
+  rotary: { category: 'BUTTON', requiresBidirectional: false, deduplicate: false },
+  light:  { category: 'LIGHT',  requiresBidirectional: true,  deduplicate: true  },
+  group:  { category: 'LIGHT',  requiresBidirectional: true,  deduplicate: true  },
+};
 
 /**
  * Status cache statistics
@@ -49,42 +67,19 @@ class StatusManager {
     }
 
     const deviceStatus = this.statusCache.get(loxName)!;
+    const policy = ROUTING[entry.hue_type];
 
-    // IMPORTANT: Events (buttons/rotary) are never cached!
-    const isEvent = (key === 'button' || key === 'rotary');
+    if (!policy) return; // unknown device type — ignore
 
-    // Deduplicate: skip if value hasn't changed (except for events)
-    if (!isEvent && deviceStatus[key] === value) {
-      return;
-    }
+    // Deduplicate: skip forwarding if value unchanged (events always propagate)
+    if (policy.deduplicate && deviceStatus[key] === value) return;
 
-    // Update cache
     deviceStatus[key] = value;
 
-    // Do not propagate to Loxone when sync is disabled
-    if (!this.config.get('syncEnabled')) {
-      return;
-    }
+    if (!this.config.get('syncEnabled')) return;
+    if (policy.requiresBidirectional && !entry.bidirectional) return;
 
-    // Determine if we should send to Loxone
-    let shouldSend = false;
-    let category = 'SYSTEM';
-
-    if (entry.hue_type === 'sensor') {
-      shouldSend = true;
-      category = 'SENSOR';
-    } else if (entry.hue_type === 'button') {
-      shouldSend = true;
-      category = 'BUTTON';
-    } else if (entry.bidirectional === true) {
-      shouldSend = true;
-      category = 'LIGHT';
-    }
-
-    // Send to Loxone if enabled
-    if (shouldSend) {
-      this.loxoneUdp.send(loxName, key, value as string | number, category);
-    }
+    this.loxoneUdp.send(loxName, key, value as string | number, policy.category);
   }
 
   /**
