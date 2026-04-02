@@ -180,6 +180,7 @@ class EventStream {
   private _processEvents(events: HueEvent[]): void {
     const mapping = this.config.getMapping();
     const serviceToDeviceMap = this.hueClient.getServiceToDeviceMap();
+    const { byHueUuid, byDeviceId } = this._buildMappingIndex(mapping, serviceToDeviceMap);
 
     events.forEach(event => {
       if (event.type !== 'update' && event.type !== 'add') {
@@ -187,12 +188,8 @@ class EventStream {
       }
 
       event.data.forEach(data => {
-        // Find mapping entry for this device
-        const entry = mapping.find(m => m.hue_uuid === data.id) || mapping.find(m => {
-          const dataMeta = serviceToDeviceMap[data.id];
-          const mapMeta = serviceToDeviceMap[m.hue_uuid];
-          return dataMeta && mapMeta && dataMeta.deviceId === mapMeta.deviceId;
-        });
+        const entry = byHueUuid.get(data.id)
+          ?? byDeviceId.get(serviceToDeviceMap[data.id]?.deviceId);
 
         // Determine log category
         let category = 'SYSTEM';
@@ -322,6 +319,30 @@ class EventStream {
   }
 
   /**
+   * Build O(1) lookup indices for a mapping array.
+   * - `byHueUuid`  — direct match on mapping.hue_uuid
+   * - `byDeviceId` — fallback match via the Hue service→device map
+   *   (needed because SSE events carry service UUIDs, not device UUIDs)
+   */
+  private _buildMappingIndex(
+    mapping: DeviceMapping[],
+    serviceToDeviceMap: Record<string, any>
+  ): {
+    byHueUuid: Map<string, DeviceMapping>;
+    byDeviceId: Map<string, DeviceMapping>;
+  } {
+    const byHueUuid = new Map<string, DeviceMapping>(mapping.map(m => [m.hue_uuid, m]));
+    const byDeviceId = new Map<string, DeviceMapping>();
+
+    for (const m of mapping) {
+      const deviceId = serviceToDeviceMap[m.hue_uuid]?.deviceId;
+      if (deviceId) byDeviceId.set(deviceId, m);
+    }
+
+    return { byHueUuid, byDeviceId };
+  }
+
+  /**
    * Sync initial states from Hue Bridge
    */
   async syncInitialStates(): Promise<void> {
@@ -333,13 +354,11 @@ class EventStream {
       const lights: LightState[] = await this.hueClient.getLightStates();
       const mapping = this.config.getMapping();
       const serviceToDeviceMap = this.hueClient.getServiceToDeviceMap();
+      const { byHueUuid, byDeviceId } = this._buildMappingIndex(mapping, serviceToDeviceMap);
 
       lights.forEach(light => {
-        const entry = mapping.find(m => m.hue_uuid === light.id) || mapping.find(m => {
-          const lightMeta = serviceToDeviceMap[light.id];
-          const mapMeta = serviceToDeviceMap[m.hue_uuid];
-          return lightMeta && mapMeta && lightMeta.deviceId === mapMeta.deviceId;
-        });
+        const entry = byHueUuid.get(light.id)
+          ?? byDeviceId.get(serviceToDeviceMap[light.id]?.deviceId);
 
         if (entry) {
           const loxName = entry.loxone_name;
