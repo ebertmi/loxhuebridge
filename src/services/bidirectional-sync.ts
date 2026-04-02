@@ -10,8 +10,7 @@ import { IHueClient } from '../types/services';
 import { ILoxoneClient } from '../types/services';
 import LoxoneUDP from './loxone-udp';
 import { DeviceMapping, LoxoneControlRaw } from '../types';
-import { LightConverterFactory } from '../utils/light-converters';
-import { xyToLoxoneHsv, mirekToLoxoneTemp, hueBrightnessToLoxoneDimmer } from '../utils/color';
+import { createLight, HueEventData } from '../domain/lights';
 import CONSTANTS from '../constants';
 import { SyncLoopGuard } from './sync-loop-guard';
 
@@ -39,26 +38,6 @@ interface LoxoneUpdate {
   control: ControlInfo;
 }
 
-/**
- * Hue event data
- */
-interface HueEventData {
-  on?: {
-    on: boolean;
-  };
-  dimming?: {
-    brightness: number;
-  };
-  color_temperature?: {
-    mirek: number;
-  };
-  color?: {
-    xy: {
-      x: number;
-      y: number;
-    };
-  };
-}
 
 class BidirectionalSyncManager {
   private config: Config;
@@ -361,44 +340,20 @@ class BidirectionalSyncManager {
   private async _updateHueFromLoxone(
     mapping: DeviceMapping,
     control: ControlInfo,
-    value: number | string  // Accept both numeric and string formats
+    value: number | string
   ): Promise<void> {
     try {
-      // Filter by state name (only sync relevant states)
-      if (control.controlType === 'Dimmer' && control.stateName !== 'position') {
-        // Ignore min/max/step states for Dimmer
-        return;
-      }
+      if (control.controlType === 'Dimmer' && control.stateName !== 'position') return;
+      if (control.controlType === 'ColorPickerV2' && control.stateName !== 'color') return;
 
-      if (control.controlType === 'ColorPickerV2' && control.stateName !== 'color') {
-        // Only sync color state for ColorPickerV2
-        return;
-      }
-
-      // Build light context
       const capabilities = this.hueClient.getLightCapabilities()[mapping.hue_uuid];
-      const context = LightConverterFactory.createContext(
-        control.controlType,
-        control.details,
-        capabilities,
-        mapping.hue_uuid
-      );
-
-      // Get converter and convert Loxone value to Hue payload
-      const converter = LightConverterFactory.getLoxoneToHueConverter(context);
-      const payload = converter(value);
-
-      // Determine resource type
+      const light = createLight(control.controlType, control.details, capabilities);
+      const payload = light.toHue(value);
       const resourceType = mapping.hue_type === 'group' ? 'grouped_light' : 'light';
 
-      // Send to Hue
       this.logger.debug(`Updating Hue ${mapping.hue_name}: ${JSON.stringify(payload)}`, 'SYNC');
       await this.hueClient.updateLight(mapping.hue_uuid, resourceType, payload, mapping.loxone_name);
-
-      this.logger.success(
-        `Synced ${control.controlName} → ${mapping.hue_name}`,
-        'SYNC'
-      );
+      this.logger.success(`Synced ${control.controlName} → ${mapping.hue_name}`, 'SYNC');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to update Hue from Loxone: ${message}`);
@@ -442,7 +397,9 @@ class BidirectionalSyncManager {
   }
 
   /**
-   * Update Loxone from Hue state change
+   * Update Loxone from Hue state change.
+   * For color lights receiving a brightness-only event, the current Hue state
+   * is fetched first so the full color context is preserved.
    */
   private async _updateLoxoneFromHue(mapping: DeviceMapping, data: HueEventData): Promise<void> {
     try {
@@ -451,69 +408,36 @@ class BidirectionalSyncManager {
         return;
       }
 
-      // For ColorPickerV2 controls, we need to handle state changes differently
-      let commandValue: string | number | undefined;
+      const controlInfo = this._getControlInfo(mapping.loxone_control_uuid);
+      const capabilities = this.hueClient.getLightCapabilities()[mapping.hue_uuid];
+      const light = createLight(controlInfo?.type ?? 'Dimmer', controlInfo?.details, capabilities);
 
-      // Priority: Color > Color Temperature > Brightness > On/Off
-      if (data.color !== undefined && data.color.xy) {
-        // Color changed - send HSV format
-        const brightness = data.dimming?.brightness ?? CONSTANTS.LOXONE.BRIGHTNESS_MAX;
-        this.logger.debug(`XY color event: x=${data.color.xy.x.toFixed(4)}, y=${data.color.xy.y.toFixed(4)}, brightness=${brightness} (dimming=${data.dimming?.brightness ?? 'undefined'})`, 'SYNC');
-        commandValue = xyToLoxoneHsv(data.color.xy.x, data.color.xy.y, brightness);
-        this.logger.debug(`Color change: ${commandValue}`, 'SYNC');
-      } else if (data.color_temperature !== undefined && data.color_temperature.mirek) {
-        // Color temperature changed - send temp format
-        const brightness = data.dimming?.brightness ?? CONSTANTS.LOXONE.BRIGHTNESS_MAX;
-        this.logger.debug(`Color temp event: mirek=${data.color_temperature.mirek}, brightness=${brightness} (dimming=${data.dimming?.brightness ?? 'undefined'})`, 'SYNC');
-        commandValue = mirekToLoxoneTemp(data.color_temperature.mirek, brightness);
-        this.logger.debug(`Temperature change: ${commandValue}`, 'SYNC');
-      } else if (data.dimming !== undefined || data.on !== undefined) {
-        // Brightness or on/off changed without color data
-        // For ColorPickerV2, we need to fetch current color and send complete HSV
-        const controlType = await this._getControlType(mapping.loxone_control_uuid);
-        this.logger.debug(`Control type for ${mapping.loxone_control_uuid}: ${controlType}`, 'SYNC');
+      let enrichedData = data;
 
-        if (controlType === 'ColorPickerV2') {
-          this.logger.debug('Fetching current Hue state to preserve color...', 'SYNC');
-          // Fetch current light state from Hue to get color
-          const currentState = await this._getCurrentHueState(mapping.hue_uuid, mapping.hue_type);
+      if (light.needsStatePrefetch(data)) {
+        this.logger.debug('Fetching current Hue state to preserve color...', 'SYNC');
+        const currentState = await this._getCurrentHueState(mapping.hue_uuid, mapping.hue_type);
 
-          if (currentState) {
-            this.logger.debug(`Current Hue state: on=${currentState.on?.on}, hasColor=${!!currentState.color?.xy}, hasCT=${!!currentState.color_temperature?.mirek}`, 'SYNC');
-            const brightness = data.dimming?.brightness ?? (data.on?.on ? CONSTANTS.LOXONE.BRIGHTNESS_MAX : 0);
-
-            if (currentState.color?.xy) {
-              // Light has color - send HSV with current color and new brightness
-              commandValue = xyToLoxoneHsv(currentState.color.xy.x, currentState.color.xy.y, brightness);
-              this.logger.debug(`Brightness change with color: ${commandValue}`, 'SYNC');
-            } else if (currentState.color_temperature?.mirek) {
-              // Light has color temperature - send temp format
-              commandValue = mirekToLoxoneTemp(currentState.color_temperature.mirek, brightness);
-              this.logger.debug(`Brightness change with CT: ${commandValue}`, 'SYNC');
-            } else {
-              // Fallback to brightness only
-              commandValue = hueBrightnessToLoxoneDimmer(brightness);
-              this.logger.debug(`Brightness change: ${brightness}`, 'SYNC');
-            }
-          } else {
-            // Couldn't fetch state, fallback to brightness only
-            const brightness = data.dimming?.brightness ?? (data.on?.on ? CONSTANTS.LOXONE.BRIGHTNESS_MAX : 0);
-            commandValue = hueBrightnessToLoxoneDimmer(brightness);
-            this.logger.debug(`Brightness change (no state): ${brightness}`, 'SYNC');
-          }
-        } else {
-          // For non-ColorPickerV2 (Dimmer, Switch), just send brightness
-          const brightness = data.dimming?.brightness ?? (data.on?.on ? CONSTANTS.LOXONE.BRIGHTNESS_MAX : 0);
-          commandValue = hueBrightnessToLoxoneDimmer(brightness);
-          this.logger.debug(`Brightness change: ${brightness}`, 'SYNC');
+        if (currentState) {
+          this.logger.debug(
+            `Current Hue state: on=${currentState.on?.on}, hasColor=${!!currentState.color?.xy}, hasCT=${!!currentState.color_temperature?.mirek}`,
+            'SYNC'
+          );
+          // Merge: event data takes priority for brightness/on; current state fills in color/CT
+          enrichedData = {
+            on: data.on ?? currentState.on,
+            dimming: data.dimming ?? currentState.dimming,
+            color: data.color ?? currentState.color,
+            color_temperature: data.color_temperature ?? currentState.color_temperature
+          };
         }
       }
 
-      if (commandValue !== undefined) {
-        await this.loxoneClient.sendCommand(mapping.loxone_control_uuid, commandValue);
-        this.logger.debug(`Sent to Loxone: ${mapping.loxone_control_uuid} = ${commandValue}`, 'SYNC');
-        this.logger.success(`Synced ${mapping.hue_name} → Loxone`, 'SYNC');
-      }
+      const commandValue = light.fromHue(enrichedData);
+
+      await this.loxoneClient.sendCommand(mapping.loxone_control_uuid, commandValue);
+      this.logger.debug(`Sent to Loxone: ${mapping.loxone_control_uuid} = ${commandValue}`, 'SYNC');
+      this.logger.success(`Synced ${mapping.hue_name} → Loxone`, 'SYNC');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to update Loxone from Hue: ${message}`);
@@ -521,36 +445,28 @@ class BidirectionalSyncManager {
   }
 
   /**
-   * Get control type from Loxone structure
+   * Look up a Loxone control by its UUID, returning type and details.
+   * Searches main controls and sub-controls in the structure file.
    */
-  private async _getControlType(controlUuid: string): Promise<string | null> {
-    try {
-      // Extract base UUID (remove /AI# suffix for subcontrols)
-      const baseUuid = controlUuid.split('/')[0];
-      const structure = this.loxoneClient.getStructure();
+  private _getControlInfo(controlUuid: string): { type: string; details?: Record<string, any> } | null {
+    const baseUuid = controlUuid.split('/')[0];
+    const structure = this.loxoneClient.getStructure();
 
-      if (!structure || !structure.controls) {
-        return null;
+    if (!structure?.controls) return null;
+
+    const control = structure.controls[baseUuid];
+    if (control) return { type: control.type, details: control.details };
+
+    for (const mainControl of Object.values(structure.controls) as LoxoneControlRaw[]) {
+      if (mainControl.subControls?.[controlUuid]) {
+        return {
+          type: mainControl.subControls[controlUuid].type,
+          details: mainControl.subControls[controlUuid].details
+        };
       }
-
-      // Check in main controls
-      const control = structure.controls[baseUuid];
-      if (control) {
-        return control.type;
-      }
-
-      // Check in subcontrols
-      for (const mainControl of Object.values(structure.controls) as LoxoneControlRaw[]) {
-        if (mainControl.subControls && mainControl.subControls[controlUuid]) {
-          return mainControl.subControls[controlUuid].type;
-        }
-      }
-
-      return null;
-    } catch (error) {
-      this.logger.warn(`Failed to get control type for ${controlUuid}`, 'SYNC');
-      return null;
     }
+
+    return null;
   }
 
   /**
