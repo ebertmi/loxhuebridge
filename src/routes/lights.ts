@@ -19,18 +19,18 @@ import CONSTANTS from '../constants';
 import { asyncHandler } from '../middleware/error-handler';
 import { validateLightCommand } from '../middleware/validation';
 import Config from '../config';
-import HueClient from '../services/hue-client';
 import Logger from '../utils/logger';
 import StatusManager from '../services/status-manager';
 import BidirectionalSyncManager from '../services/bidirectional-sync';
 import { DetectedItemsStore, DeviceMapping } from '../types';
+import { IHueClient } from '../types/services';
 
 /**
  * Dependencies for lights routes
  */
 interface LightsRouteDependencies {
   config: Config;
-  hueClient: HueClient;
+  hueClient: IHueClient;
   logger: Logger;
   statusManager: StatusManager;
   detectedItems: DetectedItemsStore;

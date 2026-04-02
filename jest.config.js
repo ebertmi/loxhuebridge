@@ -4,6 +4,12 @@
 
 module.exports = {
   preset: 'ts-jest',
+  globals: {
+    'ts-jest': {
+      isolatedModules: true,
+      diagnostics: { ignoreCodes: [151002] }
+    }
+  },
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/test'],
   testMatch: [

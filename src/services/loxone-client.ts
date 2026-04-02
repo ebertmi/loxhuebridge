@@ -16,58 +16,24 @@
 import WebSocket from 'ws';
 import axios from 'axios';
 import https from 'https';
-import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import {
-  generateAesKey,
-  generateAesIv,
-  generateSalt,
-  extractPublicKey,
-  rsaEncrypt,
-  aesEncrypt,
-  hashPassword,
-  hmacSha1,
-  hmacSha256
-} from '../utils/loxone-crypto';
-import {
-  parseMessage,
-  ParsedMessage,
-  ValueState
-} from '../utils/loxone-binary';
+import { LoxoneAuthService } from './loxone-auth';
+import { LoxoneStructureManager } from './loxone-structure';
+import { LoxoneMessageParser } from './loxone-message-parser';
+import { ILoxoneClient } from '../types/services';
 import CONSTANTS from '../constants';
 import Config from '../config';
 import Logger from '../utils/logger';
 import { LoxoneStructureFile } from '../types';
 
 /**
- * Control information structure
- */
-interface ControlInfo {
-  controlUuid: string;
-  controlName: string;
-  controlType: string;
-  parentControlUuid?: string;
-  parentControlName?: string;
-  stateName: string;
-  isSubControl: boolean;
-  details?: Record<string, any>;  // Control details (e.g., pickerType for ColorPickerV2)
-}
-
-/**
- * Control to query structure
+ * Control to query for initial state update
  */
 interface ControlToQuery {
   uuid: string;
   name: string;
   type: string;
-}
-
-/**
- * Enriched value state with control info
- */
-interface EnrichedValueState extends ValueState {
-  control: ControlInfo | null;
 }
 
 /**
@@ -83,7 +49,7 @@ interface LoxoneResponse {
   [key: string]: unknown;
 }
 
-class LoxoneClient extends EventEmitter {
+class LoxoneClient extends EventEmitter implements ILoxoneClient {
   private config: Config;
   private logger: Logger;
 
@@ -92,23 +58,10 @@ class LoxoneClient extends EventEmitter {
   private isConnected: boolean;
   private isAuthenticated: boolean;
 
-  // Crypto state
-  private sessionKey: string | null;
-  private sessionIv: string | null;
-  private currentSalt: string | null;
-  private publicKey: string | null;
-
-  // Authentication state
-  private token: string | null;
-  private jwtToken: string | null;
-  private tokenHash: string | null;
-  private tokenExpiry: number | null;
-
-  // Structure file
-  private structure: LoxoneStructureFile | null;
-  private stateUuidIndex: Map<string, ControlInfo>;
-  private structureVersion: string | null;
-  private stateValues: Map<string, number | string>;
+  // Authentication and crypto session (RSA key exchange, AES encryption, JWT)
+  private auth: LoxoneAuthService;
+  private structureManager: LoxoneStructureManager;
+  private messageParser: LoxoneMessageParser;
 
   // Keepalive
   private keepaliveInterval: NodeJS.Timeout | null;
@@ -117,9 +70,6 @@ class LoxoneClient extends EventEmitter {
   private reconnectAttempts: number;
   private reconnectTimeout: NodeJS.Timeout | null;
   private maxReconnectDelay: number;
-
-  // Message buffer for incomplete messages
-  private messageBuffer: Buffer;
 
   // HTTPS agent for API calls (ignore self-signed certs)
   private httpsAgent: https.Agent;
@@ -134,23 +84,32 @@ class LoxoneClient extends EventEmitter {
     this.isConnected = false;
     this.isAuthenticated = false;
 
-    // Crypto state
-    this.sessionKey = null;
-    this.sessionIv = null;
-    this.currentSalt = null;
-    this.publicKey = null;
+    // HTTPS agent
+    this.httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-    // Authentication state
-    this.token = null;
-    this.jwtToken = null;
-    this.tokenHash = null;
-    this.tokenExpiry = null;
+    // Authentication and crypto session
+    this.auth = new LoxoneAuthService(config, logger);
 
-    // Structure file
-    this.structure = null;
-    this.stateUuidIndex = new Map();
-    this.structureVersion = null;
-    this.stateValues = new Map();
+    // Structure file + state index (wired after httpsAgent is ready)
+    const dataDir = path.join(__dirname, '../../data');
+    this.structureManager = new LoxoneStructureManager(
+      logger,
+      this._sendCommand.bind(this),
+      this._httpRequest.bind(this),
+      dataDir
+    );
+
+    // Binary message parser (wired to structure manager for lookups)
+    this.messageParser = new LoxoneMessageParser(
+      logger,
+      this.structureManager.getControlByStateUuid.bind(this.structureManager),
+      this.structureManager.updateStateValue.bind(this.structureManager)
+    );
+
+    // Re-emit parser events as own events
+    this.messageParser.on('text_message', (data) => this.emit('text_message', data));
+    this.messageParser.on('value_states', (states) => this.emit('value_states', states));
+    this.messageParser.on('text_states', (states) => this.emit('text_states', states));
 
     // Keepalive
     this.keepaliveInterval = null;
@@ -159,14 +118,6 @@ class LoxoneClient extends EventEmitter {
     this.reconnectAttempts = 0;
     this.reconnectTimeout = null;
     this.maxReconnectDelay = CONSTANTS.RECONNECT.MAX_BACKOFF_MS;
-
-    // Message buffer for incomplete messages
-    this.messageBuffer = Buffer.alloc(0);
-
-    // HTTPS agent for API calls (ignore self-signed certs)
-    this.httpsAgent = new https.Agent({
-      rejectUnauthorized: false
-    });
   }
 
   /**
@@ -202,7 +153,7 @@ class LoxoneClient extends EventEmitter {
    */
   private _getReconnectDelay(): number {
     const delay = Math.min(
-      5000 * Math.pow(2, this.reconnectAttempts),
+      CONSTANTS.LOXONE.RECONNECT_BASE_DELAY_MS * Math.pow(2, this.reconnectAttempts),
       this.maxReconnectDelay
     );
     this.reconnectAttempts++;
@@ -227,10 +178,10 @@ class LoxoneClient extends EventEmitter {
 
     // Add JWT token if authenticated
     // Since v11.2, plain text token is supported (we have v16.1)
-    if (this.jwtToken) {
+    if (this.auth.jwtToken) {
       const user = this.config.get('loxoneUser');
       const separator = endpoint.includes('?') ? '&' : '?';
-      url += `${separator}autht=${this.jwtToken}&user=${user}`;
+      url += `${separator}autht=${this.auth.jwtToken}&user=${user}`;
       this.logger.debug(`HTTP request with JWT token to: ${endpoint}`, 'LOXONE');
     } else {
       this.logger.debug(`HTTP request without token to: ${endpoint}`, 'LOXONE');
@@ -239,7 +190,7 @@ class LoxoneClient extends EventEmitter {
     try {
       const response = await axios.get(url, {
         httpsAgent: this.httpsAgent,
-        timeout: 10000
+        timeout: CONSTANTS.LOXONE.COMMAND_TIMEOUT_MS
       });
 
       return response.data;
@@ -270,7 +221,7 @@ class LoxoneClient extends EventEmitter {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Command timeout'));
-      }, 10000);
+      }, CONSTANTS.LOXONE.COMMAND_TIMEOUT_MS);
 
       // Set up one-time response handler
       const responseHandler = (data: string) => {
@@ -291,242 +242,22 @@ class LoxoneClient extends EventEmitter {
    * @returns Encrypted command
    */
   private _encryptCommand(command: string): string {
-    if (!this.sessionKey || !this.sessionIv) {
-      throw new Error('Session key not initialized');
-    }
-
-    // Generate new salt for replay protection
-    const prevSalt = this.currentSalt;
-    const nextSalt = generateSalt();
-
-    // Build payload with salt
-    // First command or salt update
-    let payload: string;
-    if (prevSalt) {
-      // Use nextSalt format for replay protection
-      payload = `nextSalt/${prevSalt}/${nextSalt}/${command}`;
-    } else {
-      // First command - simple salt format
-      payload = `salt/${nextSalt}/${command}`;
-    }
-
-    // Update current salt for next command
-    this.currentSalt = nextSalt;
-
-    // Miniserver requires a null terminator at the end of the command string (undocumented)
-    const nullTerminated = payload + '\x00';
-
-    const encrypted = aesEncrypt(nullTerminated, this.sessionKey, this.sessionIv);
-
-    // URL encode
-    const encoded = encodeURIComponent(encrypted);
-
-    return `jdev/sys/enc/${encoded}`;
+    return this.auth.encryptCommand(command);
   }
 
   /**
    * Perform key exchange (RSA-encrypted session key)
    */
   private async _performKeyExchange(): Promise<void> {
-    try {
-      // Generate session key and IV
-      // currentSalt stays null until the first encrypted command, so _encryptCommand
-      // uses the correct 'salt/{s}/{cmd}' format for the first command (not 'nextSalt/...')
-      this.sessionKey = generateAesKey();
-      this.sessionIv = generateAesIv();
-      this.currentSalt = null;
-
-      this.logger.debug('Generated session key and IV', 'LOXONE');
-
-      // Build payload: key:iv
-      const payload = `${this.sessionKey}:${this.sessionIv}`;
-
-      // RSA encrypt with public key
-      const encrypted = rsaEncrypt(payload, this.publicKey!);
-
-      // Send key exchange command
-      const command = `jdev/sys/keyexchange/${encrypted}`;
-      await this._sendCommand(command, false);
-
-      this.logger.success('Key exchange completed', 'LOXONE');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Key exchange failed: ${message}`);
-    }
+    await this.auth.performKeyExchange(this._sendCommand.bind(this));
   }
 
   /**
-   * Authenticate with Loxone Miniserver
+   * Authenticate with Loxone Miniserver (delegates to LoxoneAuthService)
    */
   private async _authenticate(): Promise<void> {
-    try {
-      const user = this.config.get('loxoneUser');
-      const password = this.config.get('loxonePassword');
-      const existingToken = this.config.get('loxoneToken');
-      const tokenExpiry = this.config.get('loxoneTokenExpiry');
-
-      if (!user || !password) {
-        throw new Error('Loxone credentials not configured');
-      }
-
-      // Check if we have a valid existing token
-      const now = Math.floor(Date.now() / 1000);
-      const loxoneEpoch = 1230768000; // 2009-01-01 00:00:00 UTC
-      const currentLoxoneTime = now - loxoneEpoch;
-
-      if (existingToken && tokenExpiry && tokenExpiry > currentLoxoneTime) {
-        this.logger.debug('Using existing token', 'LOXONE');
-        this.jwtToken = existingToken;
-        this.tokenExpiry = tokenExpiry;
-
-        // JWT tokens don't need additional authentication - they are already valid
-        this.logger.success('Existing JWT token is valid', 'LOXONE');
-      } else {
-        this.logger.debug('Requesting new token', 'LOXONE');
-
-        // Get new token (already authenticated)
-        await this._getNewToken(user, password);
-      }
-
-      // Authenticate WebSocket session with JWT token
-      await this._authenticateWebSocketWithJWT();
-
-      this.isAuthenticated = true;
-      this.logger.success('Authentication completed', 'LOXONE');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Authentication failed: ${message}`);
-    }
-  }
-
-  /**
-   * Authenticate WebSocket session with JWT token
-   */
-  private async _authenticateWebSocketWithJWT(): Promise<void> {
-    try {
-      const user = this.config.get('loxoneUser');
-
-      // Get key for hashing the token
-      const getKeyCommand = `jdev/sys/getkey2/${user}`;
-      const keyResponse = await this._sendCommand(getKeyCommand, false);
-      const keyData: LoxoneResponse = JSON.parse(keyResponse);
-
-      if (!keyData || !keyData.LL || (keyData.LL.code !== '200' && keyData.LL.Code !== '200')) {
-        throw new Error('Failed to get key for JWT token hash');
-      }
-
-      const serverKeyHex = keyData.LL.value.key;
-      const hashAlg = keyData.LL.value.hashAlg || 'SHA256';
-      const serverKeyBytes = Buffer.from(serverKeyHex, 'hex');  // single decode → 40 bytes
-
-      // Hash JWT token using same algorithm as hashAlg
-      this.tokenHash = hashAlg.toUpperCase() === 'SHA1'
-        ? hmacSha1(this.jwtToken!, serverKeyBytes)
-        : hmacSha256(this.jwtToken!, serverKeyBytes);
-
-      // Authenticate WebSocket session with token hash
-      const authCommand = `authwithtoken/${this.tokenHash}/${user}`;
-      const authResponse = await this._sendCommand(authCommand, false);
-      const authData: LoxoneResponse = JSON.parse(authResponse);
-
-      if (!authData || !authData.LL || (authData.LL.code !== '200' && authData.LL.Code !== '200')) {
-        throw new Error('WebSocket authentication with token failed');
-      }
-
-      this.logger.success('WebSocket session authenticated with JWT token', 'LOXONE');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`JWT WebSocket authentication failed: ${message}`);
-    }
-  }
-
-  /**
-   * Get new JWT token
-   *
-   * @param user - Username
-   * @param password - Password
-   */
-  private async _getNewToken(user: string, password: string): Promise<void> {
-    try {
-      // Step 1: Get key and salt from server
-      const getKeyCommand = `jdev/sys/getkey2/${user}`;
-      const keyResponse = await this._sendCommand(getKeyCommand, false);
-      const keyData: LoxoneResponse = JSON.parse(keyResponse);
-
-      if (!keyData || !keyData.LL || (keyData.LL.code !== '200' && keyData.LL.Code !== '200')) {
-        throw new Error('Failed to get key from server');
-      }
-
-      const serverKeyHex = keyData.LL.value.key;
-      const userSaltHex = keyData.LL.value.salt;
-      const hashAlg = keyData.LL.value.hashAlg || 'SHA256';
-
-      // Key and salt are hex-encoded in the response.
-      // Salt: use the raw hex string as-is for password hashing (do NOT decode to UTF-8).
-      // Key: decode once from hex to get the 40-byte ASCII key material for HMAC.
-      const serverKeyBytes = Buffer.from(serverKeyHex, 'hex');  // 40 bytes
-      const userSalt = userSaltHex;                              // raw hex string, used as-is
-
-      this.logger.debug(`Got server key, salt, and hash algorithm (${hashAlg})`, 'LOXONE');
-
-      // Step 2: Hash password with raw hex salt using the algorithm the server specified
-      const pwHash = hashPassword(password, userSalt, hashAlg);
-
-      // Step 3: HMAC with SAME algorithm as hashAlg, keyed with single-decoded key bytes
-      const credentialsHash = hashAlg.toUpperCase() === 'SHA1'
-        ? hmacSha1(`${user}:${pwHash}`, serverKeyBytes)
-        : hmacSha256(`${user}:${pwHash}`, serverKeyBytes);
-
-      // Step 4: Request JWT token (must be encrypted)
-      const uuid = this._generateClientUuid();
-      const info = encodeURIComponent('loxHueBridge');
-      const permission = 4; // App permission (long-lived)
-
-      const tokenCommand = `jdev/sys/getjwt/${credentialsHash}/${user}/${permission}/${uuid}/${info}`;
-
-      this.logger.debug('Requesting JWT token...', 'LOXONE');
-      const tokenResponse = await this._sendCommand(tokenCommand, false); // getjwt works unencrypted
-      const tokenData: LoxoneResponse = JSON.parse(tokenResponse);
-
-      if (!tokenData || !tokenData.LL || (tokenData.LL.code !== '200' && tokenData.LL.Code !== '200')) {
-        throw new Error(`Token request failed: ${JSON.stringify(tokenData)}`);
-      }
-
-      this.token = tokenData.LL.value.token;
-      this.jwtToken = tokenData.LL.value.token;
-      this.tokenExpiry = tokenData.LL.value.validUntil;
-      // tokenRights available but not used: tokenData.LL.value.tokenRights
-
-      this.logger.success('JWT token acquired', 'LOXONE');
-
-      // Save token to config
-      this.config.set('loxoneToken', this.token);
-      this.config.set('loxoneTokenExpiry', this.tokenExpiry);
-      this.config.save();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to get token: ${message}`);
-    }
-  }
-
-  /**
-   * Generate client UUID for token
-   *
-   * @returns UUID in Loxone format
-   */
-  private _generateClientUuid(): string {
-    const crypto = require('crypto');
-    const bytes = crypto.randomBytes(14); // 14 bytes for non-ffff parts
-
-    // Format: 098802e1-02b4-603c-ffff-eee000d80cfd
-    // Total: 8-4-4-4-12 hex chars = 4-2-2-2-6 bytes
-    return [
-      bytes.slice(0, 4).toString('hex'),   // 8 hex chars (4 bytes)
-      bytes.slice(4, 6).toString('hex'),   // 4 hex chars (2 bytes)
-      bytes.slice(6, 8).toString('hex'),   // 4 hex chars (2 bytes)
-      'ffff',                               // 4 hex chars (fixed)
-      bytes.slice(8, 14).toString('hex')   // 12 hex chars (6 bytes)
-    ].join('-');
+    await this.auth.authenticate(this._sendCommand.bind(this));
+    this.isAuthenticated = true;
   }
 
   /**
@@ -566,7 +297,7 @@ class LoxoneClient extends EventEmitter {
       // Wait for initial binary status updates to be processed
       // This ensures we receive the initial Text States before triggering state queries
       this.logger.debug('Waiting for initial binary status updates...', 'LOXONE');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, CONSTANTS.LOXONE.STATUS_WAIT_MS));
 
       // Query initial color states
       // Triggers /state commands which generate Text State updates for ColorPickerV2
@@ -603,26 +334,10 @@ class LoxoneClient extends EventEmitter {
   }
 
   /**
-   * Get public key from Miniserver
+   * Get public key from Miniserver (delegates to LoxoneAuthService)
    */
   private async _getPublicKey(): Promise<void> {
-    try {
-      const certPem = await this._httpRequest('/jdev/sys/getcertificate');
-      this.logger.debug(`Raw certificate response type: ${typeof certPem}`, 'LOXONE');
-      this.logger.debug(`Raw certificate response: ${JSON.stringify(certPem).substring(0, 200)}...`, 'LOXONE');
-
-      // Check if response is wrapped in JSON
-      const certData = typeof certPem === 'object' && certPem.LL && certPem.LL.value
-        ? certPem.LL.value
-        : certPem;
-
-      this.logger.debug(`Certificate data to parse: ${typeof certData === 'string' ? certData.substring(0, 100) : certData}`, 'LOXONE');
-      this.publicKey = extractPublicKey(certData);
-      this.logger.debug('Public key retrieved', 'LOXONE');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to get public key: ${message}`);
-    }
+    await this.auth.fetchPublicKey(this._httpRequest.bind(this));
   }
 
   /**
@@ -666,133 +381,15 @@ class LoxoneClient extends EventEmitter {
           reject(new Error('WebSocket connection timeout'));
           this.ws!.close();
         }
-      }, 10000);
+      }, CONSTANTS.LOXONE.COMMAND_TIMEOUT_MS);
     });
   }
 
   /**
-   * Handle incoming WebSocket message
-   *
-   * @param data - Raw message data
+   * Handle incoming WebSocket message (delegates to LoxoneMessageParser)
    */
   private _handleMessage(data: Buffer): void {
-    try {
-      // Append to buffer
-      this.messageBuffer = Buffer.concat([this.messageBuffer, data]);
-
-      // Try to parse complete messages
-      while (this.messageBuffer.length >= 8) {
-        // Check if we have a complete message
-        const headerLength = this.messageBuffer.readUInt32LE(4);
-        const totalLength = 8 + headerLength;
-
-        if (this.messageBuffer.length < totalLength) {
-          // Wait for more data
-          break;
-        }
-
-        // Extract complete message
-        const messageData = this.messageBuffer.slice(0, totalLength);
-        this.messageBuffer = this.messageBuffer.slice(totalLength);
-
-        // Parse and handle message
-        const message = parseMessage(messageData);
-        this._processMessage(message);
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to handle message: ${message}`, 'LOXONE');
-    }
-  }
-
-  /**
-   * Process parsed message
-   *
-   * @param message - Parsed message
-   */
-  private _processMessage(message: ParsedMessage): void {
-    switch (message.type) {
-      case 'text':
-        this.logger.debug(`Text message: ${message.data}`, 'LOXONE');
-        this.emit('text_message', message.data);
-        break;
-
-      case 'value_states':
-        this.logger.debug(`Value states: ${message.data.length} updates`, 'LOXONE');
-
-        // Store state values
-        message.data.forEach(state => {
-          this.stateValues.set(state.uuid, state.value);
-        });
-
-        // Process and enrich state updates with control info
-        const enrichedUpdates: EnrichedValueState[] = message.data.map(state => {
-          const controlInfo = this.getControlByStateUuid(state.uuid);
-          return {
-            ...state,
-            control: controlInfo
-          };
-        }).filter(state => state.control !== null); // Only emit states we know about
-
-        if (enrichedUpdates.length > 0) {
-          this.emit('value_states', enrichedUpdates);
-        }
-        break;
-
-      case 'text_states':
-        this.logger.debug(`Text states: ${message.data.length} updates`, 'LOXONE');
-
-        // Store text states (contains color values for ColorPickerV2)
-        message.data.forEach(state => {
-          this.stateValues.set(state.uuid, state.text);
-
-          // Log ALL text state updates for debugging (including UUID)
-          this.logger.debug(`Text state: UUID=${state.uuid}, text="${state.text}"`, 'LOXONE');
-
-          const controlInfo = this.getControlByStateUuid(state.uuid);
-          if (controlInfo) {
-            this.logger.debug(`  → Control: ${controlInfo.controlName} (${controlInfo.stateName})`, 'LOXONE');
-          } else {
-            this.logger.debug(`  → UUID not found in state index`, 'LOXONE');
-          }
-        });
-
-        this.emit('text_states', message.data);
-        break;
-
-      case 'keepalive':
-        // lastKeepaliveResponse tracked but not used
-        this.logger.debug('Keepalive response received', 'LOXONE');
-        break;
-
-      case 'out_of_service':
-        this.logger.warn('Miniserver is out of service', 'LOXONE');
-        break;
-
-      case 'unknown':
-        // Loxone sends message types we don't parse (BINARY_FILE, DAYTIMER_STATES, WEATHER_STATES)
-        // This is expected behavior and can be safely ignored
-        const messageTypeName = this._getMessageTypeName(message.identifier);
-        this.logger.debug(`Ignoring unsupported message type: ${messageTypeName} (ID: ${message.identifier})`, 'LOXONE');
-        break;
-    }
-  }
-
-  /**
-   * Get human-readable message type name from identifier
-   */
-  private _getMessageTypeName(identifier: number): string {
-    const messageTypes: Record<number, string> = {
-      0: 'TEXT',
-      1: 'BINARY_FILE',
-      2: 'VALUE_STATES',
-      3: 'TEXT_STATES',
-      4: 'DAYTIMER_STATES',
-      5: 'OUT_OF_SERVICE',
-      6: 'KEEPALIVE',
-      7: 'WEATHER_STATES'
-    };
-    return messageTypes[identifier] || `UNKNOWN_${identifier}`;
+    this.messageParser.handleRawData(data);
   }
 
   /**
@@ -807,7 +404,7 @@ class LoxoneClient extends EventEmitter {
         this.logger.debug('Sending keepalive', 'LOXONE');
         this.ws.send('keepalive');
       }
-    }, 4 * 60 * 1000);
+    }, CONSTANTS.LOXONE.KEEPALIVE_INTERVAL_MS);
   }
 
   /**
@@ -875,6 +472,8 @@ class LoxoneClient extends EventEmitter {
 
     this.isConnected = false;
     this.isAuthenticated = false;
+    this.auth.reset();
+    this.messageParser.reset();
   }
 
   /**
@@ -933,176 +532,35 @@ class LoxoneClient extends EventEmitter {
   }
 
   /**
-   * Load structure file (LoxAPP3.json) with caching and version checking
+   * Load structure file (delegates to LoxoneStructureManager)
    */
   async loadStructureFile(): Promise<void> {
-    try {
-      const cachePath = path.join(__dirname, '../../data/loxone-structure.json');
-
-      // Check if cache exists
-      if (fs.existsSync(cachePath)) {
-        try {
-          const cachedData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
-
-          // Get current version from Miniserver
-          const currentVersion = await this._getStructureVersion();
-
-          // Compare versions
-          if (cachedData.lastModified === currentVersion) {
-            this.logger.info('Using cached structure file (up to date)', 'LOXONE');
-            this.structure = cachedData;
-            this.structureVersion = currentVersion;
-            this._buildStateUuidIndex();
-            this.logger.success(`State UUID index built (${this.stateUuidIndex.size} states)`, 'LOXONE');
-            return;
-          } else {
-            this.logger.info(`Structure file outdated (cached: ${cachedData.lastModified}, current: ${currentVersion})`, 'LOXONE');
-          }
-        } catch (cacheError) {
-          const message = cacheError instanceof Error ? cacheError.message : 'Unknown error';
-          this.logger.warn(`Failed to load cached structure file: ${message}`, 'LOXONE');
-        }
-      }
-
-      // Load fresh structure file from Miniserver
-      this.logger.debug('Loading structure file from Miniserver...', 'LOXONE');
-      const data = await this._httpRequest('/data/LoxAPP3.json');
-
-      if (!data) {
-        throw new Error('Structure file is empty');
-      }
-
-      // Persist to disk
-      try {
-        fs.writeFileSync(cachePath, JSON.stringify(data, null, 2));
-        this.logger.debug('Structure file cached to disk', 'LOXONE');
-      } catch (writeError) {
-        const message = writeError instanceof Error ? writeError.message : 'Unknown error';
-        this.logger.warn(`Failed to cache structure file: ${message}`, 'LOXONE');
-      }
-
-      this.structure = data;
-      this.structureVersion = data.lastModified;
-      this.logger.success(`Structure file loaded (${data.msInfo?.projectName || 'unknown'})`, 'LOXONE');
-
-      // Build state UUID index
-      this._buildStateUuidIndex();
-
-      this.logger.success(`State UUID index built (${this.stateUuidIndex.size} states)`, 'LOXONE');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to load structure file: ${message}`);
-    }
-  }
-
-  /**
-   * Get current structure file version from Miniserver
-   */
-  private async _getStructureVersion(): Promise<string | null> {
-    try {
-      const responseText = await this._sendCommand('jdev/sps/LoxAPPversion3', false);
-      const response: LoxoneResponse = JSON.parse(responseText);
-
-      if (response && response.LL && response.LL.value) {
-        return response.LL.value;
-      }
-
-      throw new Error('Invalid version response');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Failed to get structure version: ${message}`, 'LOXONE');
-      return null;
-    }
+    await this.structureManager.load();
   }
 
   /**
    * Check if structure file has changed and reload if necessary
-   * Called on reconnect or when receiving structure change events
    */
   async checkAndReloadStructureFile(): Promise<boolean> {
-    try {
-      const currentVersion = await this._getStructureVersion();
-
-      if (!currentVersion) {
-        this.logger.warn('Could not check structure file version', 'LOXONE');
-        return false;
-      }
-
-      if (this.structureVersion !== currentVersion) {
-        this.logger.info(`Structure file changed (${this.structureVersion} → ${currentVersion}), reloading...`, 'LOXONE');
-        await this.loadStructureFile();
-
-        // Emit event for other services (e.g., BidirectionalSyncManager)
-        this.emit('structure_changed', this.structure);
-
-        return true;
-      }
-
-      this.logger.debug('Structure file up to date', 'LOXONE');
-      return false;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to check structure file version: ${message}`, 'LOXONE');
-      return false;
+    const reloaded = await this.structureManager.checkAndReload();
+    if (reloaded) {
+      this.emit('structure_changed', this.structureManager.getStructure());
     }
+    return reloaded;
   }
 
   /**
    * Get the current structure file
-   * @returns Structure file or null if not loaded
    */
   getStructure(): LoxoneStructureFile | null {
-    return this.structure;
+    return this.structureManager.getStructure();
   }
 
   /**
-   * Build reverse index: stateUuid → control info
+   * Whether the WebSocket connection to the Miniserver is established and authenticated
    */
-  private _buildStateUuidIndex(): void {
-    this.stateUuidIndex.clear();
-
-    if (!this.structure || !this.structure.controls) {
-      return;
-    }
-
-    // Iterate through all controls
-    for (const [controlUuid, control] of Object.entries(this.structure.controls)) {
-      // Process main control states
-      if (control.states) {
-        for (const [stateName, stateUuid] of Object.entries(control.states)) {
-          this.stateUuidIndex.set(stateUuid, {
-            controlUuid,
-            controlName: control.name,
-            controlType: control.type,
-            stateName,
-            isSubControl: false,
-            details: control.details  // Include control details (e.g., pickerType)
-          });
-        }
-      }
-
-      // Process subcontrols (e.g., individual lights in LightControllerV2)
-      if (control.subControls) {
-        for (const [subControlUuid, subControl] of Object.entries(control.subControls)) {
-          if (subControl.states) {
-            for (const [stateName, stateUuid] of Object.entries(subControl.states)) {
-              this.stateUuidIndex.set(stateUuid, {
-                controlUuid: subControlUuid,
-                controlName: subControl.name,
-                controlType: subControl.type,
-                parentControlUuid: controlUuid,
-                parentControlName: control.name,
-                stateName,
-                isSubControl: true,
-                details: subControl.details  // Include subControl details (e.g., pickerType)
-              });
-            }
-          }
-        }
-      }
-    }
-
-    this.logger.debug(`Indexed ${this.stateUuidIndex.size} state UUIDs`, 'LOXONE');
+  get connected(): boolean {
+    return this.isConnected;
   }
 
   /**
@@ -1111,14 +569,15 @@ class LoxoneClient extends EventEmitter {
    * with the current value.
    */
   private async _queryColorStates(): Promise<void> {
-    if (!this.structure || !this.structure.controls) {
+    const structure = this.structureManager.getStructure();
+    if (!structure || !structure.controls) {
       return;
     }
 
     const controlsToQuery: ControlToQuery[] = [];
 
     // Collect all SubControls (Dimmer, ColorPickerV2, Switch) AND LightControllerV2 for moods
-    for (const [_controlUuid, control] of Object.entries(this.structure.controls)) {
+    for (const [_controlUuid, control] of Object.entries(structure.controls)) {
       // Query LightControllerV2 for mood states
       if (control.type === 'LightControllerV2') {
         controlsToQuery.push({
@@ -1151,7 +610,7 @@ class LoxoneClient extends EventEmitter {
       this.logger.debug(`Expected color state UUIDs for ${colorPickerControls.length} ColorPickerV2 controls:`, 'LOXONE');
       for (const cp of colorPickerControls) {
         // Find the color state UUID from the structure
-        const colorStateUuid = this._findColorStateUuid(cp.uuid);
+        const colorStateUuid = this.structureManager.findColorStateUuid(cp.uuid);
         this.logger.debug(`  - ${cp.name}: ${colorStateUuid}`, 'LOXONE');
       }
     }
@@ -1178,43 +637,17 @@ class LoxoneClient extends EventEmitter {
   }
 
   /**
-   * Find color state UUID for a ColorPickerV2 control
-   */
-  private _findColorStateUuid(uuidAction: string): string | null {
-    if (!this.structure || !this.structure.controls) {
-      return null;
-    }
-
-    for (const control of Object.values(this.structure.controls)) {
-      if (control.subControls) {
-        for (const [_subUuid, subControl] of Object.entries(control.subControls)) {
-          if (subControl.uuidAction === uuidAction && subControl.type === 'ColorPickerV2') {
-            return subControl.states?.color || null;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
    * Get control info for a state UUID
-   *
-   * @param stateUuid - State UUID
-   * @returns Control info or null if not found
    */
-  getControlByStateUuid(stateUuid: string): ControlInfo | null {
-    return this.stateUuidIndex.get(stateUuid) || null;
+  getControlByStateUuid(stateUuid: string): any | null {
+    return this.structureManager.getControlByStateUuid(stateUuid);
   }
 
   /**
-   * Get current value for a state UUID
-   *
-   * @param stateUuid - State UUID
-   * @returns Current value or null if not available
+   * Get current cached value for a state UUID
    */
   getStateValue(stateUuid: string): number | string | null {
-    return this.stateValues.has(stateUuid) ? this.stateValues.get(stateUuid)! : null;
+    return this.structureManager.getStateValue(stateUuid);
   }
 }
 

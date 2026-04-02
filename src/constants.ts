@@ -43,7 +43,19 @@ const CONSTANTS: Constants = {
     DEFAULT_PORT: 8555
   },
   LOXONE: {
-    DEFAULT_UDP_PORT: 7000
+    DEFAULT_UDP_PORT: 7000,
+    EPOCH: 1230768000,         // 2009-01-01 00:00:00 UTC — Loxone time base for token expiry
+    KEEPALIVE_INTERVAL_MS: 240000,  // 4 minutes
+    STATUS_WAIT_MS: 2000,           // wait after enabling binary status updates
+    COMMAND_TIMEOUT_MS: 10000,      // HTTP/WS command timeout
+    RECONNECT_BASE_DELAY_MS: 5000,  // base for exponential backoff reconnect
+    BRIGHTNESS_MAX: 100             // max brightness percent
+  },
+  SYNC: {
+    DEBOUNCE_MS: 2000,         // default change-source debounce window
+    MOOD_DEBOUNCE_MS: 10000,   // extended debounce for mood changes
+    CLEANUP_INTERVAL_MS: 10000, // how often stale debounce entries are purged
+    AUS_MOOD_ID: 778            // Loxone mood ID for "Aus" (all lights off)
   },
   PATHS: {
     DATA_DIR: 'data',

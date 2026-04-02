@@ -17,21 +17,20 @@ import { asyncHandler } from '../middleware/error-handler';
 import { validateMapping } from '../middleware/validation';
 import { generateOutputsXML, generateInputsXML, generateScenesXML } from '../utils/xml-generator';
 import Config from '../config';
-import HueClient from '../services/hue-client';
-import LoxoneClient from '../services/loxone-client';
 import Logger from '../utils/logger';
 import StatusManager from '../services/status-manager';
 import EventStream from '../services/event-stream';
 import RateLimiter from '../services/rate-limiter';
 import { DetectedItemsStore, DeviceMapping, LoxoneControlRaw, LoxoneSubControlRaw } from '../types';
+import { IHueClient, ILoxoneClient } from '../types/services';
 
 /**
  * Dependencies for API routes
  */
 interface ApiRouteDependencies {
   config: Config;
-  hueClient: HueClient;
-  loxoneClient: LoxoneClient;
+  hueClient: IHueClient;
+  loxoneClient: ILoxoneClient;
   logger: Logger;
   statusManager: StatusManager;
   eventStream: EventStream;
@@ -437,8 +436,7 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
    * GET /api/loxone/controls
    */
   router.get('/loxone/controls', asyncHandler(async (_req: Request, res: Response): Promise<void> => {
-    // Access private property (TODO: add public getter to LoxoneClient)
-    const structure = (loxoneClient as any).structure;
+    const structure = loxoneClient.getStructure();
 
     if (!structure) {
       res.status(503).json({
@@ -585,8 +583,7 @@ function createApiRoutes(dependencies: ApiRouteDependencies): Router {
       return;
     }
 
-    // Access private property (TODO: add public getter to LoxoneClient)
-    if (!(loxoneClient as any).isConnected) {
+    if (!loxoneClient.connected) {
       res.status(503).json({
         error: 'Loxone client not connected'
       });

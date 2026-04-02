@@ -1,33 +1,23 @@
 /**
  * Bidirectional Sync Manager
- * Coordinates synchronization between Hue and Loxone
- * Prevents infinite loops with debouncing and change source tracking
+ * Coordinates synchronization between Hue and Loxone.
+ * Loop prevention is delegated to SyncLoopGuard.
  */
 
 import Config from '../config';
 import Logger from '../utils/logger';
-import HueClient from './hue-client';
-import LoxoneClient from './loxone-client';
+import { IHueClient } from '../types/services';
+import { ILoxoneClient } from '../types/services';
 import LoxoneUDP from './loxone-udp';
 import { DeviceMapping, LoxoneControlRaw } from '../types';
 import { LightConverterFactory } from '../utils/light-converters';
+import { xyToLoxoneHsv, mirekToLoxoneTemp, hueBrightnessToLoxoneDimmer } from '../utils/color';
+import CONSTANTS from '../constants';
+import { SyncLoopGuard } from './sync-loop-guard';
 
-/**
- * Change source tracking entry
- */
-interface ChangeSourceEntry {
-  source: string;
-  timestamp: number;
-  extendedDebounce?: boolean;  // True for mood-triggered changes
-}
-
-/**
- * Sync statistics
- */
 interface SyncStats {
   hueToLoxone: number;
   loxoneToHue: number;
-  loopsPrevented: number;
 }
 
 /**
@@ -73,20 +63,16 @@ interface HueEventData {
 class BidirectionalSyncManager {
   private config: Config;
   private logger: Logger;
-  private hueClient: HueClient;
-  private loxoneClient: LoxoneClient;
-  private changeSource: Map<string, ChangeSourceEntry>;
-  private debounceWindow: number;
-  private moodDebounceWindow: number;  // Extended debounce for mood-triggered changes
-  private cleanupInterval: NodeJS.Timeout | null;
-  private cleanupIntervalMs: number;
+  private hueClient: IHueClient;
+  private loxoneClient: ILoxoneClient;
+  private loopGuard: SyncLoopGuard;
   private stats: SyncStats;
 
   constructor(
     config: Config,
     logger: Logger,
-    hueClient: HueClient,
-    loxoneClient: LoxoneClient,
+    hueClient: IHueClient,
+    loxoneClient: ILoxoneClient,
     _loxoneUdp: LoxoneUDP
   ) {
     this.config = config;
@@ -94,25 +80,17 @@ class BidirectionalSyncManager {
     this.hueClient = hueClient;
     this.loxoneClient = loxoneClient;
 
-    // Change source tracking: deviceId → { source, timestamp }
-    this.changeSource = new Map();
+    const debounceMs = this.config.get('bidirectionalDebounceMs') || CONSTANTS.SYNC.DEBOUNCE_MS;
+    this.loopGuard = new SyncLoopGuard(
+      logger,
+      debounceMs,
+      CONSTANTS.SYNC.MOOD_DEBOUNCE_MS,
+      CONSTANTS.SYNC.CLEANUP_INTERVAL_MS
+    );
 
-    // Debounce window (milliseconds)
-    this.debounceWindow = this.config.get('bidirectionalDebounceMs') || 2000;
-
-    // Extended debounce for mood-triggered changes (5x normal debounce)
-    // Use 10 seconds as default to allow all mood-triggered light changes to settle
-    this.moodDebounceWindow = 10000;
-
-    // Cleanup interval for old entries
-    this.cleanupInterval = null;
-    this.cleanupIntervalMs = 10000; // Clean up every 10 seconds
-
-    // Statistics
     this.stats = {
       hueToLoxone: 0,
-      loxoneToHue: 0,
-      loopsPrevented: 0
+      loxoneToHue: 0
     };
   }
 
@@ -132,8 +110,7 @@ class BidirectionalSyncManager {
       this._handleTextStates(updates);
     });
 
-    // Start cleanup interval
-    this._startCleanup();
+    this.loopGuard.start();
 
     this.logger.success('BidirectionalSyncManager started', 'SYNC');
   }
@@ -148,94 +125,9 @@ class BidirectionalSyncManager {
     this.loxoneClient.removeAllListeners('value_states');
     this.loxoneClient.removeAllListeners('text_states');
 
-    // Stop cleanup
-    this._stopCleanup();
+    this.loopGuard.stop();
 
     this.logger.success('BidirectionalSyncManager stopped', 'SYNC');
-  }
-
-  /**
-   * Start cleanup interval for change source map
-   */
-  private _startCleanup(): void {
-    this._stopCleanup();
-
-    this.cleanupInterval = setInterval(() => {
-      this._cleanupOldEntries();
-    }, this.cleanupIntervalMs);
-  }
-
-  /**
-   * Stop cleanup interval
-   */
-  private _stopCleanup(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
-    }
-  }
-
-  /**
-   * Clean up old entries from change source map
-   */
-  private _cleanupOldEntries(): void {
-    const now = Date.now();
-    const cutoff = now - (this.debounceWindow * 5); // Keep entries for 5x debounce window
-
-    let removed = 0;
-    for (const [key, entry] of this.changeSource.entries()) {
-      if (entry.timestamp < cutoff) {
-        this.changeSource.delete(key);
-        removed++;
-      }
-    }
-
-    if (removed > 0) {
-      this.logger.debug(`Cleaned up ${removed} old change source entries`, 'SYNC');
-    }
-  }
-
-  /**
-   * Mark change source for a device
-   */
-  markChangeSource(deviceId: string, source: string, extendedDebounce: boolean = false): void {
-    this.changeSource.set(deviceId, {
-      source,
-      timestamp: Date.now(),
-      extendedDebounce
-    });
-
-    const moodNote = extendedDebounce ? ' [extended debounce]' : '';
-    this.logger.debug(`Change source marked: ${deviceId} = ${source}${moodNote}`, 'SYNC');
-  }
-
-  /**
-   * Check if update should be ignored (is an echo)
-   */
-  private _isEcho(deviceId: string, expectedSource: string): boolean {
-    const entry = this.changeSource.get(deviceId);
-
-    if (!entry) {
-      return false; // No recent change, not an echo
-    }
-
-    const age = Date.now() - entry.timestamp;
-
-    // Use extended debounce window for mood-triggered changes
-    const debounceWindow = entry.extendedDebounce ? this.moodDebounceWindow : this.debounceWindow;
-
-    if (age > debounceWindow) {
-      return false; // Change is too old, not an echo
-    }
-
-    if (entry.source === expectedSource) {
-      this.stats.loopsPrevented++;
-      const moodNote = entry.extendedDebounce ? ' [mood-triggered]' : '';
-      this.logger.debug(`Echo detected for ${deviceId} (source: ${expectedSource}, age: ${age}ms)${moodNote}`, 'SYNC');
-      return true;
-    }
-
-    return false;
   }
 
   /**
@@ -334,7 +226,7 @@ class BidirectionalSyncManager {
     }
 
     // Check if this is an echo of our own change
-    if (this._isEcho(mapping.hue_uuid, 'hue')) {
+    if (this.loopGuard.isEcho(mapping.hue_uuid, 'hue')) {
       return; // Ignore echo
     }
 
@@ -344,7 +236,7 @@ class BidirectionalSyncManager {
     );
 
     // Mark change source as Loxone
-    this.markChangeSource(mapping.hue_uuid, 'loxone');
+    this.loopGuard.mark(mapping.hue_uuid, 'loxone');
 
     // Update Hue device
     await this._updateHueFromLoxone(mapping, controlInfo, colorValue);
@@ -390,8 +282,8 @@ class BidirectionalSyncManager {
         return;
       }
 
-      // Check if this is "Aus" mood: either empty array [] or single mood 778
-      const isAusMood = moodIds.length === 0 || (moodIds.length === 1 && moodIds[0] === 778);
+      // Check if this is "Aus" mood: either empty array [] or single mood AUS_MOOD_ID
+      const isAusMood = moodIds.length === 0 || (moodIds.length === 1 && moodIds[0] === CONSTANTS.SYNC.AUS_MOOD_ID);
 
       const moodDescription = moodIds.length > 0
         ? moodIds.join(', ') + ' active'
@@ -413,7 +305,7 @@ class BidirectionalSyncManager {
       const bidirectionalMappings = mappings.filter(m => m.bidirectional);
 
       bidirectionalMappings.forEach(mapping => {
-        this.markChangeSource(mapping.hue_uuid, 'loxone', true);
+        this.loopGuard.mark(mapping.hue_uuid, 'loxone', true);
       });
 
       this.logger.debug(
@@ -445,7 +337,7 @@ class BidirectionalSyncManager {
     }
 
     // Check if this is an echo of our own change
-    if (this._isEcho(mapping.hue_uuid, 'hue')) {
+    if (this.loopGuard.isEcho(mapping.hue_uuid, 'hue')) {
       return; // Ignore echo
     }
 
@@ -455,7 +347,7 @@ class BidirectionalSyncManager {
     );
 
     // Mark change source as Loxone
-    this.markChangeSource(mapping.hue_uuid, 'loxone');
+    this.loopGuard.mark(mapping.hue_uuid, 'loxone');
 
     // Update Hue device
     await this._updateHueFromLoxone(mapping, control, value);
@@ -530,14 +422,14 @@ class BidirectionalSyncManager {
       }
 
       // Check if this is an echo of our own change
-      if (this._isEcho(hueUuid, 'loxone')) {
+      if (this.loopGuard.isEcho(hueUuid, 'loxone')) {
         return; // Ignore echo
       }
 
       this.logger.debug(`Hue change: ${mapping.hue_name}`, 'SYNC');
 
       // Mark change source as Hue
-      this.markChangeSource(hueUuid, 'hue');
+      this.loopGuard.mark(hueUuid, 'hue');
 
       // Update Loxone
       await this._updateLoxoneFromHue(mapping, data);
@@ -559,23 +451,19 @@ class BidirectionalSyncManager {
         return;
       }
 
-      // Import color utilities
-      const { xyToLoxoneHsv, mirekToLoxoneTemp, hueBrightnessToLoxoneDimmer } =
-        require('../utils/color');
-
       // For ColorPickerV2 controls, we need to handle state changes differently
       let commandValue: string | number | undefined;
 
       // Priority: Color > Color Temperature > Brightness > On/Off
       if (data.color !== undefined && data.color.xy) {
         // Color changed - send HSV format
-        const brightness = data.dimming?.brightness ?? 100;
+        const brightness = data.dimming?.brightness ?? CONSTANTS.LOXONE.BRIGHTNESS_MAX;
         this.logger.debug(`XY color event: x=${data.color.xy.x.toFixed(4)}, y=${data.color.xy.y.toFixed(4)}, brightness=${brightness} (dimming=${data.dimming?.brightness ?? 'undefined'})`, 'SYNC');
         commandValue = xyToLoxoneHsv(data.color.xy.x, data.color.xy.y, brightness);
         this.logger.debug(`Color change: ${commandValue}`, 'SYNC');
       } else if (data.color_temperature !== undefined && data.color_temperature.mirek) {
         // Color temperature changed - send temp format
-        const brightness = data.dimming?.brightness ?? 100;
+        const brightness = data.dimming?.brightness ?? CONSTANTS.LOXONE.BRIGHTNESS_MAX;
         this.logger.debug(`Color temp event: mirek=${data.color_temperature.mirek}, brightness=${brightness} (dimming=${data.dimming?.brightness ?? 'undefined'})`, 'SYNC');
         commandValue = mirekToLoxoneTemp(data.color_temperature.mirek, brightness);
         this.logger.debug(`Temperature change: ${commandValue}`, 'SYNC');
@@ -592,7 +480,7 @@ class BidirectionalSyncManager {
 
           if (currentState) {
             this.logger.debug(`Current Hue state: on=${currentState.on?.on}, hasColor=${!!currentState.color?.xy}, hasCT=${!!currentState.color_temperature?.mirek}`, 'SYNC');
-            const brightness = data.dimming?.brightness ?? (data.on?.on ? 100 : 0);
+            const brightness = data.dimming?.brightness ?? (data.on?.on ? CONSTANTS.LOXONE.BRIGHTNESS_MAX : 0);
 
             if (currentState.color?.xy) {
               // Light has color - send HSV with current color and new brightness
@@ -609,13 +497,13 @@ class BidirectionalSyncManager {
             }
           } else {
             // Couldn't fetch state, fallback to brightness only
-            const brightness = data.dimming?.brightness ?? (data.on?.on ? 100 : 0);
+            const brightness = data.dimming?.brightness ?? (data.on?.on ? CONSTANTS.LOXONE.BRIGHTNESS_MAX : 0);
             commandValue = hueBrightnessToLoxoneDimmer(brightness);
             this.logger.debug(`Brightness change (no state): ${brightness}`, 'SYNC');
           }
         } else {
           // For non-ColorPickerV2 (Dimmer, Switch), just send brightness
-          const brightness = data.dimming?.brightness ?? (data.on?.on ? 100 : 0);
+          const brightness = data.dimming?.brightness ?? (data.on?.on ? CONSTANTS.LOXONE.BRIGHTNESS_MAX : 0);
           commandValue = hueBrightnessToLoxoneDimmer(brightness);
           this.logger.debug(`Brightness change: ${brightness}`, 'SYNC');
         }
@@ -694,9 +582,10 @@ class BidirectionalSyncManager {
    */
   getStats(): Record<string, unknown> {
     return {
-      ...this.stats,
-      changeSourceEntries: this.changeSource.size,
-      debounceWindow: this.debounceWindow
+      hueToLoxone: this.stats.hueToLoxone,
+      loxoneToHue: this.stats.loxoneToHue,
+      loopsPrevented: this.loopGuard.loopsPrevented,
+      changeSourceEntries: this.loopGuard.size()
     };
   }
 }

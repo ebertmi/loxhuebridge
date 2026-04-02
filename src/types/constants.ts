@@ -40,6 +40,18 @@ export interface Constants {
   };
   LOXONE: {
     DEFAULT_UDP_PORT: number;
+    EPOCH: number;
+    KEEPALIVE_INTERVAL_MS: number;
+    STATUS_WAIT_MS: number;
+    COMMAND_TIMEOUT_MS: number;
+    RECONNECT_BASE_DELAY_MS: number;
+    BRIGHTNESS_MAX: number;
+  };
+  SYNC: {
+    DEBOUNCE_MS: number;
+    MOOD_DEBOUNCE_MS: number;
+    CLEANUP_INTERVAL_MS: number;
+    AUS_MOOD_ID: number;
   };
   PATHS: {
     DATA_DIR: string;

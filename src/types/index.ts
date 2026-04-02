@@ -195,9 +195,9 @@ export interface Mood {
 // ===== Service Dependency Types =====
 
 export interface ServiceDependencies {
-  config: any; // Will be properly typed during migration
-  hueClient?: any;
-  loxoneClient?: any;
+  config: any;
+  hueClient?: import('./services').IHueClient;
+  loxoneClient?: import('./services').ILoxoneClient;
   logger: any;
   statusManager?: any;
   eventStream?: any;

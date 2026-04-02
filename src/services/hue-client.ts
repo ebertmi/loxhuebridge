@@ -16,6 +16,7 @@ import CONSTANTS from '../constants';
 import Config from '../config';
 import Logger from '../utils/logger';
 import RateLimiter from './rate-limiter';
+import { IHueClient } from '../types/services';
 
 /**
  * Service to device mapping structure
@@ -116,7 +117,7 @@ interface DiagnosticsInfo {
   last_seen: unknown | null;
 }
 
-class HueClient {
+class HueClient implements IHueClient {
   private config: Config;
   private logger: Logger;
   private rateLimiter: RateLimiter;
