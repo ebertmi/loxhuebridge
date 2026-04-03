@@ -288,7 +288,7 @@ class BidirectionalSyncManager {
       });
 
       this.logger.debug(
-        `Extended debounce applied to ${bidirectionalMappings.length} devices for ${this.moodDebounceWindow}ms`,
+        `Extended debounce applied to ${bidirectionalMappings.length} devices for ${CONSTANTS.SYNC.MOOD_DEBOUNCE_MS}ms`,
         'SYNC'
       );
     } catch (error) {
@@ -496,6 +496,11 @@ class BidirectionalSyncManager {
   /**
    * Get sync statistics
    */
+  /** Mark a device change as originating from `source` (for loop prevention). */
+  markChangeSource(deviceId: string, source: string, extendedDebounce = false): void {
+    this.loopGuard.mark(deviceId, source, extendedDebounce);
+  }
+
   getStats(): Record<string, unknown> {
     return {
       hueToLoxone: this.stats.hueToLoxone,

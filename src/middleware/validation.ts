@@ -30,7 +30,8 @@ export function setLogger(loggerInstance: Logger): void {
  * Validate light control command parameters
  */
 export function validateLightCommand(req: Request, res: Response, next: NextFunction): void {
-  const { name, value } = req.params;
+  const name = req.params.name as string;
+  const value = req.params.value as string;
 
   // Validate device name
   if (!isValidDeviceName(name)) {

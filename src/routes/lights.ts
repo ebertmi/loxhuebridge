@@ -83,7 +83,8 @@ function createLightsRoutes(dependencies: LightsRouteDependencies): Router {
    * GET /:name/:value
    */
   router.get('/:name/:value', validateLightCommand, asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { name, value } = req.params;
+    const name = req.params.name as string;
+    const value = req.params.value as string;
     const search = name.toLowerCase();
 
     logger.debug(`Command: /${name}/${value}`, 'LIGHT');

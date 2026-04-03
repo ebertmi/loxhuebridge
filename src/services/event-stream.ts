@@ -120,7 +120,6 @@ class EventStream {
   private config: Config;
   private logger: Logger;
   private hueClient: HueClient;
-  private loxoneUdp: LoxoneUDP;
   private statusManager: StatusManager;
   private bidirectionalSync: BidirectionalSyncManager | null;
   private isActive: boolean;
@@ -131,14 +130,13 @@ class EventStream {
     config: Config,
     logger: Logger,
     hueClient: HueClient,
-    loxoneUdp: LoxoneUDP,
+    _loxoneUdp: LoxoneUDP,
     statusManager: StatusManager,
     bidirectionalSync: BidirectionalSyncManager | null = null
   ) {
     this.config = config;
     this.logger = logger;
     this.hueClient = hueClient;
-    this.loxoneUdp = loxoneUdp;
     this.statusManager = statusManager;
     this.bidirectionalSync = bidirectionalSync;
 

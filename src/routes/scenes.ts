@@ -42,7 +42,8 @@ function createSceneRoutes(dependencies: SceneRouteDependencies): Router {
    * @param value - 'on' to activate, 'off' to deactivate (turn off lights)
    */
   router.get('/scene/:id/:value', asyncHandler(async (req: Request, res: Response) => {
-    const { id, value } = req.params;
+    const id = req.params.id as string;
+    const value = req.params.value as string;
     const normalizedValue = value.toLowerCase();
 
     logger.debug(`Scene command: /scene/${id}/${value}`, 'SCENE');
